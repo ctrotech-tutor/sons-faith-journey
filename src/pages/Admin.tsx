@@ -322,7 +322,7 @@ const MiniChart = ({ color }: { color: string }) => {
           </motion.div>
 
           <Tabs defaultValue="content" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4 overflow-x-auto gap-2">
               <TabsTrigger value="content" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
                 <span>Content</span>
