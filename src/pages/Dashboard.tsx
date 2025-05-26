@@ -173,13 +173,12 @@ const Dashboard = () => {
           </motion.div>
 
           <Tabs defaultValue="devotion" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="devotion">Today's Devotion</TabsTrigger>
-              <TabsTrigger value="tracker">Reading Tracker</TabsTrigger>
-              <TabsTrigger value="prayer">Prayer Wall</TabsTrigger>
-              <TabsTrigger value="community">Community</TabsTrigger>
-            </TabsList>
-
+            <TabsList className="w-full overflow-x-auto whitespace-nowrap sm:grid sm:grid-cols-4 gap-2">
+  <TabsTrigger value="devotion" className="inline-block min-w-[8rem] text-center">Today's Devotion</TabsTrigger>
+  <TabsTrigger value="tracker" className="inline-block min-w-[8rem] text-center">Reading Tracker</TabsTrigger>
+  <TabsTrigger value="prayer" className="inline-block min-w-[8rem] text-center">Prayer Wall</TabsTrigger>
+  <TabsTrigger value="community" className="inline-block min-w-[8rem] text-center">Community</TabsTrigger>
+</TabsList>
             <TabsContent value="devotion" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
@@ -225,7 +224,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Reactions */}
-                            <div className="flex items-center gap-4 pt-4 border-t overflow-x-auto">
+                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
                                 Amen ({dailyReading.reactions?.amen?.length || 0})
