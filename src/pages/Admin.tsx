@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -551,39 +551,95 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="analytics">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-600 mb-2">
-                        {registrations.length}
-                      </div>
-                      <p className="text-gray-600">Total Registrations</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-600 mb-2">
-                        {devotionals.length}
-                      </div>
-                      <p className="text-gray-600">Total Devotionals</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-600 mb-2">
-                        {Math.round((registrations.filter(r => r.gender === 'male').length / registrations.length) * 100) || 0}%
-                      </div>
-                      <p className="text-gray-600">Male Participants</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-4 py-6">
+
+    {/* Total Registrations */}
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="rounded-xl shadow-md border border-purple-100 hover:shadow-lg transition">
+        <CardContent className="p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Total Registrations</h2>
+            <Users className="h-5 w-5 text-purple-600" />
+          </div>
+          <div className="text-4xl font-bold text-purple-600">
+            {registrations.length}
+          </div>
+          <MiniChart color="#a855f7" />
+        </CardContent>
+      </Card>
+    </motion.div>
+
+    {/* Total Devotionals */}
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="rounded-xl shadow-md border border-green-100 hover:shadow-lg transition">
+        <CardContent className="p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Total Devotionals</h2>
+            <BookOpen className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="text-4xl font-bold text-green-600">
+            {devotionals.length}
+          </div>
+          <MiniChart color="#16a34a" />
+        </CardContent>
+      </Card>
+    </motion.div>
+
+    {/* Male Participants */}
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition">
+        <CardContent className="p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Male Participants</h2>
+            <User className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="text-4xl font-bold text-blue-600">
+            {Math.round(
+              (registrations.filter(r => r.gender === 'male').length / registrations.length) * 100
+            ) || 0}
+            %
+          </div>
+          <MiniChart color="#2563eb" />
+        </CardContent>
+      </Card>
+    </motion.div>
+
+    {/* Female Participants */}
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="rounded-xl shadow-md border border-pink-100 hover:shadow-lg transition">
+        <CardContent className="p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">Female Participants</h2>
+            <User className="h-5 w-5 text-pink-500" />
+          </div>
+          <div className="text-4xl font-bold text-pink-500">
+            {Math.round(
+              (registrations.filter(r => r.gender === 'female').length / registrations.length) * 100
+            ) || 0}
+            %
+          </div>
+          <MiniChart color="#ec4899" />
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+</TabsContent>
           </Tabs>
         </div>
       </div>
