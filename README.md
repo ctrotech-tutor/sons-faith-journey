@@ -78,9 +78,20 @@ THE SONS Devotional App is a full-featured spiritual web app with:
 
 ## Project Structure
 
-/src /components       # Reusable UI components /pages            # Register, Devotions, Dashboard, Admin, etc. /hooks            # Custom React hooks /utils            # Helper functions and services /context          # Auth and global app context /styles           # Tailwind or custom styles /assets           # Icons, logos, and images
+```
+/src
+  /components       # Reusable UI components
+  /pages            # Register, Devotions, Dashboard, Admin, etc.
+  /hooks            # Custom React hooks
+  /utils            # Helper functions and services
+  /context          # Auth and global app context
+  /styles           # Tailwind or custom styles
+  /assets           # Icons, logos, and images
 
-/firebase firebase-config.ts firestore.rules
+/firebase
+  firebase-config.ts
+  firestore.rules
+```
 
 ---
 
