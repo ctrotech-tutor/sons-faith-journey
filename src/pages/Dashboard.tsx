@@ -225,7 +225,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Reactions */}
-                            <div className="flex items-center space-x-4 pt-4 border-t">
+                            <div className="flex items-center gap-4 pt-4 border-t overflow-x-auto">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
                                 Amen ({dailyReading.reactions?.amen?.length || 0})
