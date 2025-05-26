@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, getDocs, addDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Users, FileText, Plus } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import Layout from '@/components/Layout';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Registration {
   id: string;
@@ -26,20 +28,35 @@ interface Registration {
   registeredAt: any;
 }
 
+interface Devotional {
+  id: string;
+  title: string;
+  content: string;
+  scripture: string;
+  imageURL?: string;
+  date: any;
+  createdBy: string;
+}
+
 const Admin = () => {
   const { user, login } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [devotionals, setDevotionals] = useState<Devotional[]>([]);
   const [loading, setLoading] = useState(false);
   const [devotionalTitle, setDevotionalTitle] = useState('');
   const [devotionalContent, setDevotionalContent] = useState('');
   const [devotionalScripture, setDevotionalScripture] = useState('');
+  const [devotionalImageURL, setDevotionalImageURL] = useState('');
+  const [editingDevotional, setEditingDevotional] = useState<Devotional | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchRegistrations();
+      fetchDevotionals();
     }
   }, [user]);
 
@@ -57,6 +74,23 @@ const Admin = () => {
       setRegistrations(regs);
     } catch (error) {
       console.error('Error fetching registrations:', error);
+    }
+  };
+
+  const fetchDevotionals = async () => {
+    try {
+      const devotionalsQuery = query(
+        collection(db, 'devotionals'),
+        orderBy('date', 'desc')
+      );
+      const querySnapshot = await getDocs(devotionalsQuery);
+      const devs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Devotional[];
+      setDevotionals(devs);
+    } catch (error) {
+      console.error('Error fetching devotionals:', error);
     }
   };
 
@@ -80,41 +114,107 @@ const Admin = () => {
     }
   };
 
-  const addDevotional = async () => {
+  const addOrUpdateDevotional = async () => {
     if (!devotionalTitle || !devotionalContent || !devotionalScripture) {
       toast({
         title: 'Missing Fields',
-        description: 'Please fill in all devotional fields.',
+        description: 'Please fill in all required devotional fields.',
         variant: 'destructive'
       });
       return;
     }
 
     try {
-      await addDoc(collection(db, 'devotionals'), {
+      const devotionalData = {
         title: devotionalTitle,
         content: devotionalContent,
         scripture: devotionalScripture,
+        imageURL: devotionalImageURL || null,
         date: new Date(),
         createdBy: user?.email
-      });
+      };
 
-      toast({
-        title: 'Devotional Added',
-        description: 'New devotional content has been published.'
-      });
+      if (editingDevotional) {
+        await updateDoc(doc(db, 'devotionals', editingDevotional.id), devotionalData);
+        toast({
+          title: 'Devotional Updated',
+          description: 'Devotional content has been updated successfully.'
+        });
+      } else {
+        await addDoc(collection(db, 'devotionals'), devotionalData);
+        toast({
+          title: 'Devotional Added',
+          description: 'New devotional content has been published.'
+        });
+      }
 
-      setDevotionalTitle('');
-      setDevotionalContent('');
-      setDevotionalScripture('');
+      resetForm();
+      fetchDevotionals();
     } catch (error) {
-      console.error('Error adding devotional:', error);
+      console.error('Error saving devotional:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add devotional. Please try again.',
+        description: 'Failed to save devotional. Please try again.',
         variant: 'destructive'
       });
     }
+  };
+
+  const editDevotional = (devotional: Devotional) => {
+    setEditingDevotional(devotional);
+    setDevotionalTitle(devotional.title);
+    setDevotionalContent(devotional.content);
+    setDevotionalScripture(devotional.scripture);
+    setDevotionalImageURL(devotional.imageURL || '');
+  };
+
+  const deleteDevotional = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this devotional?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'devotionals', id));
+      toast({
+        title: 'Devotional Deleted',
+        description: 'Devotional has been removed successfully.'
+      });
+      fetchDevotionals();
+    } catch (error) {
+      console.error('Error deleting devotional:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete devotional. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteRegistration = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this registration?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'registrations', id));
+      toast({
+        title: 'Registration Deleted',
+        description: 'Registration has been removed successfully.'
+      });
+      fetchRegistrations();
+    } catch (error) {
+      console.error('Error deleting registration:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete registration. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setDevotionalTitle('');
+    setDevotionalContent('');
+    setDevotionalScripture('');
+    setDevotionalImageURL('');
+    setEditingDevotional(null);
+    setShowPreview(false);
   };
 
   const exportToCSV = () => {
@@ -209,21 +309,192 @@ const Admin = () => {
             <p className="text-gray-600">Manage THE SONS challenge</p>
           </motion.div>
 
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="users" className="flex items-center space-x-2">
-                <Users className="h-4 w-4" />
-                <span>Users</span>
-              </TabsTrigger>
+          <Tabs defaultValue="content" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="content" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
                 <span>Content</span>
+              </TabsTrigger>
+              <TabsTrigger value="devotionals" className="flex items-center space-x-2">
+                <Edit className="h-4 w-4" />
+                <span>Devotionals</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center space-x-2">
+                <Users className="h-4 w-4" />
+                <span>Users</span>
               </TabsTrigger>
               <TabsTrigger value="analytics" className="flex items-center space-x-2">
                 <Plus className="h-4 w-4" />
                 <span>Analytics</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="content">
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>
+                      {editingDevotional ? 'Edit Devotional' : 'Add New Devotional'}
+                    </CardTitle>
+                    <div className="space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowPreview(!showPreview)}
+                        className="flex items-center space-x-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>{showPreview ? 'Hide' : 'Show'} Preview</span>
+                      </Button>
+                      {editingDevotional && (
+                        <Button variant="outline" onClick={resetForm}>
+                          Cancel Edit
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="devotionalTitle">Title</Label>
+                        <Input
+                          id="devotionalTitle"
+                          value={devotionalTitle}
+                          onChange={(e) => setDevotionalTitle(e.target.value)}
+                          placeholder="Enter devotional title"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="devotionalScripture">Scripture Reference</Label>
+                        <Input
+                          id="devotionalScripture"
+                          value={devotionalScripture}
+                          onChange={(e) => setDevotionalScripture(e.target.value)}
+                          placeholder="e.g., John 3:16 - 'For God so loved the world...'"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="devotionalImageURL">Image URL (Optional)</Label>
+                        <Input
+                          id="devotionalImageURL"
+                          value={devotionalImageURL}
+                          onChange={(e) => setDevotionalImageURL(e.target.value)}
+                          placeholder="https://example.com/image.jpg"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="devotionalContent">Content (Markdown Supported)</Label>
+                        <Textarea
+                          id="devotionalContent"
+                          value={devotionalContent}
+                          onChange={(e) => setDevotionalContent(e.target.value)}
+                          placeholder="Enter devotional content using Markdown formatting..."
+                          className="mt-1 min-h-[300px] font-mono"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Supports: **bold**, *italic*, # headers, > blockquotes, - lists
+                        </p>
+                      </div>
+                      <Button
+                        onClick={addOrUpdateDevotional}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        {editingDevotional ? 'Update Devotional' : 'Publish Devotional'}
+                      </Button>
+                    </div>
+
+                    {showPreview && (
+                      <div className="border rounded-lg p-4 bg-white">
+                        <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
+                        <div className="space-y-4">
+                          {devotionalTitle && (
+                            <h2 className="text-xl font-bold text-purple-800">{devotionalTitle}</h2>
+                          )}
+                          {devotionalScripture && (
+                            <p className="text-purple-600 font-medium italic">{devotionalScripture}</p>
+                          )}
+                          {devotionalImageURL && (
+                            <img 
+                              src={devotionalImageURL} 
+                              alt="Devotional" 
+                              className="w-full h-48 object-cover rounded-lg"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          {devotionalContent && (
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {devotionalContent}
+                              </ReactMarkdown>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="devotionals">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manage Devotionals ({devotionals.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Scripture</TableHead>
+                          <TableHead>Created By</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {devotionals.map((devotional) => (
+                          <TableRow key={devotional.id}>
+                            <TableCell className="font-medium">{devotional.title}</TableCell>
+                            <TableCell className="max-w-xs truncate">{devotional.scripture}</TableCell>
+                            <TableCell>{devotional.createdBy}</TableCell>
+                            <TableCell>
+                              {devotional.date?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => editDevotional(devotional)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteDevotional(devotional.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="users">
               <Card>
@@ -246,6 +517,7 @@ const Admin = () => {
                           <TableHead>Email</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -259,57 +531,21 @@ const Admin = () => {
                             <TableCell>
                               {reg.registeredAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteRegistration(reg.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="content">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add New Devotional</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="devotionalTitle">Title</Label>
-                    <Input
-                      id="devotionalTitle"
-                      value={devotionalTitle}
-                      onChange={(e) => setDevotionalTitle(e.target.value)}
-                      placeholder="Enter devotional title"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="devotionalScripture">Scripture Reference</Label>
-                    <Input
-                      id="devotionalScripture"
-                      value={devotionalScripture}
-                      onChange={(e) => setDevotionalScripture(e.target.value)}
-                      placeholder="e.g., John 3:16 - 'For God so loved the world...'"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="devotionalContent">Content</Label>
-                    <Textarea
-                      id="devotionalContent"
-                      value={devotionalContent}
-                      onChange={(e) => setDevotionalContent(e.target.value)}
-                      placeholder="Enter devotional content"
-                      className="mt-1 min-h-[200px]"
-                    />
-                  </div>
-                  <Button
-                    onClick={addDevotional}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    Publish Devotional
-                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -330,11 +566,9 @@ const Admin = () => {
                   <CardContent className="p-6">
                     <div className="text-center">
                       <div className="text-3xl font-bold text-green-600 mb-2">
-                        {registrations.filter(r => 
-                          r.registeredAt?.toDate?.()?.toDateString() === new Date().toDateString()
-                        ).length}
+                        {devotionals.length}
                       </div>
-                      <p className="text-gray-600">Today's Signups</p>
+                      <p className="text-gray-600">Total Devotionals</p>
                     </div>
                   </CardContent>
                 </Card>
