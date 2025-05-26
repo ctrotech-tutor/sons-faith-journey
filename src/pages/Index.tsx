@@ -2,16 +2,20 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Users, MessageCircle, Heart, CheckCircle } from 'lucide-react';
+import { BookOpen, Users, MessageCircle, Heart, CheckCircle, LogIn } from 'lucide-react';
 import CountdownTimer from '@/components/CountdownTimer';
+import AuthModal from '@/components/AuthModal';
 import Layout from '@/components/Layout';
 
 const Index = () => {
+  const { user } = useAuth();
   const location = useLocation();
   const [showWhatsAppLink, setShowWhatsAppLink] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     // Check if user just registered
@@ -94,9 +98,33 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="space-y-4"
             >
-              <Button asChild size="lg" className="bg-white text-purple-700 hover:bg-purple-50 text-lg px-8 py-4">
-                <Link to="/register">Join the Challenge</Link>
-              </Button>
+              {user ? (
+                <div className="space-y-4">
+                  <p className="text-purple-100 mb-4">
+                    Welcome back, {user.displayName || 'Brother'}!
+                  </p>
+                  <Button asChild size="lg" className="bg-white text-purple-700 hover:bg-purple-50 text-lg px-8 py-4">
+                    <Link to="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button asChild size="lg" className="bg-white text-purple-700 hover:bg-purple-50 text-lg px-8 py-4">
+                      <Link to="/register">Join the Challenge</Link>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsAuthModalOpen(true)}
+                      size="lg" 
+                      variant="outline" 
+                      className="border-white text-white hover:bg-white hover:text-purple-700 text-lg px-8 py-4"
+                    >
+                      <LogIn className="h-5 w-5 mr-2" />
+                      Sign In
+                    </Button>
+                  </div>
+                </div>
+              )}
               
               {showWhatsAppLink && (
                 <motion.div
@@ -206,9 +234,15 @@ const Index = () => {
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Take the first step towards deeper faith, stronger character, and purposeful living
             </p>
-            <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4">
-              <Link to="/register">Register Now</Link>
-            </Button>
+            {user ? (
+              <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4">
+                <Link to="/dashboard">Continue Your Journey</Link>
+              </Button>
+            ) : (
+              <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4">
+                <Link to="/register">Register Now</Link>
+              </Button>
+            )}
           </motion.div>
         </div>
       </section>
@@ -230,6 +264,11 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </Layout>
   );
 };

@@ -1,13 +1,18 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { Navigate } from 'react-router-dom';
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Check, MessageCircle, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BookOpen, Check, MessageCircle, Calendar, Heart, Users } from 'lucide-react';
 import Layout from '@/components/Layout';
+import ReadingTracker from '@/components/ReadingTracker';
+import PrayerWall from '@/components/PrayerWall';
 
 interface Devotional {
   id: string;
@@ -15,66 +20,140 @@ interface Devotional {
   content: string;
   scripture: string;
   date: Date;
+  imageUrl?: string;
+  reactions?: {
+    amen: string[];
+    blessed: string[];
+    shared: string[];
+  };
+}
+
+interface VerseOfDay {
+  id: string;
+  verse: string;
+  reference: string;
+  date: Date;
 }
 
 const Dashboard = () => {
+  const { user, userProfile, loading } = useAuth();
   const [dailyReading, setDailyReading] = useState<Devotional | null>(null);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [verseOfDay] = useState("'For I know the plans I have for you,' declares the Lord, 'plans to prosper you and not to harm you, to give you hope and a future.' - Jeremiah 29:11");
+  const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
+  const [activeUsers, setActiveUsers] = useState(0);
 
   useEffect(() => {
-    const fetchTodaysReading = async () => {
-      try {
-        const devotionalsQuery = query(
-          collection(db, 'devotionals'),
-          orderBy('date', 'desc'),
-          limit(1)
-        );
-        const querySnapshot = await getDocs(devotionalsQuery);
-        
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          setDailyReading({
-            id: doc.id,
-            ...doc.data()
-          } as Devotional);
-        } else {
-          // Default devotional if none exists
-          setDailyReading({
-            id: 'default',
-            title: 'Welcome to Your Journey',
-            content: 'Welcome to THE SONS 90-day Bible Reading Challenge! Today marks the beginning of your spiritual journey. Take a moment to pray and ask God to open your heart to His word.',
-            scripture: 'Psalm 119:105 - "Your word is a lamp for my feet, a light on my path."',
-            date: new Date()
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching devotional:', error);
+    if (user) {
+      fetchTodaysContent();
+      fetchActiveUsers();
+    }
+  }, [user]);
+
+  const fetchTodaysContent = async () => {
+    try {
+      // Fetch today's devotional
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const devotionalsQuery = query(
+        collection(db, 'devotionals'),
+        where('date', '>=', today),
+        orderBy('date', 'asc'),
+        limit(1)
+      );
+      const devotionalSnapshot = await getDocs(devotionalsQuery);
+      
+      if (!devotionalSnapshot.empty) {
+        const doc = devotionalSnapshot.docs[0];
+        setDailyReading({
+          id: doc.id,
+          ...doc.data()
+        } as Devotional);
+      } else {
+        // Default devotional
+        setDailyReading({
+          id: 'default',
+          title: 'Welcome to Your Journey',
+          content: 'Welcome to THE SONS 90-day Bible Reading Challenge! Today marks the beginning of your spiritual journey. Take a moment to pray and ask God to open your heart to His word.',
+          scripture: 'Psalm 119:105 - "Your word is a lamp for my feet, a light on my path."',
+          date: new Date(),
+          reactions: { amen: [], blessed: [], shared: [] }
+        });
       }
-    };
 
-    fetchTodaysReading();
+      // Fetch verse of the day
+      const verseQuery = query(
+        collection(db, 'versesOfDay'),
+        where('date', '>=', today),
+        orderBy('date', 'asc'),
+        limit(1)
+      );
+      const verseSnapshot = await getDocs(verseQuery);
+      
+      if (!verseSnapshot.empty) {
+        const doc = verseSnapshot.docs[0];
+        setVerseOfDay({
+          id: doc.id,
+          ...doc.data()
+        } as VerseOfDay);
+      } else {
+        // Default verse
+        setVerseOfDay({
+          id: 'default',
+          verse: 'For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future.',
+          reference: 'Jeremiah 29:11',
+          date: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
+    }
+  };
 
-    // Check if today's reading is completed
-    const today = new Date().toDateString();
-    const completed = localStorage.getItem(`reading-${today}`) === 'true';
-    setIsCompleted(completed);
-  }, []);
-
-  const markAsCompleted = () => {
-    const today = new Date().toDateString();
-    localStorage.setItem(`reading-${today}`, 'true');
-    setIsCompleted(true);
+  const fetchActiveUsers = async () => {
+    try {
+      const today = new Date().toDateString();
+      const usersQuery = query(collection(db, 'users'));
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      let activeCount = 0;
+      usersSnapshot.docs.forEach(doc => {
+        const userData = doc.data();
+        if (userData.readingProgress && userData.readingProgress[today]) {
+          activeCount++;
+        }
+      });
+      
+      setActiveUsers(activeCount);
+    } catch (error) {
+      console.error('Error fetching active users:', error);
+    }
   };
 
   const openWhatsApp = () => {
     window.open('https://chat.whatsapp.com/Bxu5l4wv77nJZqfVxGktPI', '_blank');
   };
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -82,160 +161,195 @@ const Dashboard = () => {
             className="text-center mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Welcome Back to THE SONS
+              Welcome Back, {userProfile?.displayName}!
             </h1>
             <p className="text-gray-600">Continue your faith journey today</p>
+            {activeUsers > 0 && (
+              <Badge variant="secondary" className="mt-2">
+                <Users className="h-3 w-3 mr-1" />
+                {activeUsers} others completed today's reading
+              </Badge>
+            )}
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Today's Reading */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center space-x-2">
-                        <BookOpen className="h-5 w-5 text-purple-600" />
-                        <span>Today's Reading</span>
-                      </CardTitle>
-                      {isCompleted && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          <Check className="h-4 w-4 mr-1" />
-                          Completed
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {dailyReading && (
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {dailyReading.title}
-                        </h3>
-                        <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-600">
-                          <p className="text-purple-800 font-medium">
-                            {dailyReading.scripture}
+          <Tabs defaultValue="devotion" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="devotion">Today's Devotion</TabsTrigger>
+              <TabsTrigger value="tracker">Reading Tracker</TabsTrigger>
+              <TabsTrigger value="prayer">Prayer Wall</TabsTrigger>
+              <TabsTrigger value="community">Community</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="devotion" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content */}
+                <div className="lg:col-span-2">
+                  {/* Today's Reading */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <BookOpen className="h-5 w-5 text-purple-600" />
+                          <span>Today's Devotion</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {dailyReading && (
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                              {dailyReading.title}
+                            </h3>
+                            
+                            {dailyReading.imageUrl && (
+                              <img
+                                src={dailyReading.imageUrl}
+                                alt={dailyReading.title}
+                                className="w-full h-48 object-cover rounded-lg"
+                              />
+                            )}
+                            
+                            <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-600">
+                              <p className="text-purple-800 font-medium">
+                                {dailyReading.scripture}
+                              </p>
+                            </div>
+                            
+                            <div className="prose max-w-none">
+                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                {dailyReading.content}
+                              </p>
+                            </div>
+
+                            {/* Reactions */}
+                            <div className="flex items-center space-x-4 pt-4 border-t">
+                              <Button variant="outline" size="sm">
+                                <Heart className="h-4 w-4 mr-1" />
+                                Amen ({dailyReading.reactions?.amen?.length || 0})
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                ✨ Blessed ({dailyReading.reactions?.blessed?.length || 0})
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                📖 Share ({dailyReading.reactions?.shared?.length || 0})
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-6">
+                  {/* Verse of the Day */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold mb-3">Verse of the Day</h3>
+                        {verseOfDay && (
+                          <div>
+                            <p className="text-purple-100 leading-relaxed italic mb-2">
+                              "{verseOfDay.verse}"
+                            </p>
+                            <p className="text-purple-200 text-sm font-medium">
+                              — {verseOfDay.reference}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Quick Stats */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <Calendar className="h-5 w-5 text-purple-600" />
+                          <span>Challenge Progress</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-purple-600 mb-2">
+                            Day {Math.ceil((new Date().getTime() - new Date('2025-06-01').getTime()) / (1000 * 60 * 60 * 24)) || 1}
+                          </div>
+                          <p className="text-gray-600 mb-4">of 90-day challenge</p>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-purple-600 h-2 rounded-full"
+                              style={{ width: `${Math.min(((Math.ceil((new Date().getTime() - new Date('2025-06-01').getTime()) / (1000 * 60 * 60 * 24)) || 1) / 90) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-2">
+                            {Math.min(Math.round(((Math.ceil((new Date().getTime() - new Date('2025-06-01').getTime()) / (1000 * 60 * 60 * 24)) || 1) / 90) * 100), 100)}% Complete
                           </p>
                         </div>
-                        <p className="text-gray-700 leading-relaxed">
-                          {dailyReading.content}
-                        </p>
-                        {!isCompleted && (
-                          <Button
-                            onClick={markAsCompleted}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            Mark as Completed
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </div>
+              </div>
+            </TabsContent>
 
-              {/* Verse of the Day */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-3">Verse of the Day</h3>
-                    <p className="text-purple-100 leading-relaxed italic">
-                      {verseOfDay}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
+            <TabsContent value="tracker">
+              <ReadingTracker />
+            </TabsContent>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Progress Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-purple-600" />
-                      <span>Progress</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-600 mb-2">
-                        Day 1
-                      </div>
-                      <p className="text-gray-600 mb-4">of 90-day challenge</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-purple-600 h-2 rounded-full"
-                          style={{ width: '1.1%' }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-2">1.1% Complete</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+            <TabsContent value="prayer">
+              <PrayerWall />
+            </TabsContent>
 
-              {/* Community Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <MessageCircle className="h-5 w-5 text-purple-600" />
-                      <span>Community</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">
+            <TabsContent value="community" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <MessageCircle className="h-5 w-5 text-purple-600" />
+                    <span>Community</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-600">
                       Connect with fellow believers on this journey
                     </p>
                     <Button
                       onClick={openWhatsApp}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700"
                     >
                       Join WhatsApp Group
                     </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Encouragement Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card className="bg-yellow-50 border-yellow-200">
-                  <CardContent className="p-4">
-                    <h4 className="font-semibold text-yellow-800 mb-2">
-                      Daily Encouragement
-                    </h4>
-                    <p className="text-yellow-700 text-sm">
-                      Remember, this journey is not about perfection but about progress. 
-                      God meets you exactly where you are.
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </div>
+              <Card className="bg-yellow-50 border-yellow-200">
+                <CardContent className="p-6">
+                  <h4 className="font-semibold text-yellow-800 mb-2">
+                    Daily Encouragement
+                  </h4>
+                  <p className="text-yellow-700">
+                    Remember, this journey is not about perfection but about progress. 
+                    God meets you exactly where you are. Keep pressing forward!
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>
