@@ -91,7 +91,7 @@ git clone https://github.com/your-org/the-sons-devotional-app.git
 cd the-sons-devotional-app
 npm install
 npm run dev
-
+```
 
 ---
 
