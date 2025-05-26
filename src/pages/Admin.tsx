@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -396,7 +396,7 @@ const Admin = () => {
                           className="mt-1 min-h-[300px] font-mono"
                         />
                         <p className="text-sm text-gray-500 mt-1">
-                          Supports: **bold**, *italic*, # headers, > blockquotes, - lists
+                          Supports: **bold**, *italic*, # headers, &gt; blockquotes, - lists
                         </p>
                       </div>
                       <Button
