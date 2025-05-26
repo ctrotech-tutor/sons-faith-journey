@@ -248,22 +248,48 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-2 rounded-lg">
-              <Heart className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold">THE SONS</span>
-          </div>
-          <p className="text-gray-400 mb-4">
-            Rooted in Faith, Purpose, and Growth.
-          </p>
-          <p className="text-gray-500 text-sm">
-            © 2024 THE SONS. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <footer className="bg-gray-900 text-white py-10 px-4">
+  <div className="max-w-6xl mx-auto flex flex-col gap-10">
+    
+    {/* Branding & Description */}
+    <div className="text-center">
+      <h3 className="text-2xl font-bold">THE SONS</h3>
+      <p className="text-sm text-gray-400 mt-2">Rooted in Faith, Purpose, and Growth.</p>
+    </div>
+
+    {/* Community Action Links */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center text-sm">
+      <a href="https://youtube.com/@BeyondTheUsual" target="_blank" rel="noopener noreferrer" className="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Join YouTube: Beyond the Usual
+      </a>
+      <a href="https://t.me/YourTelegramGroup" target="_blank" rel="noopener noreferrer" className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Join Telegram Group
+      </a>
+      <a href="https://chat.whatsapp.com/YourWhatsAppGroup" target="_blank" rel="noopener noreferrer" className="bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Join WhatsApp Group
+      </a>
+      <a href="https://whatsapp.com/channel/YourWhatsAppChannel" target="_blank" rel="noopener noreferrer" className="bg-emerald-600 hover:bg-emerald-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Join WhatsApp Channel
+      </a>
+      <a href="https://ctrotech.com" target="_blank" rel="noopener noreferrer" className="bg-indigo-600 hover:bg-indigo-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Visit Official Website
+      </a>
+      <a href="mailto:beyond@ctrotech.com" className="bg-yellow-600 hover:bg-yellow-700 px-5 py-3 rounded-xl font-medium transition-all">
+        Contact: beyond@ctrotech.com
+      </a>
+    </div>
+
+    {/* Powered by */}
+    <div className="text-center text-gray-500 text-sm mt-4">
+      Powered by <span className="font-semibold text-white">Ctrotech</span> | Designed with purpose & prayer.
+    </div>
+
+    {/* Divider & Copyright */}
+    <div className="border-t border-gray-700 pt-4 text-center text-xs text-gray-500">
+      © {new Date().getFullYear()} THE SONS. All rights reserved.
+    </div>
+  </div>
+</footer>
 
       <AuthModal 
         isOpen={isAuthModalOpen} 
