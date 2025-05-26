@@ -173,7 +173,7 @@ const Dashboard = () => {
           </motion.div>
 
           <Tabs defaultValue="devotion" className="space-y-6">
-            <TabsList className="w-full overflow-x-auto whitespace-nowrap sm:grid sm:grid-cols-4 gap-2">
+            <TabsList className="overflow-x-auto whitespace-nowrap flex items-center gap-2">
   <TabsTrigger value="devotion" className="inline-block min-w-[8rem] text-center">Today's Devotion</TabsTrigger>
   <TabsTrigger value="tracker" className="inline-block min-w-[8rem] text-center">Reading Tracker</TabsTrigger>
   <TabsTrigger value="prayer" className="inline-block min-w-[8rem] text-center">Prayer Wall</TabsTrigger>
