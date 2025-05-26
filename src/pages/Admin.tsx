@@ -114,6 +114,18 @@ const Admin = () => {
     }
   };
 
+const MiniChart = ({ color }: { color: string }) => {
+  return (
+    <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+      <div
+        className="h-full animate-pulse"
+        style={{ width: "70%", backgroundColor: color }}
+      />
+    </div>
+  );
+};
+
+
   const addOrUpdateDevotional = async () => {
     if (!devotionalTitle || !devotionalContent || !devotionalScripture) {
       toast({
