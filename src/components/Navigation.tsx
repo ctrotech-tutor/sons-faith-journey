@@ -70,7 +70,7 @@ const Navigation = () => {
               THE SONS
             </span>
           </Link>
-<Button onClick={() => setIsAuthModalOpen(false)} className="bg-[#FF9606] hover:bg-[#FF9600]/90">
+<Button onClick={() => setIsAuthModalOpen(false)} className="bg-purple-700 hover:bg-purple-900">
           Sign In
         </Button>
 </div>
