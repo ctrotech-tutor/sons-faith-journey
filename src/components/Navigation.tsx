@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import AuthModal from '@/components/AuthModal;
 import {
   Home,
   BookOpen,
@@ -57,7 +58,7 @@ const Navigation = () => {
   if (!user) {
     return (
       <div className="fixed top-4 right-4 z-50">
-        <Button onClick={() => navigate('/')} className="bg-[#FF9606] hover:bg-[#FF9606]/90">
+        <Button onClick={() => setIsAuthModalOpen(true)} className="bg-[#FF9606] hover:bg-[#FF9606]/90">
           Sign In
         </Button>
       </div>
