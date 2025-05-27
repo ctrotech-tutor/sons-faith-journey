@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, Plus, Flag, Heart, Flame, PrayingHands, ThumbsUp } from 'lucide-react';
+import { Send, Plus, Flag, Heart, Flame, HandHeart, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -41,7 +41,7 @@ const ChurchRoom = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const reactionEmojis = [
-    { emoji: '🙏', key: 'pray', icon: PrayingHands },
+    { emoji: '🙏', key: 'pray', icon: HandHeart },
     { emoji: '❤️', key: 'love', icon: Heart },
     { emoji: '🔥', key: 'fire', icon: Flame },
     { emoji: '👍', key: 'thumbs', icon: ThumbsUp },
