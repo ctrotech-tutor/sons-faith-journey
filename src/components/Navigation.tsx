@@ -12,7 +12,10 @@ import {
   LogOut, 
   User,
   BookOpen,
-  Settings
+  Settings,
+  MessageCircle,
+  Shield,
+  Users
 } from 'lucide-react';
 import AuthModal from './AuthModal';
 
@@ -65,32 +68,72 @@ const Navigation = () => {
               </Link>
               
               {user && (
-                <Link
-                  to="/dashboard"
-                  className={`font-medium transition-colors ${
-                    isActive('/dashboard') 
-                      ? 'text-purple-600' 
-                      : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  Dashboard
-                </Link>
+                <>
+                  <Link
+                    to="/dashboard"
+                    className={`font-medium transition-colors ${
+                      isActive('/dashboard') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+
+                  <Link
+                    to="/church-room"
+                    className={`font-medium transition-colors flex items-center space-x-1 ${
+                      isActive('/church-room') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Church Room</span>
+                  </Link>
+
+                  <Link
+                    to="/chat-supervisor"
+                    className={`font-medium transition-colors flex items-center space-x-1 ${
+                      isActive('/chat-supervisor') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Support</span>
+                  </Link>
+                </>
               )}
 
               {userProfile?.isAdmin && (
-                <Link
-                  to="/admin"
-                  className={`font-medium transition-colors ${
-                    isActive('/admin') 
-                      ? 'text-purple-600' 
-                      : 'text-gray-600 hover:text-purple-600'
-                  }`}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Admin</span>
-                    <Badge variant="secondary" className="text-xs">Admin</Badge>
-                  </div>
-                </Link>
+                <>
+                  <Link
+                    to="/admin"
+                    className={`font-medium transition-colors ${
+                      isActive('/admin') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Admin</span>
+                      <Badge variant="secondary" className="text-xs">Admin</Badge>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/admin-inbox"
+                    className={`font-medium transition-colors flex items-center space-x-1 ${
+                      isActive('/admin-inbox') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600 hover:text-purple-600'
+                    }`}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Inbox</span>
+                  </Link>
+                </>
               )}
 
               {/* User Menu */}
@@ -159,31 +202,71 @@ const Navigation = () => {
               </Link>
 
               {user && (
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block font-medium transition-colors ${
-                    isActive('/dashboard') 
-                      ? 'text-purple-600' 
-                      : 'text-gray-600'
-                  }`}
-                >
-                  Dashboard
-                </Link>
+                <>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block font-medium transition-colors ${
+                      isActive('/dashboard') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+
+                  <Link
+                    to="/church-room"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block font-medium transition-colors ${
+                      isActive('/church-room') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    🏛️ Church Room
+                  </Link>
+
+                  <Link
+                    to="/chat-supervisor"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block font-medium transition-colors ${
+                      isActive('/chat-supervisor') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    🤝 Support Chat
+                  </Link>
+                </>
               )}
 
               {userProfile?.isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block font-medium transition-colors ${
-                    isActive('/admin') 
-                      ? 'text-purple-600' 
-                      : 'text-gray-600'
-                  }`}
-                >
-                  Admin Panel
-                </Link>
+                <>
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block font-medium transition-colors ${
+                      isActive('/admin') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    Admin Panel
+                  </Link>
+
+                  <Link
+                    to="/admin-inbox"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block font-medium transition-colors ${
+                      isActive('/admin-inbox') 
+                        ? 'text-purple-600' 
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    📨 Admin Inbox
+                  </Link>
+                </>
               )}
 
               <div className="pt-4 border-t border-gray-200">

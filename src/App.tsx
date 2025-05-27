@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import ChurchRoom from "./pages/ChurchRoom";
+import ChatWithSupervisor from "./pages/ChatWithSupervisor";
+import AdminInbox from "./pages/AdminInbox";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,9 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/church-room" element={<ChurchRoom />} />
+            <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
+            <Route path="/admin-inbox" element={<AdminInbox />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
