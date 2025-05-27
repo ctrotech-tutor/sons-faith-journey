@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Home,
   BookOpen,
@@ -16,7 +17,8 @@ import {
   X,
   Shield,
   MessageCircle,
-  Heart
+  Heart,
+  User
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -51,6 +53,16 @@ const Navigation = () => {
     { path: '/admin', icon: Settings, label: 'Admin Panel' },
     { path: '/admin-inbox', icon: Heart, label: 'Admin Inbox' },
   ];
+
+  if (!user) {
+    return (
+      <div className="fixed top-4 right-4 z-50">
+        <Button onClick={() => navigate('/')} className="bg-[#FF9606] hover:bg-[#FF9606]/90">
+          Sign In
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -88,23 +100,22 @@ const Navigation = () => {
           </div>
 
           {/* User Info */}
-          {user && (
-            <div className="p-4 border-b border-purple-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-semibold">
-                    {userProfile?.displayName?.charAt(0) || user.email?.charAt(0)}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {userProfile?.displayName || 'User'}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                </div>
+          <div className="p-4 border-b border-purple-200">
+            <Link to="/profile" className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors">
+              <Avatar>
+                <AvatarImage src={userProfile?.profilePhoto} />
+                <AvatarFallback>
+                  {userProfile?.displayName?.charAt(0) || user.email?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">
+                  {userProfile?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
-            </div>
-          )}
+            </Link>
+          </div>
 
           {/* Navigation Items */}
           <nav className="flex-1 p-4 space-y-2">
@@ -131,6 +142,19 @@ const Navigation = () => {
                 )}
               </Link>
             ))}
+
+            <Link
+              to="/profile"
+              onClick={() => setIsOpen(false)}
+              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/profile')
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
 
             {/* Admin Section */}
             {userProfile?.isAdmin && (

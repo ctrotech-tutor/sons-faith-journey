@@ -16,9 +16,12 @@ interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
+  bio?: string;
+  profilePhoto?: string;
   isAdmin: boolean;
   joinedWhatsApp: boolean;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 interface AuthContextType {
@@ -57,6 +60,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || 'User',
+            bio: '',
+            profilePhoto: '',
             isAdmin: adminEmails.includes(user.email || ''),
             joinedWhatsApp: false,
             createdAt: new Date()
@@ -87,6 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       uid: userCredential.user.uid,
       email,
       displayName,
+      bio: '',
+      profilePhoto: '',
       isAdmin: adminEmails.includes(email),
       joinedWhatsApp: false,
       createdAt: new Date()

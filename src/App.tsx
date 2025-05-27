@@ -13,6 +13,7 @@ import Community from "./pages/Community";
 import ChurchRoom from "./pages/ChurchRoom";
 import ChatWithSupervisor from "./pages/ChatWithSupervisor";
 import AdminInbox from "./pages/AdminInbox";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,9 +29,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/:userId" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/community" element={<Community />} />
             <Route path="/church-room" element={<ChurchRoom />} />
+            <Route path="/chat/:chatId" element={<ChurchRoom />} />
             <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
             <Route path="/admin-inbox" element={<AdminInbox />} />
             <Route path="*" element={<NotFound />} />
