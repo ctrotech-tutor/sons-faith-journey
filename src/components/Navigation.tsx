@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import AuthModal from '@/components/AuthModal;
+import AuthModal from '@/components/AuthModal';
 import {
   Home,
   BookOpen,
