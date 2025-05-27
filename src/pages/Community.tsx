@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
@@ -10,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Navigation from '@/components/Navigation';
+import CommentsModal from '@/components/community/CommentsModal';
 
 interface CommunityPost {
   id: string;
@@ -45,6 +45,7 @@ const Community = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'recent' | 'liked' | 'admin'>('recent');
+  const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -133,6 +134,23 @@ const Community = () => {
       });
     } catch (error) {
       console.error('Error toggling like:', error);
+    }
+  };
+
+  const sharePost = async (postId: string) => {
+    try {
+      const shareUrl = `${window.location.origin}/community?post=${postId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link Copied',
+        description: 'Post link has been copied to clipboard.'
+      });
+    } catch (error) {
+      toast({
+        title: 'Share Failed',
+        description: 'Unable to copy link to clipboard.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -357,6 +375,24 @@ const Community = () => {
                   
                   <p className="text-gray-800 mb-4">{post.content}</p>
                   
+                  {post.mediaUrl && (
+                    <div className="mb-4">
+                      {post.mediaType === 'image' ? (
+                        <img 
+                          src={post.mediaUrl} 
+                          alt="Post media" 
+                          className="w-full rounded-lg max-h-96 object-cover"
+                        />
+                      ) : (
+                        <video 
+                          src={post.mediaUrl} 
+                          controls 
+                          className="w-full rounded-lg max-h-96"
+                        />
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="flex items-center space-x-4">
                       <Button
@@ -377,13 +413,23 @@ const Community = () => {
                         {post.likeCount}
                       </Button>
                       
-                      <Button variant="ghost" size="sm" className="text-gray-500">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-gray-500"
+                        onClick={() => setSelectedPostForComments(post.id)}
+                      >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         {post.commentCount}
                       </Button>
                     </div>
                     
-                    <Button variant="ghost" size="sm" className="text-gray-500">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-gray-500"
+                      onClick={() => sharePost(post.id)}
+                    >
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -401,6 +447,13 @@ const Community = () => {
           )}
         </div>
       </div>
+
+      {/* Comments Modal */}
+      <CommentsModal
+        postId={selectedPostForComments || ''}
+        isOpen={!!selectedPostForComments}
+        onClose={() => setSelectedPostForComments(null)}
+      />
     </div>
   );
 };
