@@ -57,7 +57,7 @@ const Navigation = () => {
 
   if (!user) {
     return (
-      <div className="fixed top-4 right-4 z-50">
+      <div className="hidden fixed top-4 right-4 z-50">
         <Button onClick={() => setIsAuthModalOpen(true)} className="bg-[#FF9606] hover:bg-[#FF9606]/90">
           Sign In
         </Button>
