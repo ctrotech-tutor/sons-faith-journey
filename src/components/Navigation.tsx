@@ -58,10 +58,23 @@ const Navigation = () => {
 
   if (!user) {
     return (
-      <div className="fixed top-4 right-4 z-50">
-        <button onClick={() => setIsAuthModalOpen(false)} className="bg-[#FF9606] hover:bg-[#FF9600]/90">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-lg">
+ <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-2 rounded-lg">
+              <Heart className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+              THE SONS
+            </span>
+          </Link>
+<Button onClick={() => setIsAuthModalOpen(false)} className="bg-[#FF9606] hover:bg-[#FF9600]/90">
           Sign In
-        </button>
+        </Button>
+</div>
+     
       </div>
     );
   }
