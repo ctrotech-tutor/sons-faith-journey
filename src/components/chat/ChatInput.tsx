@@ -1,9 +1,10 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Plus, Mic, Smile } from 'lucide-react';
 import VoiceNoteRecorder from './VoiceNoteRecorder';
+import { useTyping } from './TypingIndicator';
 
 interface ChatInputProps {
   value: string;
@@ -13,6 +14,7 @@ interface ChatInputProps {
   onAttachmentClick?: () => void;
   onVoiceNote?: (audioUrl: string) => void;
   placeholder?: string;
+  chatId?: string;
 }
 
 const ChatInput = ({
@@ -22,16 +24,44 @@ const ChatInput = ({
   loading = false,
   onAttachmentClick,
   onVoiceNote,
-  placeholder = "Type your message..."
+  placeholder = "Type your message...",
+  chatId
 }: ChatInputProps) => {
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { setTyping } = useTyping(chatId || '');
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (value.trim() && !loading) {
+        setTyping(false);
         onSend();
+      }
+    }
+  };
+
+  const handleChange = (newValue: string) => {
+    onChange(newValue);
+    adjustTextareaHeight();
+    
+    // Handle typing indicators
+    if (chatId) {
+      if (newValue.trim()) {
+        setTyping(true);
+        
+        // Clear existing timeout
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+        
+        // Set new timeout to stop typing after 1 second of inactivity
+        typingTimeoutRef.current = setTimeout(() => {
+          setTyping(false);
+        }, 1000);
+      } else {
+        setTyping(false);
       }
     }
   };
@@ -50,6 +80,17 @@ const ChatInput = ({
     }
     setShowVoiceRecorder(false);
   };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (chatId) {
+        setTyping(false);
+      }
+    };
+  }, [chatId, setTyping]);
 
   return (
     <div className="relative">
@@ -74,10 +115,7 @@ const ChatInput = ({
             <Textarea
               ref={textareaRef}
               value={value}
-              onChange={(e) => {
-                onChange(e.target.value);
-                adjustTextareaHeight();
-              }}
+              onChange={(e) => handleChange(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={placeholder}
               className="resize-none min-h-[36px] max-h-[120px] border-0 focus:ring-0 bg-transparent text-sm rounded-lg p-2"
@@ -103,7 +141,10 @@ const ChatInput = ({
             {/* Voice note or Send button */}
             {value.trim() ? (
               <Button
-                onClick={onSend}
+                onClick={() => {
+                  setTyping(false);
+                  onSend();
+                }}
                 disabled={loading}
                 className="bg-[#FF9606] hover:bg-[#FF9606]/90 text-white rounded-full h-8 w-8 p-0"
               >

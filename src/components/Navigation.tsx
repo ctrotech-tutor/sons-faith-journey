@@ -40,10 +40,10 @@ const Navigation = () => {
 
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
+    { path: '/community', icon: Users, label: 'Community' },
     { path: '/church-room', icon: MessageCircle, label: 'Church Room', badge: 'Chat' },
     { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { path: '/community', icon: Users, label: 'Community' },
     { path: '/readings', icon: BookOpen, label: 'Readings' },
   ];
 

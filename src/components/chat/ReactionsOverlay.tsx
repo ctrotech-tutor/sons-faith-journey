@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 interface Reaction {
   emoji: string;
   key: string;
-  icon: any;
 }
 
 interface ReactionsOverlayProps {
