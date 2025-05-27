@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flag, Trash2, Shield } from 'lucide-react';
+import { Flag, Trash2, Shield, Clock, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ChatMessageProps {
@@ -16,12 +16,14 @@ interface ChatMessageProps {
     userReactions?: { [userId: string]: string };
     reported?: boolean;
     timestamp: any;
+    status?: 'pending' | 'sent' | 'delivered';
   };
   isOwn: boolean;
   onLongPress?: () => void;
   onReport?: () => void;
   onDelete?: () => void;
   canModerate?: boolean;
+  showStatus?: boolean;
 }
 
 const ChatMessage = ({ 
@@ -30,7 +32,8 @@ const ChatMessage = ({
   onLongPress, 
   onReport, 
   onDelete, 
-  canModerate 
+  canModerate,
+  showStatus = false
 }: ChatMessageProps) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -46,6 +49,21 @@ const ChatMessage = ({
     if (!timestamp) return 'Just now';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderStatusIcon = () => {
+    if (!showStatus || !isOwn) return null;
+    
+    switch (message.status) {
+      case 'pending':
+        return <Clock className="h-3 w-3 text-yellow-500" />;
+      case 'sent':
+        return <Check className="h-3 w-3 text-gray-400" />;
+      case 'delivered':
+        return <CheckCheck className="h-3 w-3 text-blue-500" />;
+      default:
+        return <CheckCheck className="h-3 w-3 text-blue-500" />;
+    }
   };
 
   return (
@@ -123,15 +141,18 @@ const ChatMessage = ({
         )}
 
         {/* Timestamp and status */}
-        <div className={`text-xs mt-1 ${
+        <div className={`flex items-center justify-between mt-1 ${
           isOwn ? 'text-white/70' : 'text-gray-500'
         }`}>
-          {formatTime(message.timestamp)}
-          {message.reported && (
-            <span className="ml-2 text-red-500">
-              <Flag className="h-3 w-3 inline" />
-            </span>
-          )}
+          <span className="text-xs">
+            {formatTime(message.timestamp)}
+          </span>
+          <div className="flex items-center space-x-1">
+            {message.reported && (
+              <Flag className="h-3 w-3 text-red-500" />
+            )}
+            {renderStatusIcon()}
+          </div>
         </div>
       </div>
 

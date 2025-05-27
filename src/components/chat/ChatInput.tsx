@@ -59,32 +59,17 @@ const ChatInput = ({
           onCancel={() => setShowVoiceRecorder(false)}
         />
       ) : (
-        <div className="flex items-end space-x-2">
-          {/* Attachment button */}
-          {onAttachmentClick && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onAttachmentClick}
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          )}
+        <div className="flex items-end space-x-2 bg-white rounded-full p-2 shadow-sm border border-gray-200">
+          {/* Emoji button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full h-8 w-8 p-0"
+          >
+            <Smile className="h-5 w-5" />
+          </Button>
 
-          {/* Voice note button */}
-          {onVoiceNote && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowVoiceRecorder(true)}
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-            >
-              <Mic className="h-5 w-5" />
-            </Button>
-          )}
-
-          {/* Text input */}
+          {/* Text input container */}
           <div className="flex-1 relative">
             <Textarea
               ref={textareaRef}
@@ -95,32 +80,52 @@ const ChatInput = ({
               }}
               onKeyPress={handleKeyPress}
               placeholder={placeholder}
-              className="resize-none min-h-[44px] max-h-[120px] pr-12 rounded-full border-purple-200 focus:border-purple-400 focus:ring-purple-400"
+              className="resize-none min-h-[36px] max-h-[120px] border-0 focus:ring-0 bg-transparent text-sm rounded-lg p-2"
               disabled={loading}
+              style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
             />
-            
-            {/* Emoji button (placeholder) */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-700"
-            >
-              <Smile className="h-4 w-4" />
-            </Button>
           </div>
 
-          {/* Send button */}
-          <Button
-            onClick={onSend}
-            disabled={!value.trim() || loading}
-            className="bg-[#FF9606] hover:bg-[#FF9606]/90 text-white rounded-full h-12 w-12 p-0"
-          >
-            {loading ? (
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <Send className="h-5 w-5" />
+          {/* Right side buttons */}
+          <div className="flex items-center space-x-1">
+            {/* Attachment button */}
+            {onAttachmentClick && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onAttachmentClick}
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full h-8 w-8 p-0"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
             )}
-          </Button>
+
+            {/* Voice note or Send button */}
+            {value.trim() ? (
+              <Button
+                onClick={onSend}
+                disabled={loading}
+                className="bg-[#FF9606] hover:bg-[#FF9606]/90 text-white rounded-full h-8 w-8 p-0"
+              >
+                {loading ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            ) : (
+              onVoiceNote && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowVoiceRecorder(true)}
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full h-8 w-8 p-0"
+                >
+                  <Mic className="h-5 w-5" />
+                </Button>
+              )
+            )}
+          </div>
         </div>
       )}
     </div>
