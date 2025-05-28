@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -13,24 +14,48 @@ import { useToast } from '@/hooks/use-toast';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
+const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { login, register, loginWithGoogle } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [registerData, setRegisterData] = useState({ 
-    email: '', 
-    password: '', 
-    confirmPassword: '', 
-    displayName: '' 
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    displayName: ''
   });
+
+  const getModeFromPath = () => {
+    const pathParts = location.pathname.split('/');
+    const lastSegment = pathParts[pathParts.length - 1];
+    return lastSegment === 'register' ? 'register' : 'login';
+  }
+
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode || getModeFromPath());
+  useEffect(() => {
+    if (isOpen) {
+      const urlMode = getModeFromPath();
+      setMode(urlMode);
+    }
+  }, [location.pathname, isOpen]);
+
+  const handleTabChange = (newMode: 'login' | 'register') => {
+    setMode(newMode);
+
+    // Update URL based on selected tab and without full page reload
+    navigate(`/auth/${newMode}`, { replace: true });
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await login(loginData.email, loginData.password);
       toast({
@@ -51,7 +76,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (registerData.password !== registerData.confirmPassword) {
       toast({
         title: 'Password Mismatch',
@@ -62,7 +87,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
 
     setLoading(true);
-    
+
     try {
       await register(registerData.email, registerData.password, registerData.displayName);
       toast({
@@ -70,7 +95,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         description: 'Welcome to THE SONS community!',
       });
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Registration Failed',
         description: error.message || 'Failed to create account. Please try again.',
@@ -83,7 +108,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    
+
     try {
       await loginWithGoogle();
       toast({
@@ -101,11 +126,18 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setLoading(false);
     }
   };
+  const handleClose = () => {
+    onClose();
+    navigate('/', { replace: true }); // Navigate to home when modal closes
+  }
 
   if (!isOpen) return null;
 
+
+  console.log("AuthModal opened!");
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center backdrop-blur-sm justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -117,7 +149,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             <CardTitle className="text-center">Join THE SONS</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="space-y-4">
+            <Tabs value={mode} onValueChange={handleTabChange} className="space-y-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
@@ -219,7 +251,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   <span className="bg-background px-2 text-muted-foreground">Or</span>
                 </div>
               </div>
-              
+
               <Button
                 onClick={handleGoogleLogin}
                 disabled={loading}
@@ -233,7 +265,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
             <div className="mt-4 text-center">
               <Button
-                onClick={onClose}
+                onClick={handleClose}
                 variant="ghost"
                 size="sm"
               >

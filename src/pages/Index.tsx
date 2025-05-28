@@ -1,22 +1,21 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, MessageCircle, Heart, CheckCircle, LogIn } from 'lucide-react';
 import CountdownTimer from '@/components/CountdownTimer';
-import AuthModal from '@/components/AuthModal';
 import Layout from '@/components/Layout';
 
 const Index = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showWhatsAppLink, setShowWhatsAppLink] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
+  
   useEffect(() => {
     // Check if user just registered
     if (location.state?.showWhatsAppLink || localStorage.getItem('isRegistered')) {
@@ -114,7 +113,7 @@ const Index = () => {
                       <Link to="/register">Join the Challenge</Link>
                     </Button>
                     <Button 
-                      onClick={() => setIsAuthModalOpen(true)}
+                      onClick={navigate.bind(null, '/auth/login')}
                       size="lg" 
                       variant="outline" 
                       className="border-white text-purple-700 hover:bg-white text-lg px-8 py-4"
@@ -264,11 +263,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-      />
     </Layout>
   );
 };
