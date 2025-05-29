@@ -21,7 +21,7 @@ import {
   Heart,
   User,
 } from 'lucide-react';
-import path from 'path';
+
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);

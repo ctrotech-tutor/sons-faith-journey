@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { collection, getDocs, addDoc, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User, EyeOff } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -114,16 +114,16 @@ const Admin = () => {
     }
   };
 
-const MiniChart = ({ color }: { color: string }) => {
-  return (
-    <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-      <div
-        className="h-full animate-pulse"
-        style={{ width: "70%", backgroundColor: color }}
-      />
-    </div>
-  );
-};
+  const MiniChart = ({ color }: { color: string }) => {
+    return (
+      <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+        <div
+          className="h-full animate-pulse"
+          style={{ width: "0%", backgroundColor: color }}
+        />
+      </div>
+    );
+  };
 
 
   const addOrUpdateDevotional = async () => {
@@ -322,7 +322,7 @@ const MiniChart = ({ color }: { color: string }) => {
           </motion.div>
 
           <Tabs defaultValue="content" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 overflow-x-auto gap-2">
+            <TabsList className="w-full overflow-x-auto gap-2 no-scrollbar">
               <TabsTrigger value="content" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
                 <span>Content</span>
@@ -346,22 +346,44 @@ const MiniChart = ({ color }: { color: string }) => {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle>
-                      {editingDevotional ? 'Edit Devotional' : 'Add New Devotional'}
+                      {editingDevotional ? 'Edit' : 'New'}
                     </CardTitle>
-                    <div className="space-x-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="flex items-center space-x-2"
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <Eye className="h-4 w-4" />
-                        <span>{showPreview ? 'Hide' : 'Show'} Preview</span>
-                      </Button>
-                      {editingDevotional && (
-                        <Button variant="outline" onClick={resetForm}>
-                          Cancel Edit
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowPreview(!showPreview)}
+                          className="flex items-center gap-2 transition-all duration-200 hover:scale-105"
+                        >
+                          {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          <span className="ml-0.5">{showPreview ? 'Hide' : 'Show'}</span>
                         </Button>
-                      )}
+                      </motion.div>
+
+                      <AnimatePresence>
+                        {editingDevotional && (
+                          <motion.div
+                            key="cancel-btn"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <Button
+                              variant="outline"
+                              onClick={resetForm}
+                              className="transition-all duration-200 hover:scale-105"
+                            >
+                              Cancel
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </CardHeader>
@@ -405,7 +427,7 @@ const MiniChart = ({ color }: { color: string }) => {
                           value={devotionalContent}
                           onChange={(e) => setDevotionalContent(e.target.value)}
                           placeholder="Enter devotional content using Markdown formatting..."
-                          className="mt-1 min-h-[300px] font-mono"
+                          className="mt-1 min-h-[400px] font-mono resize-none"
                         />
                         <p className="text-sm text-gray-500 mt-1">
                           Supports: **bold**, *italic*, # headers, &gt; blockquotes, - lists
@@ -415,12 +437,12 @@ const MiniChart = ({ color }: { color: string }) => {
                         onClick={addOrUpdateDevotional}
                         className="bg-purple-600 hover:bg-purple-700"
                       >
-                        {editingDevotional ? 'Update Devotional' : 'Publish Devotional'}
+                        {editingDevotional ? 'Update' : 'Publish'}
                       </Button>
                     </div>
 
                     {showPreview && (
-                      <div className="border rounded-lg p-4 bg-white">
+                      <div className="border-t bg-white">
                         <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
                         <div className="space-y-4">
                           {devotionalTitle && (
@@ -430,9 +452,9 @@ const MiniChart = ({ color }: { color: string }) => {
                             <p className="text-purple-600 font-medium italic">{devotionalScripture}</p>
                           )}
                           {devotionalImageURL && (
-                            <img 
-                              src={devotionalImageURL} 
-                              alt="Devotional" 
+                            <img
+                              src={devotionalImageURL}
+                              alt="Devotional"
                               className="w-full h-48 object-cover rounded-lg"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
@@ -460,7 +482,7 @@ const MiniChart = ({ color }: { color: string }) => {
                   <CardTitle>Manage Devotionals ({devotionals.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto no-scrollbar">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -481,7 +503,7 @@ const MiniChart = ({ color }: { color: string }) => {
                               {devotional.date?.toDate?.()?.toLocaleDateString() || 'N/A'}
                             </TableCell>
                             <TableCell>
-                              <div className="flex space-x-2">
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -563,95 +585,95 @@ const MiniChart = ({ color }: { color: string }) => {
             </TabsContent>
 
             <TabsContent value="analytics">
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-4 py-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-4 py-6">
 
-    {/* Total Registrations */}
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
-      <Card className="rounded-xl shadow-md border border-purple-100 hover:shadow-lg transition">
-        <CardContent className="p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-500">Total Registrations</h2>
-            <Users className="h-5 w-5 text-purple-600" />
-          </div>
-          <div className="text-4xl font-bold text-purple-600">
-            {registrations.length}
-          </div>
-          <MiniChart color="#a855f7" />
-        </CardContent>
-      </Card>
-    </motion.div>
+                {/* Total Registrations */}
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Card className="rounded-xl shadow-md border border-purple-100 hover:shadow-lg transition">
+                    <CardContent className="p-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-medium text-gray-500">Total Registrations</h2>
+                        <Users className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div className="text-4xl font-bold text-purple-600">
+                        {registrations.length}
+                      </div>
+                      <MiniChart color="#a855f7" />
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-    {/* Total Devotionals */}
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
-      <Card className="rounded-xl shadow-md border border-green-100 hover:shadow-lg transition">
-        <CardContent className="p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-500">Total Devotionals</h2>
-            <BookOpen className="h-5 w-5 text-green-600" />
-          </div>
-          <div className="text-4xl font-bold text-green-600">
-            {devotionals.length}
-          </div>
-          <MiniChart color="#16a34a" />
-        </CardContent>
-      </Card>
-    </motion.div>
+                {/* Total Devotionals */}
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Card className="rounded-xl shadow-md border border-green-100 hover:shadow-lg transition">
+                    <CardContent className="p-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-medium text-gray-500">Total Devotionals</h2>
+                        <BookOpen className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div className="text-4xl font-bold text-green-600">
+                        {devotionals.length}
+                      </div>
+                      <MiniChart color="#16a34a" />
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-    {/* Male Participants */}
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
-      <Card className="rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition">
-        <CardContent className="p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-500">Male Participants</h2>
-            <User className="h-5 w-5 text-blue-600" />
-          </div>
-          <div className="text-4xl font-bold text-blue-600">
-            {Math.round(
-              (registrations.filter(r => r.gender === 'male').length / registrations.length) * 100
-            ) || 0}
-            %
-          </div>
-          <MiniChart color="#2563eb" />
-        </CardContent>
-      </Card>
-    </motion.div>
+                {/* Male Participants */}
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Card className="rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition">
+                    <CardContent className="p-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-medium text-gray-500">Male Participants</h2>
+                        <User className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="text-4xl font-bold text-blue-600">
+                        {Math.round(
+                          (registrations.filter(r => r.gender === 'male').length / registrations.length) * 100
+                        ) || 0}
+                        %
+                      </div>
+                      <MiniChart color="#2563eb" />
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-    {/* Female Participants */}
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
-      <Card className="rounded-xl shadow-md border border-pink-100 hover:shadow-lg transition">
-        <CardContent className="p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-500">Female Participants</h2>
-            <User className="h-5 w-5 text-pink-500" />
-          </div>
-          <div className="text-4xl font-bold text-pink-500">
-            {Math.round(
-              (registrations.filter(r => r.gender === 'female').length / registrations.length) * 100
-            ) || 0}
-            %
-          </div>
-          <MiniChart color="#ec4899" />
-        </CardContent>
-      </Card>
-    </motion.div>
-  </div>
-</TabsContent>
+                {/* Female Participants */}
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Card className="rounded-xl shadow-md border border-pink-100 hover:shadow-lg transition">
+                    <CardContent className="p-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-medium text-gray-500">Female Participants</h2>
+                        <User className="h-5 w-5 text-pink-500" />
+                      </div>
+                      <div className="text-4xl font-bold text-pink-500">
+                        {Math.round(
+                          (registrations.filter(r => r.gender === 'female').length / registrations.length) * 100
+                        ) || 0}
+                        %
+                      </div>
+                      <MiniChart color="#ec4899" />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </div>

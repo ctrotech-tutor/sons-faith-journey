@@ -125,3 +125,18 @@
 .float-animation {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Example custom badge animation */
+@keyframes ping-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+.animate-pulse {
+  animation: ping-soft 2s infinite;
+}

@@ -13,6 +13,8 @@ import { BookOpen, Check, MessageCircle, Calendar, Heart, Users } from 'lucide-r
 import Layout from '@/components/Layout';
 import ReadingTracker from '@/components/ReadingTracker';
 import PrayerWall from '@/components/PrayerWall';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Devotional {
   id: string;
@@ -60,6 +62,8 @@ const Dashboard = () => {
         orderBy('date', 'asc'),
         limit(1)
       );
+
+
       const devotionalSnapshot = await getDocs(devotionalsQuery);
 
       if (!devotionalSnapshot.empty) {
@@ -133,6 +137,13 @@ const Dashboard = () => {
     window.open('https://chat.whatsapp.com/Bxu5l4wv77nJZqfVxGktPI', '_blank');
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -152,25 +163,45 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="text-center mb-8 space-y-2"
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Welcome Back, {userProfile?.displayName}!
+            <h1 className="text-2xl md:text-4xl font-extrabold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 text-transparent bg-clip-text">
+              {getGreeting()}, {userProfile?.displayName || 'Beloved'}!
             </h1>
-            <p className="text-gray-600">Continue your faith journey today</p>
+
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm text-gray-600"
+            >
+              Continue your faith journey today
+            </motion.p>
+
             {activeUsers > 0 && (
-              <Badge variant="secondary" className="mt-2">
-                <Users className="h-3 w-3 mr-1" />
-                {activeUsers} others completed today's reading
-              </Badge>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Badge
+                  variant="secondary"
+                  className="mt-3 inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-300 animate-pulse"
+                >
+                  <Users className="h-3 w-3" />
+                  {activeUsers} others completed today's reading
+                </Badge>
+              </motion.div>
             )}
           </motion.div>
+
 
           <Tabs defaultValue="devotion" className="space-y-6">
             <TabsList className="overflow-x-auto justify-around w-full no-scrollbar">
@@ -217,14 +248,18 @@ const Dashboard = () => {
                               </p>
                             </div>
 
-                            <div className="prose max-w-none">
-                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+
+                            <div className="prose prose-sm max-w-none">
+                              <p className="text-gray-700 hidden leading-relaxed whitespace-pre-wrap">
                                 {dailyReading.content}
                               </p>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {dailyReading.content}
+                              </ReactMarkdown>
                             </div>
 
                             {/* Reactions */}
-                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto no-scrollbar">
+                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
                                 Amen ({dailyReading.reactions?.amen?.length || 0})

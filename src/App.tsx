@@ -11,6 +11,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
+import { useShield } from './hooks/useShield';
+import {useMobileGuard} from './hooks/useMobileGuard';
 
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
@@ -23,10 +25,13 @@ const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
-
+const ScrollToTop = lazy(() => import("@/components/ScrollToTop")); 
 const queryClient = new QueryClient();
 
+
+
 const AppContent = () => {
+  // useShield();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,6 +43,12 @@ const AppContent = () => {
   const closeModal = () => {
     navigate("/", { replace: true });
   };
+
+  const { showBlock, BlockUI } = useMobileGuard();
+
+  if (showBlock) {
+    return <BlockUI />;
+  }
 
   const LoadingFallback = () => (
     <div className="min-h-screen bg-white flex items-center justify-center">
@@ -51,13 +62,15 @@ const AppContent = () => {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
+      <ScrollToTop />
+    
+      {/* Main Routes */}
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/:userId" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/community" element={<Community />} />
         <Route path="/church-room" element={<ChurchRoom />} />
