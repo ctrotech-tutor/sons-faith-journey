@@ -118,8 +118,8 @@ const Index = () => {
                       variant="outline" 
                       className="border-white text-purple-700 hover:bg-white text-lg px-8 py-4"
                     >
-                      <LogIn className="h-5 w-5 mr-2" />
                       Sign In
+                      <LogIn className="h-5 w-5 mr-2" />
                     </Button>
                   </div>
                 </div>

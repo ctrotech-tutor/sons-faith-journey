@@ -53,7 +53,7 @@ const Dashboard = () => {
       // Fetch today's devotional
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const devotionalsQuery = query(
         collection(db, 'devotionals'),
         where('date', '>=', today),
@@ -61,7 +61,7 @@ const Dashboard = () => {
         limit(1)
       );
       const devotionalSnapshot = await getDocs(devotionalsQuery);
-      
+
       if (!devotionalSnapshot.empty) {
         const doc = devotionalSnapshot.docs[0];
         setDailyReading({
@@ -88,7 +88,7 @@ const Dashboard = () => {
         limit(1)
       );
       const verseSnapshot = await getDocs(verseQuery);
-      
+
       if (!verseSnapshot.empty) {
         const doc = verseSnapshot.docs[0];
         setVerseOfDay({
@@ -114,7 +114,7 @@ const Dashboard = () => {
       const today = new Date().toDateString();
       const usersQuery = query(collection(db, 'users'));
       const usersSnapshot = await getDocs(usersQuery);
-      
+
       let activeCount = 0;
       usersSnapshot.docs.forEach(doc => {
         const userData = doc.data();
@@ -122,7 +122,7 @@ const Dashboard = () => {
           activeCount++;
         }
       });
-      
+
       setActiveUsers(activeCount);
     } catch (error) {
       console.error('Error fetching active users:', error);
@@ -173,12 +173,12 @@ const Dashboard = () => {
           </motion.div>
 
           <Tabs defaultValue="devotion" className="space-y-6">
-            <TabsList className="overflow-x-auto justify-around w-full">
-  <TabsTrigger value="devotion" className="inline-block text-center">Today's Devotion</TabsTrigger>
-  <TabsTrigger value="tracker" className="inline-block text-center">Reading Tracker</TabsTrigger>
-  <TabsTrigger value="prayer" className="inline-block text-center">Prayer Wall</TabsTrigger>
-  <TabsTrigger value="community" className="inline-block text-center">Community</TabsTrigger>
-</TabsList>
+            <TabsList className="overflow-x-auto justify-around w-full no-scrollbar">
+              <TabsTrigger value="devotion" className="inline-block text-center">Today's Devotion</TabsTrigger>
+              <TabsTrigger value="tracker" className="inline-block text-center">Reading Tracker</TabsTrigger>
+              <TabsTrigger value="prayer" className="inline-block text-center">Prayer Wall</TabsTrigger>
+              <TabsTrigger value="community" className="inline-block text-center">Community</TabsTrigger>
+            </TabsList>
             <TabsContent value="devotion" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
@@ -202,7 +202,7 @@ const Dashboard = () => {
                             <h3 className="text-xl font-semibold text-gray-900">
                               {dailyReading.title}
                             </h3>
-                            
+
                             {dailyReading.imageUrl && (
                               <img
                                 src={dailyReading.imageUrl}
@@ -210,13 +210,13 @@ const Dashboard = () => {
                                 className="w-full h-48 object-cover rounded-lg"
                               />
                             )}
-                            
+
                             <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-600">
                               <p className="text-purple-800 font-medium">
                                 {dailyReading.scripture}
                               </p>
                             </div>
-                            
+
                             <div className="prose max-w-none">
                               <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                                 {dailyReading.content}
@@ -224,7 +224,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Reactions */}
-                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto">
+                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto no-scrollbar">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
                                 Amen ({dailyReading.reactions?.amen?.length || 0})
@@ -342,7 +342,7 @@ const Dashboard = () => {
                     Daily Encouragement
                   </h4>
                   <p className="text-yellow-700">
-                    Remember, this journey is not about perfection but about progress. 
+                    Remember, this journey is not about perfection but about progress.
                     God meets you exactly where you are. Keep pressing forward!
                   </p>
                 </CardContent>

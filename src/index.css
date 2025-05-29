@@ -95,6 +95,16 @@
   }
 }
 
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer and Edge */
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, and Opera */
+    }
+  }
+}
+
 @layer components {
   .spiritual-gradient {
     background: linear-gradient(135deg, #6A0DAD 0%, #8A2BE2 50%, #9932CC 100%);
