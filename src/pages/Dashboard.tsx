@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -146,14 +146,14 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <>
+        <div className="min-h-screen hidden bg-white items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-lg"></div>
-            <p className="text-gray-600">Loading your dashboard...</p>
+            <p className="text-sm text-gray-900 font-medium animate-pulse">Loading your dashboard...</p>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -163,7 +163,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-white py-8">
+      <div className="min-h-screen bg-white pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
@@ -259,7 +259,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Reactions */}
-                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto">
+                            <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto no-scrollbar">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
                                 Amen ({dailyReading.reactions?.amen?.length || 0})

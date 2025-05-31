@@ -1,15 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { replace, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogIn, UserPlus, Mail } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -62,7 +62,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps
         title: 'Welcome back!',
         description: 'Successfully signed in to your account.',
       });
-      onClose();
+      handleClose();
     } catch (error) {
       toast({
         title: 'Login Failed',
@@ -115,7 +115,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps
         title: 'Welcome!',
         description: 'Successfully signed in with Google.',
       });
-      onClose();
+      handleClose();
     } catch (error) {
       toast({
         title: 'Google Sign-in Failed',
@@ -137,14 +137,14 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps
   console.log("AuthModal opened!");
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center backdrop-blur-sm justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-white flex items-start backdrop-blur-sm z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         className="w-full max-w-md"
       >
-        <Card>
+        <Card className='min-h-screen'>
           <CardHeader>
             <CardTitle className="text-center">Join THE SONS</CardTitle>
           </CardHeader>

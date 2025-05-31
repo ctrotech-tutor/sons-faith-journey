@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -132,7 +132,7 @@ const currentLabel = getCurrentNavLabel();
           x: isOpen || typeof window !== 'undefined' && window.innerWidth >= 1024 ? 0 : -300,
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed left-0 top-0 h-full w-64 bg-white/95 backdrop-blur-md border-r border-purple-200 shadow-lg z-50 lg:relative"
+        className="sm:hidden fixed left-0 top-0 h-full w-64 bg-white/95 backdrop-blur-md border-r border-purple-200 shadow-lg z-50 lg:relative"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}

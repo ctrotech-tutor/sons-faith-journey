@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X, Upload, Image, Video, File } from 'lucide-react';
 import { convertFileToBase64, getFileType, validateFileSize } from '@/lib/fileUtils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface FileUploaderProps {
   onUpload: (url: string, type: 'image' | 'video' | 'audio') => void;

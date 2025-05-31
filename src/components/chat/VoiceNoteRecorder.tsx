@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Send, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface VoiceNoteRecorderProps {
   onComplete: (audioUrl: string) => void;

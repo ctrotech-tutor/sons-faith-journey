@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,10 +10,10 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth";
-import { useShield } from './hooks/useShield';
-import {useMobileGuard} from './hooks/useMobileGuard';
-
+import { AuthProvider } from "@/lib/context/AuthProvider";
+import { useShield } from './lib/hooks/useShield';
+import {useMobileGuard} from './lib/hooks/useMobileGuard';
+import ScrollToTop from "@/components/ScrollToTop";
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -25,7 +25,6 @@ const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
-const ScrollToTop = lazy(() => import("@/components/ScrollToTop")); 
 const queryClient = new QueryClient();
 
 
@@ -54,7 +53,7 @@ const AppContent = () => {
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-lg"></div>
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600">Please wait...</p>
       </div>
     </div>
   );

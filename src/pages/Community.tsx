@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Heart, MessageCircle, Share2, MoreVertical, Plus, Image, Video, Send, Check, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Navigation from '@/components/Navigation';
 import CommentsModal from '@/components/community/CommentsModal';
 
 interface CommunityPost {
@@ -203,8 +202,8 @@ const Community = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navigation />
+    <div className="min-h-screen bg-gray-50">
+      {/* {<Navigation />} */}
       
       <div className="flex-1 lg:ml-64">
         <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -214,7 +213,7 @@ const Community = () => {
               <h1 className="text-2xl font-bold text-gray-800">Community</h1>
               <Button
                 onClick={() => setShowCreatePost(true)}
-                className="bg-[#FF9606] hover:bg-[#FF9606]/90"
+                className="bg-purple-600 active:bg-purple- transition-colors duration-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Post
@@ -269,8 +268,8 @@ const Community = () => {
                 rows={4}
               />
               
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-2">
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-2 items-center justify-around">
                   <Button variant="outline" size="sm">
                     <Image className="h-4 w-4 mr-2" />
                     Photo

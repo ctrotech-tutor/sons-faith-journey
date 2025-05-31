@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ref, onValue, off, set, remove } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface TypingIndicatorProps {
   chatId: string;

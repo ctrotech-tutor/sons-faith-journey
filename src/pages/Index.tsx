@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, MessageCircle, Heart, CheckCircle, LogIn } from 'lucide-react';
@@ -54,13 +54,14 @@ const Index = () => {
 
   return (
     <Layout>
+   
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 text-white relative overflow-hidden rounded-b-3xl">
+      <section className="bg-gradient-to-br from-purple-700 via-purple-800 to-purple-900 text-white relative overflow-hidden rounded-b-[50px] pt-10">
         {/* Background decorative elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000" />
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000" />
+          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000" />
+          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

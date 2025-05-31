@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { X, Send, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 
 interface Comment {
   id: string;
