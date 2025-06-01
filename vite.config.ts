@@ -25,17 +25,17 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
-            src: 'public/icon/android-chrome-192x192.png',
+            src: './icon/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: 'public/icon/android-chrome-512x512.png',
+            src: './icon/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: 'public/icon/android-chrome-512x512.png',
+            src: './icon/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

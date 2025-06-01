@@ -36,6 +36,7 @@ interface UserProfile {
   profilePhoto?: string;
   isAdmin: boolean;
   joinedWhatsApp: boolean;
+  isRegistered: boolean;
   createdAt: Date;
   updatedAt?: Date;
   lastLoginAt?: Date;
@@ -84,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             profilePhoto: data.profilePhoto || '',
             isAdmin: data.isAdmin || false,
             joinedWhatsApp: data.joinedWhatsApp || false,
+            isRegistered: data.isRegistered || false,
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
             updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : undefined,
             lastLoginAt: new Date()
@@ -113,6 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               profilePhoto: '',
               isAdmin: adminEmails.includes(user.email || ''),
               joinedWhatsApp: false,
+              isRegistered: false,
               createdAt: new Date(),
               updatedAt: new Date(),
               lastLoginAt: new Date()
@@ -151,6 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       profilePhoto: '',
       isAdmin: adminEmails.includes(email),
       joinedWhatsApp: false,
+      isRegistered: false,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastLoginAt: new Date()

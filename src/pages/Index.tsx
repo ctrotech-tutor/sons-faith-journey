@@ -20,10 +20,10 @@ const Index = () => {
   const [showWhatsAppLink, setShowWhatsAppLink] = useState(false);
 
   useEffect(() => {
-    if (location.state?.showWhatsAppLink || localStorage.getItem('isRegistered')) {
+    if (location.state?.showWhatsAppLink || user) {
       setShowWhatsAppLink(true);
     }
-  }, [location]);
+  }, [location, user]);
 
   const features = [
     {
@@ -54,10 +54,7 @@ const Index = () => {
 
   return (
     <Layout>
-   
-      {/* Hero Section */}
       <section className="bg-gradient-to-br from-purple-700 via-purple-800 to-purple-900 text-white relative overflow-hidden rounded-b-[50px] pt-10">
-        {/* Background decorative elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
           <div className="absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000" />
@@ -105,17 +102,7 @@ const Index = () => {
                   <p className="text-purple-100">
                     Welcome back, {user.displayName || 'Brother'}!
                   </p>
-                  <Button
-                    asChild
-                    size="lg"
-                    className="bg-white text-purple-700 hover:bg-purple-50 text-lg px-8 py-4"
-                  >
-                    <Link to="/dashboard">Go to Dashboard</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                  {!user && (
                     <Button
                       asChild
                       size="lg"
@@ -123,6 +110,11 @@ const Index = () => {
                     >
                       <Link to="/register">Join the Challenge</Link>
                     </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-6 justify-center">
                     <Button
                       onClick={() => navigate('/auth/login')}
                       size="lg"
@@ -175,7 +167,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* About Section */}
       <section
         id="about"
         className="bg-white mt-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
@@ -202,14 +193,12 @@ const Index = () => {
           <QuoteCard />
         </div>
 
-        {/* CTA Section */}
         <CTASection
           headline="Ready to Begin Your Journey?"
           description="Take the first step towards deeper faith, stronger character, and purposeful living. Your transformation starts here."
         />
       </section>
 
-      {/* Footer */}
       <Footer withLinks />
     </Layout>
   );

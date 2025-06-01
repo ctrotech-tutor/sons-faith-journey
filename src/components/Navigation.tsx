@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Assets } from '@/assets/assets';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Home,
@@ -80,16 +81,16 @@ const currentLabel = getCurrentNavLabel();
       <>
         <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
+            <div className="flex justify-between items-center py-2">
               <Link to="/" className="flex items-center space-x-2">
-                <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-2 rounded-lg">
-                  <Heart className="h-6 w-6 text-white" />
+                <div className="">
+                  <img src={Assets.Logo4} alt="THE SONS Logo" className='h-10 w-10 rounded-lg object-cover'/>
                 </div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                   THE SONS
                 </span>
               </Link>
-              <Button onClick={() => navigate('/auth/login')} className="bg-purple-700 hover:bg-purple-900">
+              <Button onClick={() => navigate('/auth/login')} className="bg-purple-800 hover:bg-purple-900">
                 Sign In
               </Button>
             </div>
@@ -104,20 +105,19 @@ const currentLabel = getCurrentNavLabel();
       {/* Mobile Toggle Button */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-2 rounded-lg">
-                <Heart className="h-6 w-6 text-white" />
+          <div className="flex justify-between items-center py-2">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="shadow-sm bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg">
+                <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                 {currentLabel.toUpperCase()}
               </span>
-
             </Link>
             <Button
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
-              className="bg-white/90 backdrop-blur-sm border-purple-200 text-black hover:bg-purple-50 shadow-sm lg:hidden"
+              className="bg-white/90 backdrop-blur-sm border-purple-200 text-black hover:bg-purple-50 lg:hidden"
             >
               {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
@@ -138,8 +138,8 @@ const currentLabel = getCurrentNavLabel();
           {/* Logo */}
           <div className="p-4 border-b border-purple-200">
             <Link to="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Heart className="h-6 w-6 text-white" />
+              <div className="">
+                <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">THE SONS</h1>

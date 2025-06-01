@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Heart, Mail, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils"; // Or 'ct' if you're using ctrotech's custom version
+import { cn } from "@/lib/utils";
+import { Assets } from "@/assets/assets";
 import React from "react";
 
 const sloganWords = ["Faith", "Purpose", "Growth"];
@@ -23,8 +24,8 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
         {/* Logo and Name */}
         <div className="flex items-center justify-center gap-2">
-          <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-2 rounded-xl shadow-md">
-            <Heart className="h-6 w-6 text-white" />
+          <div className="">
+            <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
           </div>
           <span className="text-2xl font-bold tracking-tight">THE SONS</span>
         </div>
@@ -78,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
             WhatsApp
           </a>
           <a
-            href="mailto:hello@thesons.org"
+            href="mailto:theson@gmail.com"
             className="flex items-center gap-1 hover:text-blue-400 transition"
           >
             <Mail className="h-4 w-4" />
