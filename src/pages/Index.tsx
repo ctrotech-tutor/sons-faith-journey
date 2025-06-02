@@ -14,16 +14,16 @@ import QuoteCard from '@/components/DailyQuote';
 import CTASection from '@/components/CTASection';
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [showWhatsAppLink, setShowWhatsAppLink] = useState(false);
 
   useEffect(() => {
-    if (location.state?.showWhatsAppLink || user) {
+    if (location.state?.showWhatsAppLink || (user && userProfile?.joinedWhatsApp)) {
       setShowWhatsAppLink(true);
     }
-  }, [location, user]);
+  }, [location.state, user, userProfile]);
 
   const features = [
     {
@@ -100,7 +100,7 @@ const Index = () => {
               {user ? (
                 <div className="space-y-4">
                   <p className="text-purple-100">
-                    Welcome back, {user.displayName || 'Brother'}!
+                    Welcome back, {userProfile?.displayName || 'User'}!
                   </p>
                   {!user && (
                     <Button
@@ -119,7 +119,7 @@ const Index = () => {
                       onClick={() => navigate('/auth/login')}
                       size="lg"
                       variant="outline"
-                      className="border-white text-purple-700 hover:bg-white text-lg px-8 py-4 flex items-center justify-center gap-2"
+                      className="bg-white text-purple-700 hover:bg-purple-50 text-lg py-4 gap-2"
                     >
                       <LogIn className="h-5 w-5" />
                       Sign In

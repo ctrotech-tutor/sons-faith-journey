@@ -48,7 +48,7 @@ const Navigation = () => {
     { path: '/church-room', icon: MessageCircle, label: 'Church Room', badge: 'Chat' },
     { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { path: '/readings', icon: BookOpen, label: 'Readings' },
+    { path: '/reading', icon: BookOpen, label: 'Readings' },
   ];
 
   const adminItems = [

@@ -10,11 +10,11 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', 'the_sons_media');
-  formData.append('cloud_name', 'the_sons_media');
+  formData.append('cloud_name', 'dqiqxnlkp');
 
   try {
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/the_sons_media/auto/upload`,
+      `https://api.cloudinary.com/v1_1/dqiqxnlkp/auto/upload`,
       {
         method: 'POST',
         body: formData,

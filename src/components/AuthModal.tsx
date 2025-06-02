@@ -89,7 +89,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps
     setLoading(true);
 
     try {
-      await register(registerData.email, registerData.password, registerData.displayName);
+      await register(registerData?.email, registerData?.password, registerData?.displayName);
       toast({
         title: 'Account Created!',
         description: 'Welcome to THE SONS community!',

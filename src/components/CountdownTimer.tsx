@@ -1,14 +1,19 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { getChallengeDay } from '@/lib/getChallengeDay';
+import { useAuth } from '@/lib/hooks/useAuth'; // 🔐 adjust path if needed
 
 const CountdownTimer = () => {
+  const { user } = useAuth(); // 👈 pulls user directly
+  const isAuthenticated = !!user;
+
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0
   });
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
     const targetDate = new Date('June 1, 2025 00:00:00').getTime();
@@ -25,13 +30,78 @@ const CountdownTimer = () => {
           seconds: Math.floor((difference % (1000 * 60)) / 1000)
         });
       } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setHasStarted(true);
+        clearInterval(timer);
       }
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
+  if (hasStarted) {
+    const currentDay = getChallengeDay();
+
+    if (currentDay > 90) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center text-white py-8"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            🎉 You've Completed the 90-Day Bible Reading Challenge!
+          </h2>
+          <p className="text-lg md:text-xl text-purple-200">
+            May God's Word continue to guide and strengthen you every day.
+          </p>
+        </motion.div>
+      );
+    }
+
+    if (isAuthenticated) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center text-white py-8"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            📖 Day {currentDay} of the 90-Day Challenge
+          </h2>
+          <p className="text-lg md:text-xl text-purple-200 mb-4">
+            Let's grow in the Word together. Today is Day {currentDay}.
+          </p>
+          <a
+            href={`/reading/day-${currentDay}`}
+            className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition"
+          >
+            Start Day {currentDay} Reading
+          </a>
+        </motion.div>
+      );
+    }
+
+    // Unauthenticated user view
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center text-white py-8"
+      >
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          🙌 The 90-Day Bible Reading Challenge Has Started!
+        </h2>
+        <p className="text-lg md:text-xl text-purple-200">
+          Dive into Day 1 and let the journey begin!
+        </p>
+      </motion.div>
+    );
+  }
+
+  // Countdown (pre-launch)
   const timeUnits = [
     { label: 'Days', value: timeLeft.days },
     { label: 'Hours', value: timeLeft.hours },

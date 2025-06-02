@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { convertFileToBase64, validateFileSize } from '@/lib/fileUtils';
 //import ProfileSkeleton from '@/components/ProfileSkeleton';
 import { GoogleLinkManager } from '@/components/GoogleLinkManager';
-
+import { uploadToCloudinary } from '@/lib/cloudinary';
 const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
   <div className={`animate-spin rounded-full ${size} ${border} border-purple-900 border-t-transparent`} />
 );
@@ -95,8 +95,8 @@ const Profile = () => {
 
     setUploading(true);
     try {
-      const base64String = await convertFileToBase64(file);
-      setProfilePhoto(base64String);
+      const url = await uploadToCloudinary(file);
+      setProfilePhoto(url);
       toast({ title: 'Image ready', description: 'Click Save to apply changes.' });
     } catch {
       toast({ title: 'Upload failed', variant: 'destructive' });
@@ -146,7 +146,7 @@ const Profile = () => {
   }
 
   const profile = isOwnProfile ? userProfile : viewingUserProfile;
-  const currentEmail = isOwnProfile ? user?.email : profile?.email;
+  const currentEmail = isOwnProfile ? user?.email : profile?.email || '';
 
   if (loading || !profile) {
     return (
@@ -210,7 +210,7 @@ const Profile = () => {
             {/* Name and Bio */}
             <div className="text-center space-y-1">
               <h3 className="text-xl font-bold text-foreground leading-tight">
-                {displayName || currentEmail}
+                {displayName || currentEmail || 'User'}
               </h3>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                 {bio || 'No bio added yet'}
