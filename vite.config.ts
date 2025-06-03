@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from 'vite-plugin-pwa';
+import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -11,6 +12,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -45,6 +47,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}'],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB limit instead of default 2MB
       },
       injectRegister: 'auto',
       strategies: 'generateSW',
@@ -52,7 +55,7 @@ export default defineConfig(({ mode }) => ({
         enabled: true,
       },
     }),
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
