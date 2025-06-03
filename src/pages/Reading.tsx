@@ -5,9 +5,12 @@ import { useActivitySync } from '@/lib/hooks/useActivitySync'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 import EnkvBibleData from '@/data/json/en_kjv.json'
-import { CheckCircle, Lock, BookOpen, ArrowLeftRight } from 'lucide-react'
+import { CheckCircle, Lock, BookOpen, ArrowLeftRight, Sparkles } from 'lucide-react'
 import { readingPlan } from '@/data/readingPlan'
 import { Book } from '@/types/bible'
+import AdvancedReadingFeatures from '@/components/reading/AdvancedReadingFeatures'
+import { Card, CardContent } from '@/components/ui/card'
+import { motion } from 'framer-motion'
 
 function getPassageText(passage: string): string {
   const [bookName, chapterRange] = passage.split(' ')
@@ -41,7 +44,7 @@ function formatBibleText(text: string): JSX.Element[] {
   return lines.map((line, index) => (
     <p
       key={index}
-      className="whitespace-pre-wrap text-sm text-gray-800"
+      className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed"
       dangerouslySetInnerHTML={{ __html: line }}
     />
   ))
@@ -51,6 +54,7 @@ export default function ReadingPage() {
   const { user } = useAuth();
   const { userStats, updateReadingProgress } = useActivitySync();
   const [openDay, setOpenDay] = useState<number | null>(null);
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState<number | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
 
   const todayPlan = readingPlan.find((plan) => plan.date === today);
@@ -64,90 +68,159 @@ export default function ReadingPage() {
   };
 
   return (
-    <main className="p-4 max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-center text-gray-800">📖 June Bible Journey: <span className="text-blue-700">Knowing God</span></h1>
-
-      {/* Progress Summary */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-xl">
-        <div className="text-center">
-          <div className="text-3xl font-bold mb-1">{userStats.readingStreak}</div>
-          <p className="text-purple-100">Day Streak</p>
-          <div className="mt-2 text-sm">
-            {userStats.totalReadingDays} of 90 days completed
-          </div>
-        </div>
+    <main className="p-4 max-w-4xl mx-auto space-y-6">
+      <div className="text-center space-y-4">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl font-bold text-gray-800"
+        >
+          📖 June Bible Journey: <span className="text-blue-700">Knowing God</span>
+        </motion.h1>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <div className="text-4xl font-bold mb-2">{userStats.readingStreak}</div>
+                <p className="text-purple-100 text-lg">Day Streak</p>
+                <div className="mt-3 text-sm">
+                  {userStats.totalReadingDays} of 90 days completed
+                </div>
+                <div className="w-full bg-purple-800/30 rounded-full h-2 mt-3">
+                  <div 
+                    className="bg-white rounded-full h-2 transition-all duration-300"
+                    style={{ width: `${(userStats.totalReadingDays / 90) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      {readingPlan.map(({ day, date, passages }) => {
+      {readingPlan.map(({ day, date, passages }, index) => {
         const isTodayOrEarlier = dayjs().isAfter(dayjs(date), 'day') || dayjs().isSame(dayjs(date), 'day')
         const isCompleted = userStats.readingProgress.includes(day)
+        const isToday = dayjs().isSame(dayjs(date), 'day')
 
         return (
-          <div
+          <motion.div
             key={day}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
             className={cn(
-              'rounded-2xl p-4 border space-y-3 shadow-md backdrop-blur transition-all',
-              isTodayOrEarlier ? 'bg-white' : 'bg-gray-100 text-gray-400',
-              isCompleted && 'border-green-500 bg-green-50'
+              'rounded-2xl p-6 border space-y-4 shadow-lg backdrop-blur transition-all duration-300',
+              isTodayOrEarlier ? 'bg-white hover:shadow-xl' : 'bg-gray-100 text-gray-400',
+              isCompleted && 'border-green-500 bg-green-50',
+              isToday && 'ring-2 ring-blue-500 ring-opacity-50'
             )}
           >
             <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">📆 Day {day}</h2>
-                <p className="text-sm text-gray-700 italic">{passages.join('; ')}</p>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-xl font-bold text-gray-900">📆 Day {day}</h2>
+                  {isToday && <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Today</span>}
+                  {isCompleted && <CheckCircle className="h-5 w-5 text-green-500" />}
+                </div>
+                <p className="text-sm text-gray-700 italic font-medium">{passages.join('; ')}</p>
+                <p className="text-xs text-gray-500">{dayjs(date).format('MMMM D, YYYY')}</p>
               </div>
               {isTodayOrEarlier ? (
-                <button
-                  onClick={() => toggleComplete(day)}
-                  className={cn(
-                    'flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition',
-                    isCompleted
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  )}
-                >
-                  <ArrowLeftRight size={16} /> {isCompleted ? 'Undo' : 'Mark Read'}
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => toggleComplete(day)}
+                    className={cn(
+                      'flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      isCompleted
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                    )}
+                  >
+                    <ArrowLeftRight size={16} /> {isCompleted ? 'Undo' : 'Mark Read'}
+                  </button>
+                </div>
               ) : (
-                <span className="flex items-center gap-1 opacity-50">
+                <span className="flex items-center gap-1 opacity-50 text-gray-500">
                   <Lock size={16} /> Locked
                 </span>
               )}
             </div>
 
             {isTodayOrEarlier && (
-              <div>
-                <button
-                  className="text-sm text-blue-700 flex items-center gap-1 hover:underline"
-                  onClick={() => setOpenDay(openDay === day ? null : day)}
-                >
-                  <BookOpen size={16} /> {openDay === day ? 'Hide' : 'Read & Reflect'}
-                </button>
+              <div className="space-y-4">
+                <div className="flex space-x-2">
+                  <button
+                    className="text-sm text-blue-700 flex items-center gap-1 hover:underline bg-blue-50 px-3 py-2 rounded-lg transition-colors"
+                    onClick={() => setOpenDay(openDay === day ? null : day)}
+                  >
+                    <BookOpen size={16} /> {openDay === day ? 'Hide Passage' : 'Read Passage'}
+                  </button>
+                  
+                  <button
+                    className="text-sm text-purple-700 flex items-center gap-1 hover:underline bg-purple-50 px-3 py-2 rounded-lg transition-colors"
+                    onClick={() => setShowAdvancedFeatures(showAdvancedFeatures === day ? null : day)}
+                  >
+                    <Sparkles size={16} /> {showAdvancedFeatures === day ? 'Hide Tools' : 'Advanced Tools'}
+                  </button>
+                </div>
 
                 {openDay === day && (
-                  <div className="mt-3 space-y-4">
-                    <div className="bg-gray-50 p-3 rounded-lg border text-sm">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border">
                       {passages.map((p, i) => (
-                        <div key={i} className="mb-4">
-                          <h3 className="text-base font-bold text-gray-800 mb-1">📜 {p}</h3>
-                          <div className="bg-white p-2 rounded overflow-x-auto shadow-inner text-xs">
-                            {formatBibleText(getPassageText(p))}
+                        <div key={i} className="mb-6 last:mb-0">
+                          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                            📜 {p}
+                          </h3>
+                          <div className="bg-white p-4 rounded-lg shadow-inner border max-h-96 overflow-y-auto">
+                            <div className="prose prose-sm max-w-none">
+                              {formatBibleText(getPassageText(p))}
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
+                )}
+
+                {showAdvancedFeatures === day && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <AdvancedReadingFeatures
+                      passage={passages.join('; ')}
+                      day={day}
+                      onUpdateProgress={(progress) => {
+                        // Handle progress updates
+                        console.log('Progress updated:', progress);
+                      }}
+                    />
+                  </motion.div>
                 )}
               </div>
             )}
 
-            <div className="h-1 w-full bg-gray-200 rounded overflow-hidden">
-              <div
-                className="bg-green-500 h-full transition-all"
-                style={{ width: isCompleted ? '100%' : '0%' }}
+            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                className="bg-gradient-to-r from-green-400 to-green-600 h-full transition-all duration-500"
+                initial={{ width: 0 }}
+                animate={{ width: isCompleted ? '100%' : '0%' }}
               />
             </div>
-          </div>
+          </motion.div>
         )
       })}
     </main>

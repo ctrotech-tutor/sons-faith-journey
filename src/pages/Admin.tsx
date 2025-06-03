@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, getDocs, addDoc, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -12,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/lib/hooks/use-toast';
-import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User, EyeOff } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User, EyeOff, Activity } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import UserTrackingDashboard from '@/components/admin/UserTrackingDashboard';
+import VerseOfTheDayManager from '@/components/admin/VerseOfTheDayManager';
 
 interface Registration {
   id: string;
@@ -124,7 +125,6 @@ const Admin = () => {
       </div>
     );
   };
-
 
   const addOrUpdateDevotional = async () => {
     if (!devotionalTitle || !devotionalContent || !devotionalScripture) {
@@ -321,8 +321,16 @@ const Admin = () => {
             <p className="text-gray-600">Manage THE SONS challenge</p>
           </motion.div>
 
-          <Tabs defaultValue="content" className="space-y-6">
+          <Tabs defaultValue="tracking" className="space-y-6">
             <TabsList className="w-full overflow-x-auto gap-2 no-scrollbar">
+              <TabsTrigger value="tracking" className="flex items-center space-x-2">
+                <Activity className="h-4 w-4" />
+                <span>User Tracking</span>
+              </TabsTrigger>
+              <TabsTrigger value="verse" className="flex items-center space-x-2">
+                <BookOpen className="h-4 w-4" />
+                <span>Verse of Day</span>
+              </TabsTrigger>
               <TabsTrigger value="content" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
                 <span>Content</span>
@@ -336,10 +344,18 @@ const Admin = () => {
                 <span>Users</span>
               </TabsTrigger>
               <TabsTrigger value="analytics" className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
+                <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="tracking">
+              <UserTrackingDashboard />
+            </TabsContent>
+
+            <TabsContent value="verse">
+              <VerseOfTheDayManager />
+            </TabsContent>
 
             <TabsContent value="content">
               <Card>
