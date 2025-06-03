@@ -1,22 +1,29 @@
-// Profile.tsx
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Camera, Save, ArrowLeft, MapPin, Phone, Calendar, Mail } from 'lucide-react';
+import { 
+  Camera, Save, ArrowLeft, MapPin, Phone, Calendar, Mail, 
+  Edit, Settings, Activity, BarChart3, Shield, UserCog,
+  Download, Trash2 
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-//import { Input } from '@/components/ui/input';
-import { Switch } from "@/components/ui/switch"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-//import { Textarea } from '@/components/ui/textarea';
+import { Switch } from "@/components/ui/switch";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { convertFileToBase64, validateFileSize } from '@/lib/fileUtils';
-//import ProfileSkeleton from '@/components/ProfileSkeleton';
 import { GoogleLinkManager } from '@/components/GoogleLinkManager';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import ProfileEditModal from '@/components/profile/ProfileEditModal';
+import ActivityHistory from '@/components/profile/ActivityHistory';
+import UserStats from '@/components/profile/UserStats';
+import PrivacySettings from '@/components/profile/PrivacySettings';
+
 const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
   <div className={`animate-spin rounded-full ${size} ${border} border-purple-900 border-t-transparent`} />
 );
@@ -29,6 +36,7 @@ const Profile = () => {
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -38,8 +46,6 @@ const Profile = () => {
 
   const [darkMode, setDarkMode] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
-
-
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
   const togglePublicProfile = () => setIsPublic(prev => !prev);
@@ -133,6 +139,52 @@ const Profile = () => {
     }
   };
 
+  const handleExportData = async () => {
+    if (!user) return;
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userData = userDoc.data();
+      
+      const dataStr = JSON.stringify(userData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `my-data-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      toast({ title: 'Data exported successfully' });
+    } catch (error) {
+      toast({ title: 'Export failed', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    
+    const confirmation = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+    
+    if (confirmation) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          deletionRequested: true,
+          deletionRequestedAt: new Date()
+        });
+        toast({ 
+          title: 'Account deletion requested', 
+          description: 'Your account will be reviewed for deletion within 7 days.' 
+        });
+      } catch (error) {
+        toast({ title: 'Deletion request failed', variant: 'destructive' });
+      }
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-white">
@@ -168,199 +220,238 @@ const Profile = () => {
         </h1>
       </div>
 
-      {/* Profile Card */}
-      <div className="flex items-center justify-center px-4 pt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md bg-white rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
-        >
-          <div className="flex flex-col items-center justify-center gap-4 relative">
-            {/* Avatar with upload and overlay */}
-            <div className="relative group">
-              <div className="rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-indigo-500 shadow-lg">
-                <Avatar className="h-24 w-24 border-background transition-all duration-300 group-active:scale-105">
-                  <AvatarImage src={profilePhoto || profile?.profilePhoto || ''} />
-                  <AvatarFallback className="text-2xl font-semibold bg-muted text-muted-foreground">
-                    {displayName?.charAt(0) || currentEmail?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+      <div className="pt-20 px-4 max-w-4xl mx-auto">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="stats">Stats</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Profile Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="bg-white rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
+            >
+              <div className="flex flex-col items-center justify-center gap-4 relative">
+                {/* Avatar with upload and overlay */}
+                <div className="relative group">
+                  <div className="rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-indigo-500 shadow-lg">
+                    <Avatar className="h-24 w-24 border-background transition-all duration-300 group-active:scale-105">
+                      <AvatarImage src={profilePhoto || profile?.profilePhoto || ''} />
+                      <AvatarFallback className="text-2xl font-semibold bg-muted text-muted-foreground">
+                        {displayName?.charAt(0) || currentEmail?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+
+                  {isOwnProfile && (
+                    <label className="absolute bottom-1 right-1 bg-purple-600 text-white p-2 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform">
+                      <Camera className="h-4 w-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
+                      <Spinner />
+                    </div>
+                  )}
+                </div>
+
+                {/* Name and Bio */}
+                <div className="text-center space-y-1">
+                  <h3 className="text-xl font-bold text-foreground leading-tight">
+                    {displayName || currentEmail || 'User'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                    {bio || 'No bio added yet'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Contact Details */}
+              <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md">
+                <h2 className="text-base font-semibold text-primary">Contact & Details</h2>
+
+                {/* Phone */}
+                <div className="flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="bg-primary/10 p-1.5 rounded-md">
+                      <Phone className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">Phone</span>
+                  </div>
+                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                    {profile?.phone || 'N/A'}
+                  </span>
+                </div>
+
+                {/* Location */}
+                <div className="flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="bg-emerald-100 dark:bg-emerald-900/20 p-1.5 rounded-md">
+                      <MapPin className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <span className="text-sm font-medium">Location</span>
+                  </div>
+                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                    {profile?.location || 'N/A'}
+                  </span>
+                </div>
+
+                {/* Joined */}
+                <div className="flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="bg-purple-100 dark:bg-purple-900/20 p-1.5 rounded-md">
+                      <Calendar className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <span className="text-sm font-medium">Joined</span>
+                  </div>
+                  <span className="text-sm text-right text-foreground font-semibold">
+                    {profile?.createdAt?.toDate?.().toLocaleDateString?.('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    }) || 'Unknown'}
+                  </span>
+                </div>
+
+                {/* Email */}
+                <div className="flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="bg-blue-100 dark:bg-blue-900/20 p-1.5 rounded-md">
+                      <Mail className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <span className="text-sm font-medium">Email</span>
+                  </div>
+                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                    {currentEmail || 'Unknown'}
+                  </span>
+                </div>
               </div>
 
               {isOwnProfile && (
-                <label className="absolute bottom-1 right-1 bg-purple-600 text-white p-2 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform">
-                  <Camera className="h-4 w-4" />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </label>
-              )}
-
-              {uploading && (
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
-                  <Spinner />
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    onClick={() => setShowEditModal(true)} 
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                  {hasChanges && (
+                    <Button onClick={handleSave} disabled={loading}>
+                      {loading ? <Spinner /> : <><Save className="mr-2 h-4 w-4" /> Save</>}
+                    </Button>
+                  )}
                 </div>
               )}
-            </div>
+            </motion.div>
+          </TabsContent>
 
-            {/* Name and Bio */}
-            <div className="text-center space-y-1">
-              <h3 className="text-xl font-bold text-foreground leading-tight">
-                {displayName || currentEmail || 'User'}
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                {bio || 'No bio added yet'}
-              </p>
-            </div>
-          </div>
+          <TabsContent value="activity" className="space-y-6">
+            <ActivityHistory />
+          </TabsContent>
 
+          <TabsContent value="stats" className="space-y-6">
+            <UserStats />
+          </TabsContent>
 
-          <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md">
-            <h2 className="text-base font-semibold text-primary">Contact & Details</h2>
+          <TabsContent value="settings" className="space-y-6">
+            {isOwnProfile && (
+              <>
+                <PrivacySettings />
 
-            {/* Phone */}
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="bg-primary/10 p-1.5 rounded-md">
-                  <Phone className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-sm font-medium">Phone</span>
-              </div>
-              <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                {profile?.phone || 'N/A'}
-              </span>
-            </div>
+                {/* General Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>General Settings</CardTitle>
+                    <CardDescription>Customize your experience</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Enable Dark Mode</span>
+                      <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Make Profile Public</span>
+                      <Switch checked={isPublic} onCheckedChange={togglePublicProfile} />
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Location */}
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="bg-emerald-100 dark:bg-emerald-900/20 p-1.5 rounded-md">
-                  <MapPin className="h-4 w-4 text-emerald-500" />
-                </div>
-                <span className="text-sm font-medium">Location</span>
-              </div>
-              <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                {profile?.location || 'N/A'}
-              </span>
-            </div>
+                {/* Account Management */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account Management</CardTitle>
+                    <CardDescription>Update your core account details</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full" onClick={() => setShowEditModal(true)}>
+                      <UserCog className="mr-2 h-4 w-4" />
+                      Change Display Name
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      <Mail className="mr-2 h-4 w-4" />
+                      Update Email
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Reset Password
+                    </Button>
+                  </CardContent>
+                </Card>
 
-            {/* Joined */}
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="bg-purple-100 dark:bg-purple-900/20 p-1.5 rounded-md">
-                  <Calendar className="h-4 w-4 text-purple-500" />
-                </div>
-                <span className="text-sm font-medium">Joined</span>
-              </div>
-              <span className="text-sm text-right text-foreground font-semibold">
-                {profile?.createdAt?.toDate?.().toLocaleDateString?.('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                }) || 'Unknown'}
-              </span>
-            </div>
+                {/* Connected Account */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Connected Account</CardTitle>
+                    <CardDescription>Google account linked to your profile</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <GoogleLinkManager />
+                  </CardContent> 
+                </Card>
 
-            {/* Email */}
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="bg-blue-100 dark:bg-blue-900/20 p-1.5 rounded-md">
-                  <Mail className="h-4 w-4 text-blue-500" />
-                </div>
-                <span className="text-sm font-medium">Email</span>
-              </div>
-              <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                {currentEmail || 'Unknown'}
-              </span>
-            </div>
-          </div>
-
-
-          {isOwnProfile && hasChanges && (
-            <Button onClick={handleSave} className="w-full mt-6" disabled={loading}>
-              {loading ? <Spinner /> : <><Save className="mr-2 h-4 w-4" /> Save</>}
-            </Button>
-          )}
-          <Button className='font-medium mt-6'>Edit Profile</Button>
-        </motion.div>
-      </div>
-      <div className="w-full bg-white/5 rounded-xl p-4 space-y-4 backdrop-blur-md">
-        {/* General Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>General Settings</CardTitle>
-            <CardDescription>Customize your experience</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Enable Dark Mode</span>
-              <Switch checked onCheckedChange={toggleDarkMode} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Make Profile Public</span>
-              <Switch checked={isPublic} onCheckedChange={togglePublicProfile} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Account Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Management</CardTitle>
-            <CardDescription>Update your core account details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full">Change Display Name</Button>
-            <Button variant="outline" className="w-full">Update Email</Button>
-            <Button variant="outline" className="w-full">Reset Password</Button>
-          </CardContent>
-        </Card>
-
-        {/* Connected Account */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Connected Account</CardTitle>
-            <CardDescription>Google account linked to your profile</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <GoogleLinkManager />
-          </CardContent> 
-        </Card>
-
-        {/* Data Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Management</CardTitle>
-            <CardDescription>Manage or export your personal data</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full">Download My Data</Button>
-            <Button variant="destructive" className="w-full">Delete My Account</Button>
-          </CardContent>
-        </Card>
-
-        {/* About Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>About Ctrotech</CardTitle>
-            <CardDescription>Platform info and support</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground space-y-2">
-            <p>
-              Ctrotech empowers learners to grow through structured learning and digital tools.
-              You're using version <strong>v1.0</strong>.
-            </p>
-            <p>
-              Need help? <a href="mailto:support@ctrotech.com" className="underline text-blue-600">Contact support</a>
-            </p>
-          </CardContent>
-        </Card>
+                {/* Data Management */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Data Management</CardTitle>
+                    <CardDescription>Manage or export your personal data</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full" onClick={handleExportData}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download My Data
+                    </Button>
+                    <Button variant="destructive" className="w-full" onClick={handleDeleteAccount}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete My Account
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
+      {/* Profile Edit Modal */}
+      <ProfileEditModal 
+        isOpen={showEditModal} 
+        onClose={() => setShowEditModal(false)} 
+      />
     </div>
   );
 };
