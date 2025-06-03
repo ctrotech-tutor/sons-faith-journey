@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useActivitySync } from '@/lib/hooks/useActivitySync'
@@ -6,6 +7,7 @@ import { cn } from '@/lib/utils'
 import EnkvBibleData from '@/data/json/en_kjv.json'
 import { CheckCircle, Lock, BookOpen, ArrowLeftRight } from 'lucide-react'
 import { readingPlan } from '@/data/readingPlan'
+import { Book } from '@/types/bible'
 
 function getPassageText(passage: string): string {
   const [bookName, chapterRange] = passage.split(' ')
