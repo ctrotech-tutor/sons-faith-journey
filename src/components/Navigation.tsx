@@ -45,15 +45,15 @@ const Navigation = () => {
     { path: '/', icon: Home, label: 'Home' },
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/community', icon: Users, label: 'Community' },
-    { path: '/church-room', icon: MessageCircle, label: 'Church Room', badge: 'Chat' },
-    { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
+    { path: '/church-room', icon: MessageCircle, label: 'Room', badge: 'Chat' },
+    { path: '/chat-supervisor', icon: Shield, label: 'Chat', badge: 'Private' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/reading', icon: BookOpen, label: 'Readings' },
   ];
 
   const adminItems = [
-    { path: '/admin', icon: Settings, label: 'Admin Panel' },
-    { path: '/admin-inbox', icon: Heart, label: 'Admin Inbox' },
+    { path: '/admin', icon: Settings, label: 'Panel' },
+    { path: '/admin-inbox', icon: Heart, label: 'Inbox' },
   ];
 
  const getCurrentNavLabel = () => {
@@ -185,8 +185,8 @@ const currentLabel = getCurrentNavLabel();
                     variant={item.badge === 'Private' ? 'secondary' : 'default'}
                     className={
                       item.badge === 'Private'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-[#FF9606] text-white'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-purple-800 text-white'
                     }
                   >
                     {item.badge}

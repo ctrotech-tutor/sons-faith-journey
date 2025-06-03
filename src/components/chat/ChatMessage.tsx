@@ -56,13 +56,13 @@ const ChatMessage = ({
     
     switch (message.status) {
       case 'pending':
-        return <Clock className="h-3 w-3 text-yellow-500" />;
+        return <Clock className="h-3 w-3 text-purple-100 ml-2" />;
       case 'sent':
-        return <Check className="h-3 w-3 text-gray-400" />;
+        return <Check className="h-3 w-3 text-gray-100 ml-2" />;
       case 'delivered':
-        return <CheckCheck className="h-3 w-3 text-blue-500" />;
+        return <CheckCheck className="h-3 w-3 text-blue-600 ml-2" />;
       default:
-        return <CheckCheck className="h-3 w-3 text-blue-500" />;
+        return <CheckCheck className="h-3 w-3 text-blue-500 ml-2" />;
     }
   };
 
@@ -73,9 +73,9 @@ const ChatMessage = ({
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} relative group`}
     >
       <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl cursor-pointer select-none ${
+        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl cursor-pointer select-none break-all prose ${
           isOwn
-            ? 'bg-[#FF9606] text-white'
+            ? 'bg-purple-600 text-white font-normal shadow'
             : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
         } ${message.reported ? 'opacity-50 border-red-300' : ''}`}
         onTouchStart={handleLongPress}
@@ -161,7 +161,7 @@ const ChatMessage = ({
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-0 right-0 bg-white rounded-lg shadow-lg border p-2 flex space-x-2 z-10"
+          className="zz top-0 right-0 bg-white rounded-lg shadow-lg border p-2 flex space-x-2 z-10"
         >
           {!isOwn && onReport && (
             <Button

@@ -13,7 +13,8 @@ import ReactionsOverlay from '@/components/chat/ReactionsOverlay';
 import FileUploader from '@/components/chat/FileUploader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
+import { Timestamp } from 'firebase/firestore';
+import { Server } from 'http';
 interface Message {
   id: string;
   senderId: string;
@@ -24,7 +25,7 @@ interface Message {
   reactions: { [key: string]: number };
   userReactions: { [userId: string]: string };
   reported: boolean;
-  timestamp: any;
+  timestamp: Timestamp | Date;
   status?: 'pending' | 'sent' | 'delivered';
 }
 
@@ -58,7 +59,6 @@ const ChurchRoom = () => {
     { emoji: '✨', key: 'amen' }
   ];
 
-  // Monitor online status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -68,7 +68,6 @@ const ChurchRoom = () => {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -83,28 +82,32 @@ const ChurchRoom = () => {
     }
   }, []);
 
-  // Listen to real-time messages when online
   useEffect(() => {
-    if (!user || !isOnline) return;
+    const savedQueue = localStorage.getItem('churchRoom_queued');
+    if (savedQueue) {
+      setQueuedMessages(JSON.parse(savedQueue));
+    }
+  }, []);
 
+
+
+  // Listen to real-time messages when online
+ useEffect(() => {
+    if (!user || !isOnline) return;
     const messagesQuery = query(
       collection(db, 'chats/churchRoom/messages'),
       orderBy('timestamp', 'asc')
     );
-
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const newMessages = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         status: 'delivered'
       })) as Message[];
-      
       setMessages(newMessages);
-      // Cache latest 100 messages for offline access
       localStorage.setItem('churchRoom_messages', JSON.stringify(newMessages.slice(-100)));
       scrollToBottom();
     });
-
     return unsubscribe;
   }, [user, isOnline]);
 
@@ -172,7 +175,12 @@ const ChurchRoom = () => {
     };
 
     // Add message to local state immediately
-    setMessages(prev => [...prev, messageData as Message]);
+    setMessages(prev => {
+  const updated = [...prev, messageData as Message];
+  localStorage.setItem('churchRoom_messages', JSON.stringify(updated.slice(-100)));
+  return updated;
+});
+
     setNewMessage('');
 
     if (!isOnline) {
@@ -217,24 +225,22 @@ const ChurchRoom = () => {
     }
   };
 
-  const addReaction = async (messageId: string, reactionKey: string) => {
-    if (!user || !isOnline) return;
 
+
+
+ const addReaction = async (messageId: string, reactionKey: string) => {
+    if (!user || !isOnline) return;
     try {
       const messageRef = doc(db, 'chats/churchRoom/messages', messageId);
       const message = messages.find(m => m.id === messageId);
-      
       if (!message) return;
-
       const currentUserReaction = message.userReactions[user.uid];
       const reactions = { ...message.reactions };
       const userReactions = { ...message.userReactions };
 
       if (currentUserReaction) {
         reactions[currentUserReaction] = Math.max(0, (reactions[currentUserReaction] || 0) - 1);
-        if (reactions[currentUserReaction] === 0) {
-          delete reactions[currentUserReaction];
-        }
+        if (reactions[currentUserReaction] === 0) delete reactions[currentUserReaction];
       }
 
       if (currentUserReaction !== reactionKey) {
@@ -244,16 +250,13 @@ const ChurchRoom = () => {
         delete userReactions[user.uid];
       }
 
-      await updateDoc(messageRef, {
-        reactions,
-        userReactions
-      });
-
+      await updateDoc(messageRef, { reactions, userReactions });
       setShowReactions(null);
     } catch (error) {
       console.error('Error adding reaction:', error);
     }
   };
+
 
   const reportMessage = async (messageId: string) => {
     if (!user) return;
@@ -355,32 +358,34 @@ const ChurchRoom = () => {
   return (
     <div className="h-screen bg-gray-900 flex flex-col">
       {/* Custom Chat Header */}
-      <div className="bg-[#FF9606] text-white p-4 flex items-center justify-between shadow-lg">
-        <div className="flex items-center space-x-3">
+      <div className="bg-purple-600 fixed top-0 z-50 w-full text-white py-3 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/dashboard')}
-            className="text-white hover:bg-white/20"
+            className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="bg-white/20 p-2 rounded-full">
+          <div className="flex items-center gap-2">
+            <div className="bg-white/20 p-2 rounded-full">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">Church Room</h1>
+            <h1 className="text-lg font-semibold">Chat Room</h1>
             <div className="flex items-center space-x-2 text-sm text-white/80">
-              <span>{messages.length} messages</span>
+              <span className='truncate w-16'>{messages.length} messages</span>
               {isOnline ? (
-                <Wifi className="h-4 w-4 text-green-300" />
+                <Wifi className="h-4 w-4 text-gray-200" />
               ) : (
-                <WifiOff className="h-4 w-4 text-red-300" />
+                <WifiOff className="h-4 w-4 text-gray-200" />
               )}
             </div>
           </div>
+          </div>
         </div>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+        <Button variant="ghost" size="sm" className="text-white ripple-effect rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-600 hover:text-white transition-colors">
           <MoreVertical className="h-5 w-5" />
         </Button>
       </div>

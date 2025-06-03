@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Send, X } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
-
+import { uploadToCloudinary } from '@/lib/cloudinary';
 interface VoiceNoteRecorderProps {
   onComplete: (audioUrl: string) => void;
   onCancel: () => void;

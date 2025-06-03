@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X, Upload, Image, Video, File } from 'lucide-react';
-import { convertFileToBase64, getFileType, validateFileSize } from '@/lib/fileUtils';
+import { getFileType, validateFileSize } from '@/lib/fileUtils';
 import { useToast } from '@/lib/hooks/use-toast';
-
+import { uploadToCloudinary } from '@/lib/cloudinary';
 interface FileUploaderProps {
   onUpload: (url: string, type: 'image' | 'video' | 'audio') => void;
   onClose: () => void;
@@ -31,12 +31,12 @@ const FileUploader = ({ onUpload, onClose }: FileUploaderProps) => {
 
     setUploading(true);
     try {
-      const base64String = await convertFileToBase64(file);
+      const base64String = await uploadToCloudinary(file);
       const fileType = getFileType(file);
 
       onUpload(base64String, fileType);
       onClose();
-      
+
       toast({
         title: 'Upload successful',
         description: 'Your file has been uploaded and shared.'

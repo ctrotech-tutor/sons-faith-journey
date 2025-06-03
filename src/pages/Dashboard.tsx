@@ -262,13 +262,13 @@ const Dashboard = () => {
                             <div className="flex items-center gap-4 pt-4 border-t w-full overflow-x-auto no-scrollbar">
                               <Button variant="outline" size="sm">
                                 <Heart className="h-4 w-4 mr-1" />
-                                Amen ({dailyReading.reactions?.amen?.length || 0})
+                                {dailyReading.reactions?.amen?.length || 0}
                               </Button>
                               <Button variant="outline" size="sm">
-                                ✨ Blessed ({dailyReading.reactions?.blessed?.length || 0})
+                                ✨ {dailyReading.reactions?.blessed?.length || 0}
                               </Button>
                               <Button variant="outline" size="sm">
-                                📖 Share ({dailyReading.reactions?.shared?.length || 0})
+                                📖 {dailyReading.reactions?.shared?.length || 0}
                               </Button>
                             </div>
                           </div>
