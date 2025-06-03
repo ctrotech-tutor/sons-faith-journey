@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useActivitySync } from '@/lib/hooks/useActivitySync';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,51 +10,22 @@ import { CheckCircle, Circle, Calendar, BarChart3 } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import ReadingCalendar from './ReadingCalendar';
 
-interface ReadingProgress {
-  [date: string]: boolean;
-}
-
 const ReadingTracker = () => {
   const { user } = useAuth();
+  const { userStats, updateReadingProgress } = useActivitySync();
   const { toast } = useToast();
-  const [progress, setProgress] = useState<ReadingProgress>({});
   const [loading, setLoading] = useState(false);
 
   const today = new Date().toDateString();
-  const isCompletedToday = progress[today] || false;
-
-  useEffect(() => {
-    if (user) {
-      loadProgress();
-    }
-  }, [user]);
-
-  const loadProgress = async () => {
-    if (!user) return;
-
-    try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setProgress(userData.readingProgress || {});
-      }
-    } catch (error) {
-      console.error('Error loading reading progress:', error);
-    }
-  };
+  const todayDay = Math.ceil((new Date().getTime() - new Date('2025-06-01').getTime()) / (1000 * 60 * 60 * 24));
+  const isCompletedToday = userStats.readingProgress.includes(todayDay);
 
   const markAsCompleted = async () => {
     if (!user || loading) return;
 
     setLoading(true);
     try {
-      const newProgress = { ...progress, [today]: true };
-      
-      await updateDoc(doc(db, 'users', user.uid), {
-        readingProgress: newProgress
-      });
-
-      setProgress(newProgress);
+      await updateReadingProgress(todayDay, true);
       
       toast({
         title: 'Reading Completed!',
@@ -71,31 +41,6 @@ const ReadingTracker = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getCompletionPercentage = () => {
-    const totalDays = 90;
-    const completedDays = Object.values(progress).filter(Boolean).length;
-    return Math.round((completedDays / totalDays) * 100);
-  };
-
-  const getStreakCount = () => {
-    let streak = 0;
-    const currentDate = new Date();
-    
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() - i);
-      const dateString = date.toDateString();
-      
-      if (progress[dateString]) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    
-    return streak;
   };
 
   if (!user) {
@@ -127,7 +72,7 @@ const ReadingTracker = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Calendar className="h-5 w-5 text-purple-600" />
-                <span>Today's Reading</span>
+                <span>Today's Reading - Day {todayDay}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -166,7 +111,7 @@ const ReadingTracker = () => {
                   className="text-center p-3 bg-green-50 rounded-lg"
                 >
                   <div className="text-2xl font-bold text-green-600">
-                    {getCompletionPercentage()}%
+                    {Math.round((userStats.totalReadingDays / 90) * 100)}%
                   </div>
                   <p className="text-sm text-green-700">Complete</p>
                 </motion.div>
@@ -178,7 +123,7 @@ const ReadingTracker = () => {
                   className="text-center p-3 bg-orange-50 rounded-lg"
                 >
                   <div className="text-2xl font-bold text-orange-600">
-                    {getStreakCount()}
+                    {userStats.readingStreak}
                   </div>
                   <p className="text-sm text-orange-700">Day Streak</p>
                 </motion.div>
@@ -189,21 +134,19 @@ const ReadingTracker = () => {
                 <h4 className="font-medium mb-2">Recent Days</h4>
                 <div className="grid grid-cols-7 gap-1">
                   {Array.from({ length: 7 }, (_, i) => {
-                    const date = new Date();
-                    date.setDate(date.getDate() - (6 - i));
-                    const dateString = date.toDateString();
-                    const isCompleted = progress[dateString];
+                    const dayNum = todayDay - (6 - i);
+                    const isCompleted = userStats.readingProgress.includes(dayNum);
                     
                     return (
                       <div
-                        key={dateString}
+                        key={dayNum}
                         className={`w-8 h-8 rounded flex items-center justify-center text-xs ${
                           isCompleted 
                             ? 'bg-green-600 text-white' 
                             : 'bg-gray-200 text-gray-600'
                         }`}
                       >
-                        {date.getDate()}
+                        {dayNum}
                       </div>
                     );
                   })}

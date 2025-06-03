@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { useActivitySync } from '@/lib/hooks/useActivitySync'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 import EnkvBibleData from '@/data/json/en_kjv.json'
@@ -35,8 +34,6 @@ function getPassageText(passage: string): string {
   return text.trim()
 }
 
-
-
 function formatBibleText(text: string): JSX.Element[] {
   const lines = text.split('\n')
   return lines.map((line, index) => (
@@ -50,63 +47,38 @@ function formatBibleText(text: string): JSX.Element[] {
 
 export default function ReadingPage() {
   const { user } = useAuth();
-  const [progress, setProgress] = useState<number[]>([]);
+  const { userStats, updateReadingProgress } = useActivitySync();
   const [openDay, setOpenDay] = useState<number | null>(null);
   const today = dayjs().format("YYYY-MM-DD");
 
   const todayPlan = readingPlan.find((plan) => plan.date === today);
 
-  // 🔄 Fetch reading progress
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchProgress = async () => {
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setProgress(data.readingProgress || []);
-        } else {
-          console.warn("User document does not exist");
-        }
-      } catch (error) {
-        console.error("Error fetching reading progress:", error);
-      }
-    };
-
-    fetchProgress();
-  }, [user]);
-
-
-  // ✅ Toggle completion state
+  // ✅ Toggle completion state using integrated system
   const toggleComplete = async (day: number) => {
     if (!user) return;
 
-    try {
-      const isDone = progress.includes(day);
-      const newProgress = isDone
-        ? progress.filter((d) => d !== day)
-        : [...new Set([...progress, day])];
-
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        readingProgress: newProgress,
-      });
-
-      setProgress(newProgress);
-    } catch (error) {
-      console.error("Error updating reading progress:", error);
-    }
+    const isDone = userStats.readingProgress.includes(day);
+    await updateReadingProgress(day, !isDone);
   };
 
   return (
     <main className="p-4 max-w-md mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-center text-gray-800">📖 June Bible Journey: <span className="text-blue-700">Knowing God</span></h1>
 
+      {/* Progress Summary */}
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-xl">
+        <div className="text-center">
+          <div className="text-3xl font-bold mb-1">{userStats.readingStreak}</div>
+          <p className="text-purple-100">Day Streak</p>
+          <div className="mt-2 text-sm">
+            {userStats.totalReadingDays} of 90 days completed
+          </div>
+        </div>
+      </div>
+
       {readingPlan.map(({ day, date, passages }) => {
         const isTodayOrEarlier = dayjs().isAfter(dayjs(date), 'day') || dayjs().isSame(dayjs(date), 'day')
-        const isCompleted = progress.includes(day)
+        const isCompleted = userStats.readingProgress.includes(day)
 
         return (
           <div

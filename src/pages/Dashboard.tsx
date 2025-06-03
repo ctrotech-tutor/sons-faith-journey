@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useActivitySync } from '@/lib/hooks/useActivitySync';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { BookOpen, Check, MessageCircle, Calendar, Heart, Users } from 'lucide-r
 import Layout from '@/components/Layout';
 import ReadingTracker from '@/components/ReadingTracker';
 import PrayerWall from '@/components/PrayerWall';
+import ActivityDashboard from '@/components/ActivityDashboard';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -39,6 +40,7 @@ interface VerseOfDay {
 
 const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
+  const { userStats } = useActivitySync();
   const [dailyReading, setDailyReading] = useState<Devotional | null>(null);
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [activeUsers, setActiveUsers] = useState(0);
@@ -182,10 +184,10 @@ const Dashboard = () => {
               transition={{ delay: 0.2 }}
               className="text-sm text-gray-600"
             >
-              Continue your faith journey today
+              Continue your faith journey today • {userStats.readingStreak} day streak
             </motion.p>
 
-            {activeUsers > 0 && (
+            {userStats.totalReadingDays > 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -193,23 +195,28 @@ const Dashboard = () => {
               >
                 <Badge
                   variant="secondary"
-                  className="mt-3 inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-300 animate-pulse"
+                  className="mt-3 inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-800 animate-pulse"
                 >
                   <Users className="h-3 w-3" />
-                  {activeUsers} others completed today's reading
+                  {Math.round((userStats.totalReadingDays / 90) * 100)}% through the challenge
                 </Badge>
               </motion.div>
             )}
           </motion.div>
 
-
-          <Tabs defaultValue="devotion" className="space-y-6">
+          <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="overflow-x-auto justify-around w-full no-scrollbar">
+              <TabsTrigger value="overview" className="inline-block text-center">Overview</TabsTrigger>
               <TabsTrigger value="devotion" className="inline-block text-center">Today's Devotion</TabsTrigger>
               <TabsTrigger value="tracker" className="inline-block text-center">Reading Tracker</TabsTrigger>
               <TabsTrigger value="prayer" className="inline-block text-center">Prayer Wall</TabsTrigger>
               <TabsTrigger value="community" className="inline-block text-center">Community</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="overview">
+              <ActivityDashboard />
+            </TabsContent>
+
             <TabsContent value="devotion" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
