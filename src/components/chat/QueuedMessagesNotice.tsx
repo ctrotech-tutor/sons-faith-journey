@@ -1,6 +1,6 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { WiFiOff, Clock, Send } from 'lucide-react';
+import { WifiOff, Clock, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface QueuedMessagesNoticeProps {
@@ -27,7 +27,7 @@ const QueuedMessagesNotice = ({ queuedCount, isOnline }: QueuedMessagesNoticePro
           {isOnline ? (
             <Send className="h-4 w-4 animate-pulse" />
           ) : (
-            <WiFiOff className="h-4 w-4" />
+            <WifiOff className="h-4 w-4" />
           )}
           
           <span className="text-sm font-medium">

@@ -24,6 +24,12 @@ interface UserData {
   totalSessions: number;
 }
 
+interface ProfileData {
+  displayName?: string;
+  location?: string;
+  [key: string]: any;
+}
+
 const RealTimeUserTracker = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
@@ -43,11 +49,11 @@ const RealTimeUserTracker = () => {
           const data = userDoc.data();
           
           // Get additional profile data
-          let profileData = {};
+          let profileData: ProfileData = {};
           try {
             const profileDoc = await getDoc(doc(db, 'userProfiles', userDoc.id));
             if (profileDoc.exists()) {
-              profileData = profileDoc.data();
+              profileData = profileDoc.data() as ProfileData;
             }
           } catch (error) {
             console.log('No profile data for user:', userDoc.id);
