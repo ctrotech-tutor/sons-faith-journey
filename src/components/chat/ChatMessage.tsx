@@ -73,10 +73,10 @@ const ChatMessage = ({
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} relative group`}
     >
       <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl cursor-pointer select-none ${
+        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl cursor-pointer select-none break-all ${
           isOwn
-            ? 'bg-[#FF9606] text-white'
-            : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
+            ? 'bg-purple-600 text-white'
+            : 'bg-gray-50 border border-purple-100 text-gray-800 shadow-sm'
         } ${message.reported ? 'opacity-50 border-red-300' : ''}`}
         onTouchStart={handleLongPress}
         onContextMenu={(e) => {

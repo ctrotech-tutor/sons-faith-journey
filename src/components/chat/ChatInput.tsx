@@ -100,32 +100,31 @@ const ChatInput = ({
           onCancel={() => setShowVoiceRecorder(false)}
         />
       ) : (
-        <div className="flex items-end space-x-2 bg-white rounded-full p-2 shadow-sm border border-gray-200">
-          {/* Emoji button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full h-8 w-8 p-0"
-          >
-            <Smile className="h-5 w-5" />
-          </Button>
+        <div className="flex items-end gap-2 flex-col bg-white rounded-t-3xl p-2 shadow-sm border border-gray-200">
 
           {/* Text input container */}
-          <div className="flex-1 relative">
+          <div className="relative w-full px-3">
             <Textarea
               ref={textareaRef}
               value={value}
               onChange={(e) => handleChange(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={placeholder}
-              className="resize-none min-h-[36px] max-h-[120px] border-0 focus:ring-0 bg-transparent text-sm rounded-lg p-2"
+              className="resize-none min-h-0 max-h-[120px] border-0 outline-0 focus:ring-0 bg-transparent text-sm rounded-lg p-2 w-full"
               disabled={loading}
               style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
-            />
+            ></Textarea>
           </div>
-
+          <div className='flex items-center justify-between w-full'>
+            <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full h-8 w-8 p-0"
+          >
+            <Smile className="h-5 w-5" />
+          </Button>
           {/* Right side buttons */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center gap-1">
             {/* Attachment button */}
             {onAttachmentClick && (
               <Button
@@ -146,7 +145,7 @@ const ChatInput = ({
                   onSend();
                 }}
                 disabled={loading}
-                className="bg-[#FF9606] hover:bg-[#FF9606]/90 text-white rounded-full h-8 w-8 p-0"
+                className="bg-purple-600 hover:bg-purple-900/90 text-white rounded-full h-8 w-8 p-0"
               >
                 {loading ? (
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
@@ -167,6 +166,8 @@ const ChatInput = ({
               )
             )}
           </div>
+          </div>
+          
         </div>
       )}
     </div>

@@ -43,13 +43,7 @@ const MessagesList = ({
 
   return (
     <div 
-      className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100"
-      style={{ 
-        backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"60\" height=\"60\" viewBox=\"0 0 60 60\"><defs><pattern id=\"crosses\" x=\"0\" y=\"0\" width=\"30\" height=\"30\" patternUnits=\"userSpaceOnUse\"><path d=\"M15,5 L15,25 M5,15 L25,15\" stroke=\"%23e5e7eb\" stroke-width=\"1\" fill=\"none\" opacity=\"0.3\"/></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(%23crosses)\"/></svg>')",
-        userSelect: 'none',
-        WebkitUserSelect: 'none'
-      }}
-    >
+      className="flex flex-col overflow-y-auto px-4 pt-20 pb-10 gap-1 bg-gray-50">
       {messages.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🙏</div>

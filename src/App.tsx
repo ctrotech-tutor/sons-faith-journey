@@ -26,6 +26,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
+const CreatePost = lazy(() => import("./pages/CreatePost"));
 const queryClient = new QueryClient();
 
 
@@ -78,6 +79,8 @@ const AppContent = () => {
         <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/reading" element={<Reading />} />
+        <Route path="/create-post" element={<CreatePost />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
 

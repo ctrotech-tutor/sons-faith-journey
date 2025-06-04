@@ -58,7 +58,7 @@ const ChurchRoom = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col">
       <ChatHeader messageCount={messages.length} isOnline={isOnline} />
       
       <MessagesList
@@ -74,7 +74,7 @@ const ChurchRoom = () => {
         isOnline={isOnline} 
       />
 
-      <div className="bg-white border-t border-gray-200 p-3">
+      <div className="bg-transparent">
         <ChatInput
           value={newMessage}
           onChange={setNewMessage}
