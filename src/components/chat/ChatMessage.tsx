@@ -1,8 +1,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flag, Trash2, Shield, Clock, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { MoreVertical, Flag, Trash2, Clock, Check, CheckCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ChatMessageProps {
   message: {
@@ -12,16 +14,15 @@ interface ChatMessageProps {
     message: string;
     mediaUrl?: string;
     mediaType?: 'image' | 'audio' | 'video';
-    reactions?: { [key: string]: number };
-    userReactions?: { [userId: string]: string };
-    reported?: boolean;
+    reactions: { [key: string]: number };
+    userReactions: { [userId: string]: string };
+    reported: boolean;
     timestamp: any;
     status?: 'pending' | 'sent' | 'delivered';
   };
   isOwn: boolean;
-  onLongPress?: () => void;
-  onReport?: () => void;
-  onDelete?: () => void;
+  onLongPress: () => void;
+  onReport: () => void;
   canModerate?: boolean;
   showStatus?: boolean;
 }
@@ -31,197 +32,205 @@ const ChatMessage = ({
   isOwn, 
   onLongPress, 
   onReport, 
-  onDelete, 
   canModerate,
-  showStatus = false
+  showStatus 
 }: ChatMessageProps) => {
-  const [showActions, setShowActions] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const handleLongPress = () => {
-    if (onLongPress) {
+  const handleMouseDown = () => {
+    const timer = setTimeout(() => {
       onLongPress();
-    } else {
-      setShowActions(true);
+      setLongPressTimer(null);
+    }, 500);
+    setLongPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
     }
   };
 
-  const formatTime = (timestamp: any) => {
-    if (!timestamp) return 'Just now';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const renderStatusIcon = () => {
-    if (!showStatus || !isOwn) return null;
-    
+  const getStatusIcon = () => {
     switch (message.status) {
       case 'pending':
-        return <Clock className="h-3 w-3 text-yellow-500" />;
+        return <Clock className="h-3 w-3 text-gray-400" />;
       case 'sent':
-        return <Check className="h-3 w-3 text-gray-400" />;
+        return <Check className="h-3 w-3 text-gray-500" />;
       case 'delivered':
         return <CheckCheck className="h-3 w-3 text-blue-500" />;
       default:
-        return <CheckCheck className="h-3 w-3 text-blue-500" />;
+        return null;
     }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} relative group`}
+      className={cn(
+        'flex flex-col space-y-2 p-3 rounded-xl max-w-[80%] relative group',
+        isOwn 
+          ? 'bg-purple-600 text-white ml-auto' 
+          : 'bg-white shadow-sm border mr-auto'
+      )}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
     >
-      <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl cursor-pointer select-none break-all ${
-          isOwn
-            ? 'bg-purple-600 text-white'
-            : 'bg-gray-50 border border-purple-100 text-gray-800 shadow-sm'
-        } ${message.reported ? 'opacity-50 border-red-300' : ''}`}
-        onTouchStart={handleLongPress}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          handleLongPress();
-        }}
-      >
-        {/* Sender name for others' messages */}
-        {!isOwn && (
-          <div className="text-xs font-medium text-purple-600 mb-1">
-            {message.senderName}
-          </div>
-        )}
+      {/* Sender Name */}
+      {!isOwn && (
+        <p className="text-xs font-semibold text-purple-600 mb-1">
+          {message.senderName}
+        </p>
+      )}
 
-        {/* Media content */}
-        {message.mediaUrl && (
-          <div className="mb-2">
-            {message.mediaType === 'image' && (
-              <img 
-                src={message.mediaUrl} 
-                alt="Shared" 
-                className="rounded-lg max-w-full cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open(message.mediaUrl, '_blank')}
-              />
-            )}
-            {message.mediaType === 'audio' && (
-              <audio controls className="w-full">
-                <source src={message.mediaUrl} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            )}
-            {message.mediaType === 'video' && (
-              <video controls className="rounded-lg max-w-full">
-                <source src={message.mediaUrl} type="video/mp4" />
-                Your browser does not support the video element.
-              </video>
-            )}
-          </div>
-        )}
+      {/* Message Content */}
+      {message.message && (
+        <p className={cn(
+          'text-sm leading-relaxed',
+          isOwn ? 'text-white' : 'text-gray-800'
+        )}>
+          {message.message}
+        </p>
+      )}
 
-        {/* Message text */}
-        {message.message && (
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {message.message}
-          </p>
-        )}
-
-        {/* Reactions */}
-        {message.reactions && Object.keys(message.reactions).length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {Object.entries(message.reactions).map(([reaction, count]) => (
-              <span
-                key={reaction}
-                className={`text-xs px-2 py-1 rounded-full bg-white/20 ${
-                  isOwn ? 'text-white' : 'text-gray-600 bg-gray-100'
-                }`}
-              >
-                {getReactionEmoji(reaction)} {count}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Timestamp and status */}
-        <div className={`flex items-center justify-between mt-1 ${
-          isOwn ? 'text-white/70' : 'text-gray-500'
-        }`}>
-          <span className="text-xs">
-            {formatTime(message.timestamp)}
-          </span>
-          <div className="flex items-center space-x-1">
-            {message.reported && (
-              <Flag className="h-3 w-3 text-red-500" />
-            )}
-            {renderStatusIcon()}
-          </div>
+      {/* Media Content */}
+      {message.mediaUrl && (
+        <div className="mt-2">
+          {message.mediaType === 'image' && (
+            <img
+              src={message.mediaUrl}
+              alt="Shared image"
+              className="max-w-full h-auto rounded-lg"
+            />
+          )}
+          {message.mediaType === 'video' && (
+            <video
+              src={message.mediaUrl}
+              controls
+              className="max-w-full h-auto rounded-lg"
+            />
+          )}
+          {message.mediaType === 'audio' && (
+            <audio
+              src={message.mediaUrl}
+              controls
+              className="w-full"
+            />
+          )}
         </div>
+      )}
+
+      {/* Reactions */}
+      {Object.keys(message.reactions).length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {Object.entries(message.reactions).map(([key, count]) => (
+            <Badge
+              key={key}
+              variant="secondary"
+              className="text-xs px-2 py-1 bg-white/20 text-current"
+            >
+              {getReactionEmoji(key)} {count}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Timestamp and Status */}
+      <div className={cn(
+        'flex items-center justify-between text-xs mt-2',
+        isOwn ? 'text-purple-200' : 'text-gray-500'
+      )}>
+        <span>
+          {message.timestamp?.toDate?.()?.toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }) || 'Now'}
+        </span>
+        
+        {isOwn && showStatus && (
+          <div className="flex items-center space-x-1">
+            {getStatusIcon()}
+          </div>
+        )}
       </div>
 
-      {/* Action buttons */}
-      {showActions && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-0 right-0 bg-white rounded-lg shadow-lg border p-2 flex space-x-2 z-10"
+      {/* Menu Button */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setShowMenu(!showMenu)}
         >
-          {!isOwn && onReport && (
+          <MoreVertical className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Dropdown Menu */}
+      {showMenu && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute top-8 right-2 bg-white rounded-lg shadow-lg border p-2 z-10 min-w-[120px]"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              onLongPress();
+              setShowMenu(false);
+            }}
+            className="w-full justify-start text-gray-700 hover:bg-gray-100"
+          >
+            React
+          </Button>
+          
+          {!isOwn && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 onReport();
-                setShowActions(false);
+                setShowMenu(false);
               }}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:bg-red-50"
             >
-              <Flag className="h-4 w-4" />
+              <Flag className="h-3 w-3 mr-2" />
+              Report
             </Button>
           )}
           
-          {canModerate && onDelete && (
+          {(isOwn || canModerate) && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                onDelete();
-                setShowActions(false);
-              }}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3 w-3 mr-2" />
+              Delete
             </Button>
           )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowActions(false)}
-            className="text-gray-600"
-          >
-            Cancel
-          </Button>
         </motion.div>
-      )}
-
-      {/* Click outside to close actions */}
-      {showActions && (
-        <div
-          className="fixed inset-0 z-5"
-          onClick={() => setShowActions(false)}
-        />
       )}
     </motion.div>
   );
 };
 
-const getReactionEmoji = (reaction: string): string => {
-  const emojiMap: { [key: string]: string } = {
+const getReactionEmoji = (key: string) => {
+  const emojis = {
     pray: '🙏',
     love: '❤️',
     fire: '🔥',
     thumbs: '👍',
     amen: '✨'
   };
-  return emojiMap[reaction] || '👍';
+  return emojis[key as keyof typeof emojis] || '👍';
 };
 
 export default ChatMessage;

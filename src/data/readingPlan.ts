@@ -1,182 +1,95 @@
-export const readingPlan = [
+
+export interface ReadingDay {
+  day: number;
+  date: string;
+  passages: string[];
+  theme: string;
+  month: number;
+  monthName: string;
+}
+
+export const readingPlan: ReadingDay[] = [
+  // Month 1: Knowing God (Days 1-30)
   {
     day: 1,
     date: '2025-06-01',
-    passages: ['Genesis 1-2', 'ps 19'],
+    passages: ['Genesis 1-2', 'Psalm 19'],
     theme: 'Knowing God',
+    month: 1,
+    monthName: 'June'
   },
   {
     day: 2,
     date: '2025-06-02',
-    passages: ['Exodus 3', 'ps 8'],
+    passages: ['Genesis 3-4', 'Psalm 8'],
     theme: 'Knowing God',
+    month: 1,
+    monthName: 'June'
   },
-   {
+  {
     day: 3,
     date: '2025-06-03',
-    passages: ['Exodus 3', 'ps 8'],
+    passages: ['Genesis 5-6', 'Psalm 23'],
     theme: 'Knowing God',
+    month: 1,
+    monthName: 'June'
   },
-   {
+  {
     day: 4,
     date: '2025-06-04',
-    passages: ['Exodus 3', 'ps 8'],
+    passages: ['Genesis 7-8', 'Psalm 46'],
     theme: 'Knowing God',
+    month: 1,
+    monthName: 'June'
   },
-   {
+  {
     day: 5,
     date: '2025-06-05',
-    passages: ['Exodus 3', 'ps 8'],
+    passages: ['Genesis 9-10', 'Psalm 91'],
     theme: 'Knowing God',
+    month: 1,
+    monthName: 'June'
   },
-  {
-    day: 6,
-    date: '2025-06-06',
-    passages: ['Exodus 3', 'ps 8'],
+  // Continue with more days for June (Month 1)
+  ...Array.from({ length: 25 }, (_, i) => ({
+    day: i + 6,
+    date: `2025-06-${String(i + 6).padStart(2, '0')}`,
+    passages: ['Exodus 3', 'Psalm 8'],
     theme: 'Knowing God',
-  },
-  {
-    day: 7,
-    date: '2025-06-07',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 8,
-    date: '2025-06-08',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 9,
-    date: '2025-06-09',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 10,
-    date: '2025-06-10',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 11,
-    date: '2025-06-11',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 12,
-    date: '2025-06-12',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 13,
-    date: '2025-06-13',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 14,
-    date: '2025-06-14',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 15,
-    date: '2025-06-15',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 16,
-    date: '2025-06-16',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 17,
-    date: '2025-06-17',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 18,
-    date: '2025-06-18',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 19,
-    date: '2025-06-19',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 20,
-    date: '2025-06-20',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 21,
-    date: '2025-06-21',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 22,
-    date: '2025-06-22',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 23,
-    date: '2025-06-23',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 24,
-    date: '2025-06-24',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 25,
-    date: '2025-06-25',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 26,
-    date: '2025-06-26',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 27,
-    date: '2025-06-27',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 28,
-    date: '2025-06-28',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 29,
-    date: '2025-06-29',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-  {
-    day: 30,
-    date: '2025-06-30',
-    passages: ['Exodus 3', 'ps 8'],
-    theme: 'Knowing God',
-  },
-]
+    month: 1,
+    monthName: 'June'
+  })),
+  
+  // Month 2: Walking with God (Days 31-60)
+  ...Array.from({ length: 30 }, (_, i) => ({
+    day: i + 31,
+    date: `2025-07-${String(i + 1).padStart(2, '0')}`,
+    passages: ['Romans 8', 'Psalm 23'],
+    theme: 'Walking with God',
+    month: 2,
+    monthName: 'July'
+  })),
+  
+  // Month 3: Serving God (Days 61-90)
+  ...Array.from({ length: 30 }, (_, i) => ({
+    day: i + 61,
+    date: `2025-08-${String(i + 1).padStart(2, '0')}`,
+    passages: ['Matthew 28', 'Psalm 100'],
+    theme: 'Serving God',
+    month: 3,
+    monthName: 'August'
+  }))
+];
+
+export const getMonthData = (month: number) => {
+  return readingPlan.filter(day => day.month === month);
+};
+
+export const getThemeForMonth = (month: number) => {
+  const themes = {
+    1: 'Knowing God',
+    2: 'Walking with God', 
+    3: 'Serving God'
+  };
+  return themes[month as keyof typeof themes] || 'Bible Reading';
+};

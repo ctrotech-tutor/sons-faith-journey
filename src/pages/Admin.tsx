@@ -11,12 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/lib/hooks/use-toast';
-import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User, EyeOff, Activity } from 'lucide-react';
+import { LogIn, Users, FileText, Plus, Edit, Trash2, Eye, Calendar, BarChart2, BookOpen, User, EyeOff, Activity, Monitor } from 'lucide-react';
 import Layout from '@/components/Layout';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import UserTrackingDashboard from '@/components/admin/UserTrackingDashboard';
 import VerseOfTheDayManager from '@/components/admin/VerseOfTheDayManager';
+import RealTimeUserTracker from '@/components/admin/RealTimeUserTracker';
 
 interface Registration {
   id: string;
@@ -321,11 +322,15 @@ const Admin = () => {
             <p className="text-gray-600">Manage THE SONS challenge</p>
           </motion.div>
 
-          <Tabs defaultValue="tracking" className="space-y-6">
+          <Tabs defaultValue="realtime" className="space-y-6">
             <TabsList className="w-full overflow-x-auto gap-2 no-scrollbar">
+              <TabsTrigger value="realtime" className="flex items-center space-x-2">
+                <Monitor className="h-4 w-4" />
+                <span>Real-Time Tracking</span>
+              </TabsTrigger>
               <TabsTrigger value="tracking" className="flex items-center space-x-2">
                 <Activity className="h-4 w-4" />
-                <span>User Tracking</span>
+                <span>User Analytics</span>
               </TabsTrigger>
               <TabsTrigger value="verse" className="flex items-center space-x-2">
                 <BookOpen className="h-4 w-4" />
@@ -348,6 +353,10 @@ const Admin = () => {
                 <span>Analytics</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="realtime">
+              <RealTimeUserTracker />
+            </TabsContent>
 
             <TabsContent value="tracking">
               <UserTrackingDashboard />
