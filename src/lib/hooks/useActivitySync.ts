@@ -17,6 +17,9 @@ interface UserStats {
   postsCount: number;
   lastActiveDate: string;
   readingProgress: number[];
+  timeSpentReading: number;
+  currentPage?: string;
+  sessionStart?: any;
 }
 
 export const useActivitySync = () => {
@@ -27,7 +30,8 @@ export const useActivitySync = () => {
     messagesCount: 0,
     postsCount: 0,
     lastActiveDate: '',
-    readingProgress: []
+    readingProgress: [],
+    timeSpentReading: 0
   });
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
 
@@ -38,13 +42,23 @@ export const useActivitySync = () => {
     const unsubscribe = onSnapshot(userRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        
+        // Ensure readingProgress is always an array
+        let readingProgress = data.readingProgress || [];
+        if (!Array.isArray(readingProgress)) {
+          readingProgress = [];
+        }
+        
         setUserStats({
           readingStreak: data.readingStreak || 0,
-          totalReadingDays: Object.values(data.readingProgress || {}).filter(Boolean).length,
+          totalReadingDays: readingProgress.length,
           messagesCount: data.messagesCount || 0,
           postsCount: data.postsCount || 0,
           lastActiveDate: data.lastActiveDate || '',
-          readingProgress: data.readingProgress || []
+          readingProgress: readingProgress,
+          timeSpentReading: data.timeSpentReading || 0,
+          currentPage: data.currentPage,
+          sessionStart: data.sessionStart
         });
         setRecentActivities(data.recentActivities || []);
       }
@@ -76,15 +90,22 @@ export const useActivitySync = () => {
 
     try {
       const userRef = doc(db, 'users', user.uid);
-      const newProgress = completed 
-        ? [...new Set([...userStats.readingProgress, day])]
-        : userStats.readingProgress.filter(d => d !== day);
+      let newProgress = [...userStats.readingProgress];
+      
+      if (completed && !newProgress.includes(day)) {
+        newProgress.push(day);
+      } else if (!completed) {
+        newProgress = newProgress.filter(d => d !== day);
+      }
+
+      const streak = calculateStreak(newProgress);
 
       await updateDoc(userRef, {
         readingProgress: newProgress,
         totalReadingDays: newProgress.length,
-        readingStreak: calculateStreak(newProgress),
-        lastActiveDate: new Date().toISOString()
+        readingStreak: streak,
+        lastActiveDate: new Date().toISOString(),
+        timeSpentReading: userStats.timeSpentReading + (completed ? 15 : 0) // Add 15 minutes per completed day
       });
 
       if (completed) {
@@ -102,11 +123,13 @@ export const useActivitySync = () => {
   const calculateStreak = (progressArray: number[]) => {
     if (progressArray.length === 0) return 0;
     
+    const today = getTodayDayNumber();
     const sortedDays = progressArray.sort((a, b) => b - a);
-    let streak = 1;
+    let streak = 0;
     
-    for (let i = 1; i < sortedDays.length; i++) {
-      if (sortedDays[i-1] - sortedDays[i] === 1) {
+    // Check from today backwards
+    for (let i = today; i >= 1; i--) {
+      if (sortedDays.includes(i)) {
         streak++;
       } else {
         break;
@@ -116,10 +139,19 @@ export const useActivitySync = () => {
     return streak;
   };
 
+  const getTodayDayNumber = () => {
+    const startDate = new Date('2025-06-01');
+    const today = new Date();
+    const diffTime = today.getTime() - startDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(1, Math.min(diffDays, 90));
+  };
+
   return {
     userStats,
     recentActivities,
     logActivity,
-    updateReadingProgress
+    updateReadingProgress,
+    getTodayDayNumber
   };
 };

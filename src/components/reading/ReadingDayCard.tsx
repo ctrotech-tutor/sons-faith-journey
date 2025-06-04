@@ -1,163 +1,110 @@
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Circle, BookOpen, Lock, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import dayjs from 'dayjs';
-import AdvancedReadingFeatures from './AdvancedReadingFeatures';
+import { CheckCircle, Circle, BookOpen, Calendar } from 'lucide-react';
 import { ReadingDay } from '@/data/readingPlan';
 
 interface ReadingDayCardProps {
   dayData: ReadingDay;
   isCompleted: boolean;
+  isToday: boolean;
   onToggleComplete: (completed: boolean) => void;
-  animationDelay?: number;
+  animationDelay: number;
 }
 
-const ReadingDayCard = ({ dayData, isCompleted, onToggleComplete, animationDelay = 0 }: ReadingDayCardProps) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  
-  const today = dayjs();
-  const dayDate = dayjs(dayData.date);
-  const isToday = today.isSame(dayDate, 'day');
-  const isAvailable = today.isAfter(dayDate) || isToday;
-  const isPast = today.isAfter(dayDate, 'day');
-
-  const getThemeColor = (theme: string) => {
-    switch (theme) {
-      case 'Knowing God': return 'purple';
-      case 'Walking with God': return 'blue';
-      case 'Serving God': return 'green';
-      default: return 'gray';
-    }
-  };
-
-  const themeColor = getThemeColor(dayData.theme);
-
+const ReadingDayCard = ({ 
+  dayData, 
+  isCompleted, 
+  isToday, 
+  onToggleComplete, 
+  animationDelay 
+}: ReadingDayCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay }}
+      className="h-full"
     >
-      <Card
-        className={cn(
-          'transition-all duration-300 hover:shadow-lg',
-          isCompleted && `border-${themeColor}-500 bg-${themeColor}-50`,
-          isToday && `ring-2 ring-${themeColor}-400`,
-          !isAvailable && 'opacity-60'
-        )}
-      >
-        <CardContent className="p-6 space-y-4">
+      <Card className={`h-full transition-all duration-300 hover:shadow-lg ${
+        isToday 
+          ? 'ring-2 ring-purple-500 shadow-purple-100' 
+          : isCompleted 
+          ? 'bg-green-50 border-green-200' 
+          : 'hover:shadow-md'
+      }`}>
+        <CardContent className="p-6 h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-full bg-${themeColor}-100`}>
-                <Calendar className={`h-5 w-5 text-${themeColor}-600`} />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Day {dayData.day}</h3>
-                <p className="text-sm text-gray-600">{dayData.monthName}</p>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              <span className="text-sm font-medium text-gray-600">Day {dayData.day}</span>
             </div>
-            
             {isToday && (
-              <span className={`px-3 py-1 bg-${themeColor}-100 text-${themeColor}-800 text-xs rounded-full font-medium`}>
-                Today
-              </span>
+              <Badge className="bg-purple-600 text-white text-xs">Today</Badge>
+            )}
+            {isCompleted && (
+              <CheckCircle className="h-5 w-5 text-green-600" />
             )}
           </div>
 
-          {/* Theme */}
-          <div className={`p-3 bg-${themeColor}-50 rounded-lg border border-${themeColor}-200`}>
-            <p className={`text-sm font-medium text-${themeColor}-800`}>
-              Theme: {dayData.theme}
+          {/* Date */}
+          <div className="mb-3">
+            <p className="text-sm text-gray-500">
+              {new Date(dayData.date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric'
+              })}
             </p>
           </div>
 
+          {/* Theme */}
+          <div className="mb-4">
+            <Badge variant="outline" className="text-xs">
+              {dayData.theme}
+            </Badge>
+          </div>
+
           {/* Passages */}
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-800">Today's Reading:</h4>
+          <div className="flex-1 mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <BookOpen className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700">Today's Reading</span>
+            </div>
             <div className="space-y-1">
               {dayData.passages.map((passage, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-2 p-2 bg-gray-50 rounded"
-                >
-                  <BookOpen className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium">{passage}</span>
-                </div>
+                <p key={index} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  {passage}
+                </p>
               ))}
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t">
-            {isAvailable ? (
-              <div className="flex items-center space-x-2">
-                <Button
-                  onClick={() => onToggleComplete(!isCompleted)}
-                  variant={isCompleted ? "outline" : "default"}
-                  size="sm"
-                  className={cn(
-                    !isCompleted && `bg-${themeColor}-600 hover:bg-${themeColor}-700`
-                  )}
-                >
-                  {isCompleted ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Completed
-                    </>
-                  ) : (
-                    <>
-                      <Circle className="h-4 w-4 mr-2" />
-                      Mark Complete
-                    </>
-                  )}
-                </Button>
-                
-                <Button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  variant="outline"
-                  size="sm"
-                >
-                  {showAdvanced ? 'Hide Tools' : 'Advanced'}
-                </Button>
-              </div>
+          {/* Action Button */}
+          <Button
+            onClick={() => onToggleComplete(!isCompleted)}
+            variant={isCompleted ? "outline" : "default"}
+            className={`w-full ${
+              isCompleted 
+                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' 
+                : 'bg-purple-600 hover:bg-purple-700'
+            }`}
+          >
+            {isCompleted ? (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Completed
+              </>
             ) : (
-              <div className="flex items-center text-gray-500">
-                <Lock className="h-4 w-4 mr-2" />
-                <span className="text-sm">Unlocks {dayDate.format('MMM D')}</span>
-              </div>
+              <>
+                <Circle className="h-4 w-4 mr-2" />
+                Mark Complete
+              </>
             )}
-          </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <motion.div
-              className={`bg-${themeColor}-600 h-2 rounded-full transition-all duration-500`}
-              initial={{ width: 0 }}
-              animate={{ width: isCompleted ? '100%' : '0%' }}
-            />
-          </div>
-
-          {/* Advanced Features */}
-          {showAdvanced && isAvailable && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="border-t pt-4"
-            >
-              <AdvancedReadingFeatures
-                passage={dayData.passages.join('; ')}
-                day={dayData.day}
-                onUpdateProgress={() => {}}
-              />
-            </motion.div>
-          )}
+          </Button>
         </CardContent>
       </Card>
     </motion.div>
