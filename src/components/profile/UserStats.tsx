@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, MessageCircle, Calendar, Trophy, TrendingUp, Target, Award, Clock } from 'lucide-react';
+import { BookOpen, MessageCircle, Calendar, Trophy, TrendingUp, Target, Award, Clock, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

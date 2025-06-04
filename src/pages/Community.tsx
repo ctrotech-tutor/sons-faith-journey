@@ -148,6 +148,44 @@ const Community = () => {
     }
   };
 
+  const approvePost = async (postId: string) => {
+    try {
+      await updateDoc(doc(db, 'communityPosts', postId), {
+        status: 'approved'
+      });
+      toast({
+        title: 'Post Approved',
+        description: 'The post has been approved and is now visible to all users.'
+      });
+    } catch (error) {
+      console.error('Error approving post:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to approve post. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const rejectPost = async (postId: string) => {
+    try {
+      await updateDoc(doc(db, 'communityPosts', postId), {
+        status: 'rejected'
+      });
+      toast({
+        title: 'Post Rejected',
+        description: 'The post has been rejected and will not be visible to users.'
+      });
+    } catch (error) {
+      console.error('Error rejecting post:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reject post. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const getFilteredPosts = () => {
     switch (filter) {
       case 'liked':
