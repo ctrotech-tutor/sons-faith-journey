@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { readingPlan, getMonthData, getThemeForMonth } from '@/data/readingPlan'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Calendar, Target, TrendingUp } from 'lucide-react'
+import { BookOpen, Calendar, Target, TrendingUp, Lock } from 'lucide-react'
 import MonthNavigation from '@/components/reading/MonthNavigation'
 import ReadingDayCard from '@/components/reading/ReadingDayCard'
 
@@ -17,6 +17,12 @@ export default function ReadingPage() {
 
   const monthData = getMonthData(currentMonth);
   const todayDay = getTodayDayNumber();
+
+  // Function to check if a day should be unlocked
+  const isDayUnlocked = (dayNumber: number) => {
+    // Users can access current day and all previous days
+    return dayNumber <= todayDay;
+  };
 
   if (!user) {
     return (
@@ -122,6 +128,23 @@ export default function ReadingPage() {
           </div>
         </motion.div>
 
+        {/* Locked Days Notice */}
+        {monthData.some(day => !isDayUnlocked(day.day)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-4 rounded-lg"
+          >
+            <div className="flex items-center space-x-2 text-amber-800">
+              <Lock className="h-5 w-5" />
+              <span className="font-medium">Reading Schedule</span>
+            </div>
+            <p className="text-amber-700 text-sm mt-1">
+              Future readings are locked until their scheduled date. Complete today's reading to maintain your streak!
+            </p>
+          </motion.div>
+        )}
+
         {/* Reading Days Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {monthData.map((dayData, index) => (
@@ -130,6 +153,7 @@ export default function ReadingPage() {
               dayData={dayData}
               isCompleted={Array.isArray(userStats.readingProgress) && userStats.readingProgress.includes(dayData.day)}
               isToday={dayData.day === todayDay}
+              isUnlocked={isDayUnlocked(dayData.day)}
               onToggleComplete={(completed) => updateReadingProgress(dayData.day, completed)}
               animationDelay={index * 0.05}
             />

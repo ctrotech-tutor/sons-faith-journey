@@ -1,157 +1,153 @@
-
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from './useAuth';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/hooks/useAuth';
-
-interface UserActivity {
-  type: 'reading_completed' | 'chat_message' | 'community_post' | 'profile_update' | 'login';
-  timestamp: any;
-  data?: any;
-}
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { getChallengeDay } from '@/lib/getChallengeDay';
 
 interface UserStats {
-  readingStreak: number;
   totalReadingDays: number;
+  readingStreak: number;
   messagesCount: number;
-  postsCount: number;
-  lastActiveDate: string;
-  readingProgress: number[];
   timeSpentReading: number;
-  currentPage?: string;
-  sessionStart?: any;
+  readingProgress: number[];
 }
+
+const defaultStats: UserStats = {
+  totalReadingDays: 0,
+  readingStreak: 0,
+  messagesCount: 0,
+  timeSpentReading: 0,
+  readingProgress: [],
+};
 
 export const useActivitySync = () => {
   const { user } = useAuth();
-  const [userStats, setUserStats] = useState<UserStats>({
-    readingStreak: 0,
-    totalReadingDays: 0,
-    messagesCount: 0,
-    postsCount: 0,
-    lastActiveDate: '',
-    readingProgress: [],
-    timeSpentReading: 0
-  });
-  const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>(defaultStats);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
-    const userRef = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(userRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        
-        // Ensure readingProgress is always an array
-        let readingProgress = data.readingProgress || [];
-        if (!Array.isArray(readingProgress)) {
-          readingProgress = [];
-        }
-        
-        setUserStats({
-          readingStreak: data.readingStreak || 0,
-          totalReadingDays: readingProgress.length,
-          messagesCount: data.messagesCount || 0,
-          postsCount: data.postsCount || 0,
-          lastActiveDate: data.lastActiveDate || '',
-          readingProgress: readingProgress,
-          timeSpentReading: data.timeSpentReading || 0,
-          currentPage: data.currentPage,
-          sessionStart: data.sessionStart
-        });
-        setRecentActivities(data.recentActivities || []);
-      }
-    });
-
-    return unsubscribe;
+    if (user) {
+      loadUserStats();
+    } else {
+      setUserStats(defaultStats);
+      setLoading(false);
+    }
   }, [user]);
 
-  const logActivity = async (activity: UserActivity) => {
-    if (!user) return;
-
+  const loadUserStats = async () => {
+    setLoading(true);
     try {
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        recentActivities: arrayUnion({
-          ...activity,
-          timestamp: serverTimestamp()
-        }),
-        lastActiveDate: new Date().toISOString(),
-        [`${activity.type}_lastUpdate`]: serverTimestamp()
-      });
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUserStats({
+          totalReadingDays: data.totalReadingDays || 0,
+          readingStreak: data.readingStreak || 0,
+          messagesCount: data.messagesCount || 0,
+          timeSpentReading: data.timeSpentReading || 0,
+          readingProgress: data.readingProgress || [],
+        });
+      } else {
+        console.log("No such document!");
+        setUserStats(defaultStats);
+      }
     } catch (error) {
-      console.error('Error logging activity:', error);
+      console.error("Error fetching user data:", error);
+      setUserStats(defaultStats);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateReadingProgress = async (day: number, completed: boolean) => {
+  const updateReadingProgress = useCallback(async (day: number, completed: boolean) => {
     if (!user) return;
 
     try {
       const userRef = doc(db, 'users', user.uid);
-      let newProgress = [...userStats.readingProgress];
-      
-      if (completed && !newProgress.includes(day)) {
-        newProgress.push(day);
-      } else if (!completed) {
-        newProgress = newProgress.filter(d => d !== day);
-      }
-
-      const streak = calculateStreak(newProgress);
-
-      await updateDoc(userRef, {
-        readingProgress: newProgress,
-        totalReadingDays: newProgress.length,
-        readingStreak: streak,
-        lastActiveDate: new Date().toISOString(),
-        timeSpentReading: userStats.timeSpentReading + (completed ? 15 : 0) // Add 15 minutes per completed day
-      });
+      const userDoc = await getDoc(userRef);
+      let currentProgress = userDoc.exists() && userDoc.data().readingProgress ? userDoc.data().readingProgress : [];
 
       if (completed) {
-        await logActivity({
-          type: 'reading_completed',
-          timestamp: serverTimestamp(),
-          data: { day }
+        currentProgress = Array.isArray(currentProgress) ? [...currentProgress, day] : [day];
+        await updateDoc(userRef, {
+          readingProgress: currentProgress,
+          totalReadingDays: increment(1),
+          readingStreak: increment(1),
         });
+        setUserStats(prevState => ({
+          ...prevState,
+          totalReadingDays: prevState.totalReadingDays + 1,
+          readingStreak: prevState.readingStreak + 1,
+          readingProgress: currentProgress,
+        }));
+      } else {
+        currentProgress = Array.isArray(currentProgress) ? currentProgress.filter((d: number) => d !== day) : [];
+        await updateDoc(userRef, {
+          readingProgress: currentProgress,
+          totalReadingDays: increment(-1),
+          readingStreak: 0,
+        });
+        setUserStats(prevState => ({
+          ...prevState,
+          totalReadingDays: prevState.totalReadingDays - 1,
+          readingStreak: 0,
+          readingProgress: currentProgress,
+        }));
       }
     } catch (error) {
-      console.error('Error updating reading progress:', error);
+      console.error("Error updating reading progress:", error);
     }
-  };
+  }, [user]);
 
-  const calculateStreak = (progressArray: number[]) => {
-    if (progressArray.length === 0) return 0;
-    
-    const today = getTodayDayNumber();
-    const sortedDays = progressArray.sort((a, b) => b - a);
-    let streak = 0;
-    
-    // Check from today backwards
-    for (let i = today; i >= 1; i--) {
-      if (sortedDays.includes(i)) {
-        streak++;
-      } else {
-        break;
-      }
+  const getTodayDayNumber = useCallback(() => {
+    return getChallengeDay();
+  }, []);
+
+  const trackActivity = useCallback(async (activityType: string, details: any) => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        [`activity.${Date.now()}`]: {
+          type: activityType,
+          details,
+          timestamp: new Date().toISOString()
+        }
+      });
+      console.log(`Tracked activity: ${activityType}`);
+    } catch (error) {
+      console.error('Error tracking activity:', error);
     }
-    
-    return streak;
-  };
+  }, [user]);
 
-  const getTodayDayNumber = () => {
-    const startDate = new Date('2025-06-01');
-    const today = new Date();
-    const diffTime = today.getTime() - startDate.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(1, Math.min(diffDays, 90));
-  };
+  const trackBibleReading = useCallback(async (day: number, timeSpent: number) => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        [`bibleReading.day${day}`]: {
+          timeSpent,
+          timestamp: new Date().toISOString()
+        },
+        totalBibleReadingTime: increment(timeSpent)
+      });
+
+      console.log(`Tracked Bible reading for day ${day}: ${timeSpent} seconds`);
+    } catch (error) {
+      console.error('Error tracking Bible reading:', error);
+    }
+  }, [user]);
 
   return {
     userStats,
-    recentActivities,
-    logActivity,
     updateReadingProgress,
-    getTodayDayNumber
+    getTodayDayNumber,
+    trackActivity,
+    trackBibleReading,
+    loading
   };
 };

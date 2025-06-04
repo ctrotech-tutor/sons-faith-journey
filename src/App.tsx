@@ -1,108 +1,74 @@
-import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-import { AuthProvider } from "@/lib/context/AuthProvider";
-import { useShield } from './lib/hooks/useShield';
-import {useMobileGuard} from './lib/hooks/useMobileGuard';
-import ScrollToTop from "@/components/ScrollToTop";
-const Index = lazy(() => import("./pages/Index"));
-const Register = lazy(() => import("./pages/Register"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Admin = lazy(() => import("./pages/Admin"));
-const Community = lazy(() => import("./pages/Community"));
-const ChurchRoom = lazy(() => import("./pages/ChurchRoom"));
-const ChatWithSupervisor = lazy(() => import("./pages/ChatWithSupervisor"));
-const AdminInbox = lazy(() => import("./pages/AdminInbox"));
-const Profile = lazy(() => import("./pages/Profile"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const AuthModal = lazy(() => import("@/components/AuthModal"));
-const Reading = lazy(() => import("./pages/Reading"));
-const CreatePost = lazy(() => import("./pages/CreatePost"));
-const queryClient = new QueryClient();
+import React, { Suspense } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import Layout from '@/components/Layout';
+import ScrollToTop from '@/components/ScrollToTop';
 
+// Pages
+import Home from '@/pages/Home';
+import Dashboard from '@/pages/Dashboard';
+import Reading from '@/pages/Reading';
+import Profile from '@/pages/Profile';
+import Community from '@/pages/Community';
+import Admin from '@/pages/Admin';
+import Signin from '@/pages/Signin';
+import Signup from '@/pages/Signup';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import Error404 from '@/pages/Error404';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { redirect } from 'react-router-dom';
+import BiblePage from '@/pages/Bible';
 
+function AppContent() {
+  const { user, loading } = useAuth();
 
-const AppContent = () => {
-  //useShield();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Detect if current path is for auth modal
-  const authMatch = location.pathname.startsWith("/auth/");
-  const mode = location.pathname.endsWith("register") ? "register" : "login";
-
-  // Close modal handler
-  const closeModal = () => {
-    navigate("/", { replace: true });
-  };
-
-  const { showBlock, BlockUI } = useMobileGuard();
-
-  if (showBlock) {
-    return <BlockUI />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const LoadingFallback = () => (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-lg"></div>
-        <p className="text-gray-600">Please wait...</p>
-      </div>
-    </div>
-  );
-
-
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <Router>
+      <Layout>
+        <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={user ? <Dashboard /> : redirect('/signin')} />
+            <Route path="/reading" element={user ? <Reading /> : redirect('/signin')} />
+            <Route path="/profile" element={user ? <Profile /> : redirect('/signin')} />
+            <Route path="/community" element={user ? <Community />} />
+            <Route path="/admin" element={user ? <Admin />} />
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<Error404 />} />
+            <Route path="/bible/:passage/:day" element={<BiblePage />} />
+          </Routes>
+        </Suspense>
+      </Layout>
       <ScrollToTop />
-    
-      {/* Main Routes */}
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/:userId" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/community" element={<Community />} />
-        <Route path="/church-room" element={<ChurchRoom />} />
-        <Route path="/chat/:chatId" element={<ChurchRoom />} />
-        <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
-        <Route path="/admin-inbox" element={<AdminInbox />} />
-        <Route path="/reading" element={<Reading />} />
-        <Route path="/create-post" element={<CreatePost />} />
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-
-      {authMatch && (
-        <AuthModal isOpen={true} onClose={closeModal} initialMode={mode} />
-      )}
-    </Suspense>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
       <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </Router>
+  );
+}
+
+function App() {
+  return (
+    <AppContent />
+  );
+}
 
 export default App;
