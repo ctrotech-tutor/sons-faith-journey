@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, SparklesIcon } from "lucide-react";
 
 const fallbackQuotes = [
   { q: "Iron sharpens iron, and one man sharpens another.", a: "Proverbs 27:17" },
@@ -77,85 +77,88 @@ const QuoteCard = () => {
   };
 
   return (
-    <div className="bg-white flex flex-col items-center justify-center">
-      <h2 className="text-2xl font-bold text-gray-900">Daily Quote</h2>
+    <div className="bg-white/70 dark:bg-gray-900/40 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl shadow-inner mb-12">
+  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">
+    <SparklesIcon className="inline-block mr-2 text-yellow-600" /> Daily Quote
+  </h2>
 
-      {/* Quote display with swipe and glassmorphism */}
-      <div className="relative w-full max-w-lg">
-        <AnimatePresence mode="wait">
-          {!loading && quotes.length > 0 && (
-            <motion.blockquote
-              key={index}
-              className="cursor-grab select-none rounded-3xl bg-white/70 backdrop-blur-md shadow-xl p-10 text-center text-purple-900 font-semibold italic text-xl md:text-2xl"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.3}
-              onDragEnd={handleDragEnd}
-              initial={{ opacity: 0, x: 100, scale: 0.85 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -100, scale: 0.85 }}
-              transition={spring}
-            >
-              “{quotes[index].q}”
-              <cite className="block mt-6 text-purple-700 font-medium text-lg">
-                — {quotes[index].a}
-              </cite>
-            </motion.blockquote>
-          )}
-
-          {loading && (
-            <motion.div
-              key="loading"
-              className="rounded-3xl bg-white/60 backdrop-blur-md shadow-lg p-10 text-center text-purple-700 animate-pulse font-semibold text-lg"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              Loading quotes...
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Pagination dots */}
-        <div className="flex justify-center mt-6 space-x-3">
-          {quotes.map((_, i) => (
-            <motion.span
-              key={i}
-              className="block w-3 h-3 rounded-full cursor-pointer"
-              style={{ backgroundColor: i === index ? "#7c3aed" : "#c4b5fd" }}
-              onClick={() => setIndex(i)}
-              whileHover={{ scale: 1.4 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            />
-          ))}
-        </div>
-
-        {/* Refresh button */}
-        <motion.button
-          onClick={fetchQuotes}
-          disabled={loading}
-          whileHover={{ scale: 1.1, backgroundColor: "#9d7edd" }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden mt-10 items-center justify-center gap-3 bg-purple-400 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed select-none"
+  <div className="relative w-full max-w-lg">
+    <AnimatePresence mode="wait">
+      {!loading && quotes.length > 0 && (
+        <motion.blockquote
+          key={index}
+          className="cursor-grab select-none rounded-3xl bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl shadow-2xl px-8 py-10 text-center text-purple-900 dark:text-purple-200 font-semibold italic text-lg sm:text-xl md:text-2xl transition-all"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.3}
+          onDragEnd={handleDragEnd}
+          initial={{ opacity: 0, x: 100, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: -100, scale: 0.85 }}
+          transition={spring}
         >
-          <motion.div
-            animate={loading ? { rotate: 360 } : { rotate: 0 }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-            className="inline-block"
-          >
-            <RefreshCcw size={20} />
-          </motion.div>
-          Refresh Quotes
-        </motion.button>
+          “{quotes[index].q}”
+          <cite className="block mt-6 text-purple-700 dark:text-purple-300 font-medium text-lg">
+            — {quotes[index].a}
+          </cite>
+        </motion.blockquote>
+      )}
 
-        {/* Error message */}
-        {error && (
-          <p className="hidden mt-4 text-center text-red-600 font-medium">
-            Couldn&apos;t fetch new quotes. Showing fallback quotes.
-          </p>
-        )}
-      </div>
+      {loading && (
+        <motion.div
+          key="loading"
+          className="rounded-3xl bg-white/60 dark:bg-gray-700/60 backdrop-blur-xl shadow-lg px-10 py-10 text-center text-purple-700 dark:text-purple-200 font-semibold text-lg animate-pulse"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          Fetching today's quote...
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Pagination Dots */}
+    <div className="flex justify-center mt-6 space-x-2">
+      {quotes.map((_, i) => (
+        <motion.span
+          key={i}
+          className={`w-3 h-3 rounded-full ${
+            i === index ? "bg-purple-600" : "bg-purple-300"
+          } cursor-pointer`}
+          onClick={() => setIndex(i)}
+          whileHover={{ scale: 1.4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        />
+      ))}
     </div>
+
+    {/* Refresh Button */}
+    <motion.button
+      onClick={fetchQuotes}
+      disabled={loading}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="mt-8 mx-auto hidden items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 transition-colors text-white font-semibold py-2.5 px-6 rounded-full shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      <motion.div
+        animate={loading ? { rotate: 360 } : { rotate: 0 }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+        className="inline-block"
+      >
+        <RefreshCcw size={18} />
+      </motion.div>
+      {loading ? "Refreshing..." : "New Quote"}
+    </motion.button>
+
+    {/* Error State */}
+    {error && (
+      <p className="mt-4 text-center text-red-600 font-medium text-sm hidden">
+        Couldn’t fetch quotes. Showing offline version.
+      </p>
+    )}
+  </div>
+</div>
+
   );
 };
 

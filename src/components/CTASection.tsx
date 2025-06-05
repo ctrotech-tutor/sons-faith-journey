@@ -26,28 +26,42 @@ const CTASection: React.FC<CTAProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
-      viewport={{ once: true }}
-      className={`max-w-xl mx-auto mt-20 mb-20 p-10 bg-gradient-to-tr from-purple-700 via-purple-800 to-purple-900 rounded-3xl shadow-lg text-center ${className}`}
+  initial={{ opacity: 0, y: 40, scale: 0.95 }}
+  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+  transition={{ duration: 0.9, ease: 'easeOut', bounce: 0.2 }}
+  viewport={{ once: true }}
+  className={`bg-white/70 dark:bg-gray-800/50 backdrop-blur-md border border-purple-300/30 dark:border-gray-600/20 shadow-md hover:shadow-xl rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ease-in-out
+    ${className}`}
+    style={{ position: 'relative', overflow: 'hidden' }}
+>
+  {/* Optional sparkles or light rays */}
+  {/* <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" /> */}
+
+  <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight leading-tight drop-shadow-md">
+    {headline}
+  </h3>
+
+  <p className="text-md sm:text-lg md:text-xl text-purple-900  dark:text-purple-200 mb-10 leading-relaxed max-w-xl mx-auto">
+    {description}
+  </p>
+
+  <motion.div
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.98 }}
+    transition={{ type: "spring", stiffness: 300 }}
+  >
+    <Button
+      asChild
+      size="lg"
+      className="relative bg-white text-purple-900 font-bold hover:bg-purple-100 hover:text-purple-800 dark:bg-gray-700 dark:text-white dark:shadow-lg dark:hover:shadow-2xl shadow transition-all duration-300 ease-in-out px-10 py-4 rounded-xl tracking-wide"
     >
-      <h3 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-wide drop-shadow-md">
-        {headline}
-      </h3>
-      <p className="text-lg md:text-xl text-purple-200 mb-10 max-w-lg mx-auto leading-relaxed">
-        {description}
-      </p>
-      <Button
-        asChild
-        size="lg"
-        className="bg-white text-purple-900 font-semibold hover:bg-purple-50 shadow-md hover:shadow-lg transform hover:scale-105 transition-transform duration-300 px-10 py-4 rounded-xl"
-      >
-        <Link to={user ? userButtonLink : guestButtonLink}>
-          {user ? userButtonText : guestButtonText}
-        </Link>
-      </Button>
-    </motion.div>
+      <Link to={user ? userButtonLink : guestButtonLink}>
+        {user ? userButtonText : guestButtonText}
+      </Link>
+    </Button>
+  </motion.div>
+</motion.div>
+
   );
 };
 
