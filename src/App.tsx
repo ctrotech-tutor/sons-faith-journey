@@ -54,10 +54,10 @@ const AppContent = () => {
   }
 
   const LoadingFallback = () => (
-    <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-lg"></div>
-        <p className="text-gray-600">Please wait...</p>
+        <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-md"></div>
+        <p className="text-gray-600 dark:text-gray-300">Please wait...</p>
       </div>
     </div>
   );
