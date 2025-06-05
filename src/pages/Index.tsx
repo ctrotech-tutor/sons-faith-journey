@@ -57,12 +57,12 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white rounded-b-[50px] pt-10">
+      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white dark:bg-gradient-to-br dark:from-purple-900 dark:via-purple-800 dark:to-indigo-900 rounded-b-[50px] pt-16 pb-20 px-4 md:px-12">
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-1000" />
-          <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-2000" />
+        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+          <div className="absolute top-16 left-10 w-72 h-72 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-[pulse_8s_ease-in-out_infinite] dark:from-purple-500 dark:to-indigo-500" />
+          <div className="absolute top-32 right-10 w-80 h-80 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-[pulse_10s_ease-in-out_infinite] delay-1000 dark:from-blue-500 dark:to-purple-500" />
+          <div className="absolute bottom-10 left-1/3 w-72 h-72 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-[pulse_12s_ease-in-out_infinite] delay-2000 dark:from-indigo-500 dark:to-blue-500" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -117,7 +117,7 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className=""
             >
-              
+
               <CountdownTimer />
             </motion.div>
 
