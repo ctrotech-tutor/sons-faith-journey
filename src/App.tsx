@@ -1,10 +1,10 @@
 
-
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Layout from '@/components/Layout';
 import ScrollToTop from '@/components/ScrollToTop';
+import { AuthProvider } from '@/lib/context/AuthProvider';
 
 // Pages
 import Index from '@/pages/Index';
@@ -65,9 +65,10 @@ function AppContent() {
 
 function App() {
   return (
-    <AppContent />
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
 export default App;
-
