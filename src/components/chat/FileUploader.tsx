@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, Upload, Image, Video, File } from 'lucide-react';
 import { convertFileToBase64, getFileType, validateFileSize } from '@/lib/fileUtils';
 import { useToast } from '@/lib/hooks/use-toast';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 interface FileUploaderProps {
   onUpload: (url: string, type: 'image' | 'video' | 'audio') => void;
@@ -20,7 +21,7 @@ const FileUploader = ({ onUpload, onClose }: FileUploaderProps) => {
     if (!file) return;
 
     // Validate file size (10MB limit)
-    if (!validateFileSize(file, 10)) {
+    if (!validateFileSize(file, 30)) {
       toast({
         title: 'File too large',
         description: 'Please select a file smaller than 10MB.',
@@ -31,10 +32,10 @@ const FileUploader = ({ onUpload, onClose }: FileUploaderProps) => {
 
     setUploading(true);
     try {
-      const base64String = await convertFileToBase64(file);
+      const url = await uploadToCloudinary(file);
       const fileType = getFileType(file);
 
-      onUpload(base64String, fileType);
+      onUpload(url, fileType);
       onClose();
       
       toast({

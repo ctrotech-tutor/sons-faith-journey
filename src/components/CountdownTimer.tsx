@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getChallengeDay } from '@/lib/getChallengeDay';
-import { useAuth } from '@/lib/hooks/useAuth'; // 🔐 adjust path if needed
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const CountdownTimer = () => {
-  const { user } = useAuth(); // 👈 pulls user directly
+  const { user } = useAuth();
   const isAuthenticated = !!user;
 
   const [timeLeft, setTimeLeft] = useState({
@@ -65,16 +65,16 @@ const CountdownTimer = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center text-white py-8"
+          className="text-center text-white py-0"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            📖 Day {currentDay} of the 90-Day Challenge
+            Day {currentDay} of the 90-Day Challenge
           </h2>
           <p className="text-lg md:text-xl text-purple-200 mb-4">
             Let's grow in the Word together. Today is Day {currentDay}.
           </p>
           <a
-            href={`/reading/day-${currentDay}`}
+            href={`/reading/`}
             className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             Start Day {currentDay} Reading
@@ -89,10 +89,10 @@ const CountdownTimer = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center text-white py-8"
+        className="text-center text-white"
       >
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          🙌 The 90-Day Bible Reading Challenge Has Started!
+          The 90-Day Bible Reading Challenge Has Started!
         </h2>
         <p className="text-lg md:text-xl text-purple-200">
           Dive into Day 1 and let the journey begin!

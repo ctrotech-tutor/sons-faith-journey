@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, Users, MessageCircle, Heart, CheckCircle, LogIn, Calendar, Target, Trophy, Star } from 'lucide-react';
-
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import CountdownTimer from '@/components/CountdownTimer';
 import Layout from '@/components/Layout';
 import { Footer } from '@/components/Footer';
@@ -60,7 +60,7 @@ const Index = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white rounded-b-[50px] pt-10">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
+          <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
           <div className="absolute top-40 right-10 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-1000" />
           <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-2000" />
         </div>
@@ -107,7 +107,7 @@ const Index = () => {
               </div>
               <div className="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
                 <div className="text-3xl font-bold">1</div>
-                <div className="text-sm text-purple-200">Brotherhood</div>
+                <div className="text-sm text-purple-200">Brother/Sisterhood</div>
               </div>
             </motion.div>
 
@@ -115,11 +115,9 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mb-12"
+              className=""
             >
-              <h2 className="text-3xl md:text-4xl font-semibold mb-8 text-purple-100">
-                Challenge Begins In:
-              </h2>
+              
               <CountdownTimer />
             </motion.div>
 
@@ -127,18 +125,22 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="space-y-8"
+              className=""
             >
               {user ? (
                 <div className="space-y-6">
                   <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-2xl">
+                    <Avatar className="w-24 h-24 mx-auto mb-4 shadow-sm">
+                      <AvatarImage src={userProfile?.profilePhoto || '/default-avatar.png'} alt={userProfile?.displayName || 'User Avatar'} />
+                      <AvatarFallback>{userProfile?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
                     <h3 className="text-2xl font-bold mb-2">Welcome back, {userProfile?.displayName || 'Warrior'}!</h3>
                     <p className="text-purple-200 mb-4">Ready to continue your spiritual journey?</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button asChild size="lg" className="bg-white text-purple-700 hover:bg-purple-50">
                         <Link to="/reading">Continue Reading</Link>
                       </Button>
-                      <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-purple-700">
+                      <Button asChild size="lg" variant="outline" className="border-white text-purple-700 hover:bg-white hover:text-purple-700">
                         <Link to="/community">Join Discussion</Link>
                       </Button>
                     </div>
@@ -153,15 +155,15 @@ const Index = () => {
                       className="bg-white text-purple-700 hover:bg-purple-50 text-lg py-4 px-8 gap-2"
                     >
                       <LogIn className="h-5 w-5" />
-                      Start Your Journey
+                      Continue Your Journey
                     </Button>
                     <Button
                       onClick={() => navigate('/auth/register')}
                       size="lg"
                       variant="outline"
-                      className="border-white text-white hover:bg-white hover:text-purple-700 text-lg py-4 px-8"
+                      className="border-white text-purple-700 hover:bg-white hover:text-purple-700 text-lg py-4 px-8"
                     >
-                      Join The Brotherhood
+                      Join The Sons
                     </Button>
                   </div>
                 </div>
@@ -174,14 +176,14 @@ const Index = () => {
                   className="mt-8 p-6 bg-green-600/20 border border-green-400/30 rounded-xl backdrop-blur-sm"
                 >
                   <div className="flex items-center justify-center space-x-3 mb-4">
-                    <CheckCircle className="h-6 w-6 text-green-300" />
-                    <span className="text-green-200 font-semibold text-lg">
+                    <CheckCircle className="h-6 w-6 text-purple-300" />
+                    <span className="text-purple-200 font-semibold text-lg">
                       Registration Successful!
                     </span>
                   </div>
                   <Button
                     onClick={openWhatsApp}
-                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    className="bg-purple-600 hover:bg-purple-700 text-white w-full"
                     size="lg"
                   >
                     Join WhatsApp Community
@@ -218,7 +220,7 @@ const Index = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <Badge className="bg-purple-100 text-purple-700 mb-4">What We Offer</Badge>
+          <Badge className="bg-purple-100 text-purple-700 mb-4 hover:text-white">What We Offer</Badge>
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             Your Journey Awaits
           </h2>
@@ -269,7 +271,7 @@ const Index = () => {
           </div>
         </motion.div>
 
-        <div className="mt-20">
+        <div className="mt-20 mb-2">
           <QuoteCard />
         </div>
 

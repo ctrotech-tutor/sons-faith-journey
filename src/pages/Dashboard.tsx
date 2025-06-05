@@ -40,28 +40,7 @@ const Dashboard = () => {
     <Layout>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Welcome Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {timeGreeting()}, {userProfile?.displayName || 'Friend'}! 👋
-                </h1>
-                <p className="text-gray-600">Welcome back to your faith journey</p>
-              </div>
-              <Button
-                onClick={() => navigate('/create-post')}
-                className="bg-[#FF9606] hover:bg-[#FF9606]/90 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Post
-              </Button>
-            </div>
-          </motion.div>
+          
 
           {/* Progress Overview */}
           <motion.div
