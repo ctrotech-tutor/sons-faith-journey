@@ -185,8 +185,8 @@ const currentLabel = getCurrentNavLabel();
                     variant={item.badge === 'Private' ? 'secondary' : 'default'}
                     className={
                       item.badge === 'Private'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-[#FF9606] text-white'
+                        ? 'bg-purple-100 text-blue-800'
+                        : 'bg-purple-600 text-white'
                     }
                   >
                     {item.badge}

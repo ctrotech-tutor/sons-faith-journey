@@ -80,7 +80,7 @@ const AppContent = () => {
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/reading" element={<Reading />} />
         <Route path="/create-post" element={<CreatePost />} />
-        
+      
         <Route path="*" element={<NotFound />} />
       </Routes>
 
