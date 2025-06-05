@@ -88,126 +88,134 @@ const Dashboard = () => {
           </motion.div>
 
           {/* Progress Overview (Refined Version) */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.1, duration: 0.5 }}
-  className="mb-10"
->
-  <Card className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg py-6 sm:p-8 border border-gray-200 dark:border-gray-700 dark:bg-gray-900/60 transition-all">
-    <CardContent className="p-6 sm:p-8">
-      {/* Stat Grid */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        {/* Day Streak */}
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Flame className="h-8 w-8 text-orange-500" />
-          </div>
-          <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            {userStats.readingStreak}
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Day Streak</p>
-        </div>
-
-        {/* Days Completed */}
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <BookOpen className="h-8 w-8 text-green-500" />
-          </div>
-          <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            {userStats.totalReadingDays}
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">D-completed</p>
-        </div>
-
-        {/* Progress */}
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Target className="h-8 w-8 text-blue-500" />
-          </div>
-          <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            {Math.round(progressPercentage)}%
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Progress</p>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div>
-        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-          <span>Journey Progress</span>
-          <span>{userStats.totalReadingDays}/90 days</span>
-        </div>
-        <Progress
-          value={progressPercentage}
-          className="h-3 bg-gray-200 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-full overflow-hidden"
-        >
-          <div
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500 ease-out"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </Progress>
-      </div>
-    </CardContent>
-  </Card>
-</motion.div>
-
-          
-          {/* Quick Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="mb-10"
           >
-            <Link to="/reading">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                <CardContent className="p-6 text-center">
-                  <div className="bg-blue-100 p-3 rounded-full w-fit mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
-                    <BookOpen className="h-6 w-6 text-blue-600" />
+            <Card className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg py-6 sm:p-8 border border-gray-200 dark:border-gray-700 dark:bg-gray-900/60 transition-all">
+              <CardContent className="p-6 sm:p-8">
+                {/* Stat Grid */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  {/* Day Streak */}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Flame className="h-8 w-8 text-orange-500" />
+                    </div>
+                    <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                      {userStats.readingStreak}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Day Streak</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Today's Reading</h3>
-                  <p className="text-sm text-gray-600">Continue your journey</p>
-                </CardContent>
-              </Card>
-            </Link>
 
-            <Link to="/community">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                <CardContent className="p-6 text-center">
-                  <div className="bg-green-100 p-3 rounded-full w-fit mx-auto mb-4 group-hover:bg-green-200 transition-colors">
-                    <Users className="h-6 w-6 text-green-600" />
+                  {/* Days Completed */}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <BookOpen className="h-8 w-8 text-green-500" />
+                    </div>
+                    <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                      {userStats.totalReadingDays}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">D-completed</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Community</h3>
-                  <p className="text-sm text-gray-600">Connect with others</p>
-                </CardContent>
-              </Card>
-            </Link>
 
-            <Link to="/church-room">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                <CardContent className="p-6 text-center">
-                  <div className="bg-purple-100 p-3 rounded-full w-fit mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
-                    <MessageSquare className="h-6 w-6 text-purple-600" />
+                  {/* Progress */}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                      {Math.round(progressPercentage)}%
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Progress</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Church Room</h3>
-                  <p className="text-sm text-gray-600">Join the conversation</p>
-                </CardContent>
-              </Card>
-            </Link>
+                </div>
 
-            <Link to="/profile">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                <CardContent className="p-6 text-center">
-                  <div className="bg-orange-100 p-3 rounded-full w-fit mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
-                    <Trophy className="h-6 w-6 text-orange-600" />
+                {/* Progress Bar */}
+                <div>
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Journey Progress</span>
+                    <span>{userStats.totalReadingDays}/90 days</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">My Profile</h3>
-                  <p className="text-sm text-gray-600">View achievements</p>
-                </CardContent>
-              </Card>
-            </Link>
+                  <Progress
+                    value={progressPercentage}
+                    className="h-3 bg-gray-200 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-full overflow-hidden"
+                  >
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500 ease-out"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </Progress>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
+
+          {/* Enhanced Quick Actions */}
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+>
+  {[
+    {
+      to: "/reading",
+      color: "blue",
+      icon: <BookOpen className="h-6 w-6 text-blue-600" />,
+      title: "Today's Reading",
+      desc: "Continue your journey"
+    },
+    {
+      to: "/community",
+      color: "green",
+      icon: <Users className="h-6 w-6 text-green-600" />,
+      title: "Community",
+      desc: "Connect with others"
+    },
+    {
+      to: "/church-room",
+      color: "purple",
+      icon: <MessageSquare className="h-6 w-6 text-purple-600" />,
+      title: "Church Room",
+      desc: "Join the conversation"
+    },
+    {
+      to: "/profile",
+      color: "orange",
+      icon: <Trophy className="h-6 w-6 text-orange-600" />,
+      title: "My Profile",
+      desc: "View achievements"
+    }
+  ].map((action, i) => (
+    <motion.div
+      key={action.to}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 + i * 0.1 }}
+    >
+      <Link to={action.to}>
+        <div
+          className={`group bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl py-10 shadow-md hover:shadow-xl transition-all cursor-pointer`}
+        >
+          <div
+            className={`bg-${action.color}-100 group-hover:bg-${action.color}-200 dark:bg-opacity-20 p-3 rounded-full w-fit mx-auto mb-4 transition-colors`}
+          >
+            {action.icon}
+          </div>
+          <h3 className="text-lg font-semibold text-center text-gray-900 dark:text-white mb-1">
+            {action.title}
+          </h3>
+          <p className="text-sm text-center text-gray-600 dark:text-gray-300">
+            {action.desc}
+          </p>
+        </div>
+      </Link>
+    </motion.div>
+  ))}
+</motion.div>
+
 
           {/* Recent Activity */}
           <motion.div
