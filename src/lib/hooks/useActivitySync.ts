@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 interface UserActivity {
-  type: 'reading_completed' | 'chat_message' | 'community_post' | 'profile_update' | 'login';
+  type: 'reading_completed' | 'chat_message' | 'community_post' | 'profile_update' | 'login' | 'bible_reading';
   timestamp: any;
   data?: any;
 }
@@ -34,6 +34,7 @@ export const useActivitySync = () => {
     timeSpentReading: 0
   });
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -105,7 +106,7 @@ export const useActivitySync = () => {
         totalReadingDays: newProgress.length,
         readingStreak: streak,
         lastActiveDate: new Date().toISOString(),
-        timeSpentReading: userStats.timeSpentReading + (completed ? 15 : 0) // Add 15 minutes per completed day
+        timeSpentReading: userStats.timeSpentReading + (completed ? 15 : 0)
       });
 
       if (completed) {
@@ -117,6 +118,40 @@ export const useActivitySync = () => {
       }
     } catch (error) {
       console.error('Error updating reading progress:', error);
+    }
+  };
+
+  const trackActivity = async (activityType: string, details: any) => {
+    if (!user) return;
+
+    try {
+      await logActivity({
+        type: activityType as any,
+        timestamp: serverTimestamp(),
+        data: details
+      });
+    } catch (error) {
+      console.error('Error tracking activity:', error);
+    }
+  };
+
+  const trackBibleReading = async (day: number, timeSpent: number) => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        timeSpentReading: userStats.timeSpentReading + timeSpent,
+        lastActiveDate: new Date().toISOString()
+      });
+
+      await logActivity({
+        type: 'bible_reading',
+        timestamp: serverTimestamp(),
+        data: { day, timeSpent }
+      });
+    } catch (error) {
+      console.error('Error tracking Bible reading:', error);
     }
   };
 
@@ -152,6 +187,9 @@ export const useActivitySync = () => {
     recentActivities,
     logActivity,
     updateReadingProgress,
-    getTodayDayNumber
+    getTodayDayNumber,
+    trackActivity,
+    trackBibleReading,
+    loading
   };
 };

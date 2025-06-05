@@ -18,6 +18,11 @@ export default function ReadingPage() {
   const monthData = getMonthData(currentMonth);
   const todayDay = getTodayDayNumber();
 
+  // Function to check if a day is locked
+  const isDayLocked = (dayNumber: number) => {
+    return dayNumber > todayDay;
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-4">
@@ -130,6 +135,7 @@ export default function ReadingPage() {
               dayData={dayData}
               isCompleted={Array.isArray(userStats.readingProgress) && userStats.readingProgress.includes(dayData.day)}
               isToday={dayData.day === todayDay}
+              isLocked={isDayLocked(dayData.day)}
               onToggleComplete={(completed) => updateReadingProgress(dayData.day, completed)}
               animationDelay={index * 0.05}
             />

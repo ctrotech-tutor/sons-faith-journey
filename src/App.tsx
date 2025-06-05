@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -27,9 +28,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
+const Bible = lazy(() => import("./pages/Bible"));
 const queryClient = new QueryClient();
-
-
 
 const AppContent = () => {
   //useShield();
@@ -60,7 +60,6 @@ const AppContent = () => {
     </div>
   );
 
-
   return (
     <Suspense fallback={<LoadingFallback />}>
       <ScrollToTop />
@@ -80,6 +79,7 @@ const AppContent = () => {
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/reading" element={<Reading />} />
         <Route path="/create-post" element={<CreatePost />} />
+        <Route path="/bible/:passage/:day" element={<Bible />} />
         
         <Route path="*" element={<NotFound />} />
       </Routes>
