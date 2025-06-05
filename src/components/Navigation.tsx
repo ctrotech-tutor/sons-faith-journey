@@ -79,7 +79,7 @@ const currentLabel = getCurrentNavLabel();
   if (!user) {
     return (
       <>
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-2">
               <Link to="/" className="flex items-center space-x-2">
@@ -102,8 +102,8 @@ const currentLabel = getCurrentNavLabel();
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-lg">
+
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-2">
             <Link to="/" className="flex items-center gap-2">
@@ -117,7 +117,7 @@ const currentLabel = getCurrentNavLabel();
             <Button
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
-              className="bg-white/90 backdrop-blur-sm border-purple-200 text-black hover:bg-purple-50 lg:hidden"
+              className="bg-white/90 dark:bg-gray-900/90 dark:text-white backdrop-blur-sm border-purple-200 text-black hover:bg-purple-50 lg:hidden"
             >
               {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
@@ -132,24 +132,24 @@ const currentLabel = getCurrentNavLabel();
           x: isOpen || typeof window !== 'undefined' && window.innerWidth >= 1024 ? 0 : -300,
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="sm:hidden fixed left-0 top-0 h-full w-64 bg-white/95 backdrop-blur-md border-r border-purple-200 shadow-lg z-50 lg:relative"
+        className="sm:hidden fixed left-0 top-0 h-full w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-r border-purple-200 dark:border-gray-800 shadow-lg z-50 lg:relative"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-4 border-b border-purple-200">
-            <Link to="/" className="flex items-center space-x-3">
+          <div className="px-4 py-[5.5px] border-b border-purple-200 dark:border-gray-800 flex items-center w-full">
+            <Link to="/" className="flex items-center gap-3">
               <div className="">
-                <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
+                <img src={Assets.Logo4} alt="THE SONS Logo" className="h-8 w-8 rounded-lg object-cover" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">THE SONS</h1>
-                <p className="text-xs text-purple-600">Faith Journey</p>
+              <div className="flex flex-col items-start">
+                <h1 className="text-xl font-bold text-gray-800 dark:text-purple-200">THE SONS</h1>
+                <p className="text-xs text-purple-600 dark:text-purple-400">Faith Journey</p>
               </div>
             </Link>
           </div>
 
           {/* User Info */}
-          <div className="p-4 border-b border-purple-200  hover:bg-gray-100 transition-colors">
+          <div className="px-4 py-2 border-b border-purple-200 dark:border-gray-800 active:bg-gray-100 dark:active:bg-gray-950 transition-colors">
             <Link to="/profile" className="flex items-center gap-3 rounded-lg">
               <Avatar>
                 <AvatarImage src={userProfile?.profilePhoto || undefined} />
@@ -158,10 +158,10 @@ const currentLabel = getCurrentNavLabel();
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
+                <p className="text-sm font-medium text-gray-800 dark:text-purple-200 truncate">
                   {userProfile?.displayName || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 truncate">{user.email}</p>
               </div>
             </Link>
           </div>
@@ -174,8 +174,8 @@ const currentLabel = getCurrentNavLabel();
                 to={item.path}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-gray-800  dark:text-purple-200'
+                  : 'text-gray-600 active:bg-gray-100 dark:active:bg-gray-800 dark:text-gray-300'
                   }`}
               >
                 <item.icon className="h-5 w-5" />
@@ -185,8 +185,8 @@ const currentLabel = getCurrentNavLabel();
                     variant={item.badge === 'Private' ? 'secondary' : 'default'}
                     className={
                       item.badge === 'Private'
-                        ? 'bg-purple-100 text-blue-800'
-                        : 'bg-purple-600 text-white'
+                        ? 'bg-purple-100 text-blue-800 dark:bg-gray-800 dark:text-purple-200'
+                        : 'bg-purple-600 text-white dark:bg-purple-200 dark:text-gray-900'
                     }
                   >
                     {item.badge}
@@ -199,7 +199,7 @@ const currentLabel = getCurrentNavLabel();
             <Link
               to="/profile"
               onClick={() => setIsOpen(false)}
-              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${isActive('/profile')
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive('/profile')
                 ? 'bg-purple-100 text-purple-700'
                 : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -210,7 +210,7 @@ const currentLabel = getCurrentNavLabel();
 
             {/* Admin Area */}
             {userProfile?.isAdmin && (
-              <div className="pt-4 mt-4 border-t border-purple-200">
+              <div className="pt-4 mt-4 border-t border-purple-200 dark:border-gray-800">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 px-3">Administration</p>
                 {adminItems.map((item) => (
                   <Link
@@ -218,12 +218,12 @@ const currentLabel = getCurrentNavLabel();
                     to={item.path}
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-purple-100 text-purple-700 dark:bg-gray-800  dark:text-purple-200'
+                      : 'text-gray-600 active:bg-gray-100 dark:active:bg-gray-800 dark:text-gray-300'
                       }`}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                   + <span>{item.label}</span>
                   </Link>
                 ))}
               </div>
@@ -231,11 +231,11 @@ const currentLabel = getCurrentNavLabel();
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-purple-200">
+          <div className="p-4 border-t border-purple-200 dark:border-gray-800">
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50"
+              className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-950 transition-colors"
             >
               <LogOut className="h-5 w-5 mr-3" />
               Sign Out
