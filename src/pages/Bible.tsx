@@ -5,9 +5,8 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, BookOpen, Globe, AlertCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
-import { parsePassage, formatVerseText } from '@/utils/bibleUtils';
 
 interface BibleVerse {
   chapter: number;
@@ -15,48 +14,31 @@ interface BibleVerse {
   text: string;
 }
 
-interface BibleVersion {
-  name: string;
-  abbreviation: string;
-}
-
-interface BibleLanguage {
-  language: string;
-  versions: BibleVersion[];
-}
-
 const Bible = () => {
   const { passage, day } = useParams();
   const navigate = useNavigate();
   const { logActivity } = useActivitySync();
-  const [selectedVersion, setSelectedVersion] = useState('en_kjv');
+  const [selectedVersion, setSelectedVersion] = useState('kjv');
   const [chapterData, setChapterData] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [bookName, setBookName] = useState('');
   const [chapterNumber, setChapterNumber] = useState(1);
-  const [bibleVersions, setBibleVersions] = useState<BibleLanguage[]>([]);
+
+  const bibleVersions = [
+    { value: 'kjv', label: 'King James Version (KJV)' },
+    { value: 'esv', label: 'English Standard Version (ESV)' },
+    { value: 'niv', label: 'New International Version (NIV)' },
+    { value: 'nlt', label: 'New Living Translation (NLT)' },
+    { value: 'nasb', label: 'New American Standard Bible (NASB)' }
+  ];
 
   useEffect(() => {
-    loadBibleVersions();
-  }, []);
-
-  useEffect(() => {
-    if (passage && bibleVersions.length > 0) {
+    if (passage) {
       loadBibleChapter();
       logBibleReading();
     }
-  }, [passage, selectedVersion, bibleVersions]);
-
-  const loadBibleVersions = async () => {
-    try {
-      const versionsData = await import('@/data/json/index.json');
-      setBibleVersions(versionsData.default);
-    } catch (error) {
-      console.error('Error loading Bible versions:', error);
-      setError('Failed to load Bible versions');
-    }
-  };
+  }, [passage, selectedVersion]);
 
   const logBibleReading = async () => {
     if (!passage || !day) return;
@@ -68,6 +50,26 @@ const Bible = () => {
     });
   };
 
+  const parsePassage = (passage: string) => {
+    const decodedPassage = decodeURIComponent(passage);
+    const parts = decodedPassage.trim().split(' ');
+    
+    let bookName = '';
+    let chapterRange = '';
+    
+    if (parts[0].match(/^\d/)) {
+      bookName = parts[0] + ' ' + parts[1];
+      chapterRange = parts[2] || '1';
+    } else {
+      bookName = parts[0];
+      chapterRange = parts[1] || '1';
+    }
+    
+    const chapterNumber = parseInt(chapterRange.split('-')[0]);
+    
+    return { bookName, chapterNumber };
+  };
+
   const loadBibleChapter = async () => {
     if (!passage) return;
     
@@ -75,50 +77,33 @@ const Bible = () => {
     setError('');
     
     try {
-      const decodedPassage = decodeURIComponent(passage);
-      const { bookName: parsedBookName, bookKey, chapterNumber: parsedChapter } = parsePassage(decodedPassage);
-      
-      console.log('Parsed passage:', { parsedBookName, bookKey, parsedChapter });
-      
-      if (!bookKey) {
-        setError(`Book "${parsedBookName}" not found. Please check the passage name.`);
-        setLoading(false);
-        return;
-      }
+      const { bookName: parsedBookName, chapterNumber: parsedChapter } = parsePassage(passage);
       
       setBookName(parsedBookName);
       setChapterNumber(parsedChapter);
 
-      // Load the selected Bible version
-      const bibleData = await import(`@/data/json/${selectedVersion}.json`);
-      console.log('Bible data loaded, looking for book:', bookKey);
+      // Using Bible API (https://bible-api.com/)
+      const response = await fetch(`https://bible-api.com/${parsedBookName}+${parsedChapter}?translation=${selectedVersion}`);
       
-      const bookData = bibleData.default[bookKey];
-      if (!bookData) {
-        setError(`Book "${parsedBookName}" not found in ${selectedVersion}.`);
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to fetch Bible data');
       }
       
-      const chapterVerses = bookData[parsedChapter.toString()];
-      if (!chapterVerses) {
+      const data = await response.json();
+      
+      if (!data.verses || data.verses.length === 0) {
         setError(`Chapter ${parsedChapter} not found in ${parsedBookName}.`);
         setLoading(false);
         return;
       }
       
-      // Convert the chapter data to our verse format
-      const versesArray: BibleVerse[] = Object.entries(chapterVerses).map(([verseNum, text]) => ({
+      const versesArray: BibleVerse[] = data.verses.map((verse: any) => ({
         chapter: parsedChapter,
-        verse: parseInt(verseNum),
-        text: formatVerseText(text as string)
+        verse: verse.verse,
+        text: verse.text.trim()
       }));
       
-      // Sort by verse number
-      versesArray.sort((a, b) => a.verse - b.verse);
-      
       setChapterData(versesArray);
-      console.log('Chapter data loaded:', versesArray.length, 'verses');
       
     } catch (error) {
       console.error('Error loading Bible chapter:', error);
@@ -128,19 +113,11 @@ const Bible = () => {
     }
   };
 
-  const getVersionName = (abbreviation: string) => {
-    for (const lang of bibleVersions) {
-      const version = lang.versions.find(v => v.abbreviation === abbreviation);
-      if (version) return version.name;
-    }
-    return abbreviation;
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading Scripture...</p>
         </div>
       </div>
@@ -196,13 +173,11 @@ const Bible = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {bibleVersions.map((lang) =>
-                    lang.versions.map((version) => (
-                      <SelectItem key={version.abbreviation} value={version.abbreviation}>
-                        {version.name}
-                      </SelectItem>
-                    ))
-                  )}
+                  {bibleVersions.map((version) => (
+                    <SelectItem key={version.value} value={version.value}>
+                      {version.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -213,7 +188,7 @@ const Bible = () => {
               {bookName} {chapterNumber}
             </h1>
             <p className="text-lg text-purple-600">
-              Day {day} Reading • {getVersionName(selectedVersion)}
+              Day {day} Reading • {bibleVersions.find(v => v.value === selectedVersion)?.label}
             </p>
           </div>
         </motion.div>

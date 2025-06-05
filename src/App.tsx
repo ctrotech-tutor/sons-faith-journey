@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,9 +11,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { AuthProvider } from "@/lib/context/AuthProvider";
+import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { useShield } from './lib/hooks/useShield';
 import {useMobileGuard} from './lib/hooks/useMobileGuard';
 import ScrollToTop from "@/components/ScrollToTop";
+
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -29,6 +30,7 @@ const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Bible = lazy(() => import("./pages/Bible"));
+
 const queryClient = new QueryClient();
 
 const AppContent = () => {
@@ -93,15 +95,17 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
