@@ -1,74 +1,108 @@
+import { Suspense, lazy } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { AuthProvider } from "@/lib/context/AuthProvider";
+import { useShield } from './lib/hooks/useShield';
+import {useMobileGuard} from './lib/hooks/useMobileGuard';
+import ScrollToTop from "@/components/ScrollToTop";
+const Index = lazy(() => import("./pages/Index"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Community = lazy(() => import("./pages/Community"));
+const ChurchRoom = lazy(() => import("./pages/ChurchRoom"));
+const ChatWithSupervisor = lazy(() => import("./pages/ChatWithSupervisor"));
+const AdminInbox = lazy(() => import("./pages/AdminInbox"));
+const Profile = lazy(() => import("./pages/Profile"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthModal = lazy(() => import("@/components/AuthModal"));
+const Reading = lazy(() => import("./pages/Reading"));
+const CreatePost = lazy(() => import("./pages/CreatePost"));
+const queryClient = new QueryClient();
 
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import Layout from '@/components/Layout';
-import ScrollToTop from '@/components/ScrollToTop';
-import { AuthProvider } from '@/lib/context/AuthProvider';
 
-// Pages
-import Index from '@/pages/Index';
-import Dashboard from '@/pages/Dashboard';
-import Reading from '@/pages/Reading';
-import Profile from '@/pages/Profile';
-import Community from '@/pages/Community';
-import Admin from '@/pages/Admin';
-import Register from '@/pages/Register';
-import NotFound from '@/pages/NotFound';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
-import BiblePage from '@/pages/Bible';
 
-function AppContent() {
-  const { user, loading } = useAuth();
+const AppContent = () => {
+  //useShield();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+  // Detect if current path is for auth modal
+  const authMatch = location.pathname.startsWith("/auth/");
+  const mode = location.pathname.endsWith("register") ? "register" : "login";
+
+  // Close modal handler
+  const closeModal = () => {
+    navigate("/", { replace: true });
+  };
+
+  const { showBlock, BlockUI } = useMobileGuard();
+
+  if (showBlock) {
+    return <BlockUI />;
   }
 
-  return (
-    <Router>
-      <Layout>
-        <Suspense fallback={
-          <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        }>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/register" replace />} />
-            <Route path="/reading" element={user ? <Reading /> : <Navigate to="/register" replace />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/register" replace />} />
-            <Route path="/community" element={user ? <Community /> : <Navigate to="/register" replace />} />
-            <Route path="/admin" element={user ? <Admin /> : <Navigate to="/register" replace />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/bible/:passage/:day" element={user ? <BiblePage /> : <Navigate to="/register" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-      <ScrollToTop />
-      <Toaster />
-    </Router>
+  const LoadingFallback = () => (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto mb-6 h-16 w-16 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin shadow-lg"></div>
+        <p className="text-gray-600">Please wait...</p>
+      </div>
+    </div>
   );
-}
 
-function App() {
+
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <Suspense fallback={<LoadingFallback />}>
+      <ScrollToTop />
+    
+      {/* Main Routes */}
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/:userId" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/church-room" element={<ChurchRoom />} />
+        <Route path="/chat/:chatId" element={<ChurchRoom />} />
+        <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
+        <Route path="/admin-inbox" element={<AdminInbox />} />
+        <Route path="/reading" element={<Reading />} />
+        <Route path="/create-post" element={<CreatePost />} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      {authMatch && (
+        <AuthModal isOpen={true} onClose={closeModal} initialMode={mode} />
+      )}
+    </Suspense>
   );
-}
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
