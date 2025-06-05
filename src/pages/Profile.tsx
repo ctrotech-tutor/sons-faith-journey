@@ -1,14 +1,15 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { 
   Camera, Save, ArrowLeft, MapPin, Phone, Calendar, Mail, 
   Edit, Settings, Activity, BarChart3, Shield, UserCog,
-  Download, Trash2 
+  Download, Trash2, Moon, Sun, Bell, Lock, Globe,
+  Smartphone, Palette, Volume2, VolumeX
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { convertFileToBase64, validateFileSize } from '@/lib/fileUtils';
 import { GoogleLinkManager } from '@/components/GoogleLinkManager';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -33,6 +35,7 @@ const Profile = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { userId } = useParams();
+  const { theme, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -44,11 +47,11 @@ const Profile = () => {
   const [originalData, setOriginalData] = useState({ displayName: '', bio: '', profilePhoto: '' });
   const [viewingUserProfile, setViewingUserProfile] = useState<any>(null);
 
-  const [darkMode, setDarkMode] = useState(false);
-  const [isPublic, setIsPublic] = useState(true);
-
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
-  const togglePublicProfile = () => setIsPublic(prev => !prev);
+  // Settings state
+  const [notifications, setNotifications] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [language, setLanguage] = useState('en');
+  const [autoSync, setAutoSync] = useState(true);
 
   const isOwnProfile = !userId || userId === user?.uid;
 
@@ -79,6 +82,12 @@ const Profile = () => {
             bio: userProfile.bio || '',
             profilePhoto: userProfile.profilePhoto || ''
           });
+          
+          // Load user settings
+          setNotifications(userProfile.settings?.notifications ?? true);
+          setSoundEnabled(userProfile.settings?.soundEnabled ?? true);
+          setLanguage(userProfile.settings?.language ?? 'en');
+          setAutoSync(userProfile.settings?.autoSync ?? true);
         }
       } catch (error) {
         toast({ title: 'Error loading profile', variant: 'destructive' });
@@ -136,6 +145,20 @@ const Profile = () => {
       toast({ title: 'Error saving profile', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateSetting = async (key: string, value: any) => {
+    if (!user || !isOwnProfile) return;
+
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        [`settings.${key}`]: value,
+        updatedAt: new Date()
+      });
+      toast({ title: 'Setting updated' });
+    } catch (error) {
+      toast({ title: 'Error updating setting', variant: 'destructive' });
     }
   };
 
@@ -371,25 +394,137 @@ const Profile = () => {
           <TabsContent value="settings" className="space-y-6">
             {isOwnProfile && (
               <>
-                <PrivacySettings />
-
-                {/* General Settings */}
+                {/* Theme Settings */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>General Settings</CardTitle>
-                    <CardDescription>Customize your experience</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                      <Palette className="h-5 w-5" />
+                      Appearance
+                    </CardTitle>
+                    <CardDescription>Customize your visual experience</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Enable Dark Mode</span>
-                      <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Make Profile Public</span>
-                      <Switch checked={isPublic} onCheckedChange={togglePublicProfile} />
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="text-gray-600">
+                          {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                        </div>
+                        <div>
+                          <p className="font-medium">Dark Mode</p>
+                          <p className="text-sm text-gray-600">Switch between light and dark themes</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={theme === 'dark'}
+                        onCheckedChange={toggleTheme}
+                      />
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Notification Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      Notifications
+                    </CardTitle>
+                    <CardDescription>Manage your notification preferences</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Bell className="h-4 w-4 text-gray-600" />
+                        <div>
+                          <p className="font-medium">Push Notifications</p>
+                          <p className="text-sm text-gray-600">Receive reading reminders and updates</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={notifications}
+                        onCheckedChange={(checked) => {
+                          setNotifications(checked);
+                          updateSetting('notifications', checked);
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {soundEnabled ? <Volume2 className="h-4 w-4 text-gray-600" /> : <VolumeX className="h-4 w-4 text-gray-600" />}
+                        <div>
+                          <p className="font-medium">Sound Effects</p>
+                          <p className="text-sm text-gray-600">Play sounds for interactions</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={soundEnabled}
+                        onCheckedChange={(checked) => {
+                          setSoundEnabled(checked);
+                          updateSetting('soundEnabled', checked);
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* App Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Smartphone className="h-5 w-5" />
+                      App Settings
+                    </CardTitle>
+                    <CardDescription>General application settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Globe className="h-4 w-4 text-gray-600" />
+                        <div>
+                          <p className="font-medium">Language</p>
+                          <p className="text-sm text-gray-600">Choose your preferred language</p>
+                        </div>
+                      </div>
+                      <Select 
+                        value={language} 
+                        onValueChange={(value) => {
+                          setLanguage(value);
+                          updateSetting('language', value);
+                        }}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Activity className="h-4 w-4 text-gray-600" />
+                        <div>
+                          <p className="font-medium">Auto Sync</p>
+                          <p className="text-sm text-gray-600">Automatically sync your progress</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={autoSync}
+                        onCheckedChange={(checked) => {
+                          setAutoSync(checked);
+                          updateSetting('autoSync', checked);
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <PrivacySettings />
 
                 {/* Account Management */}
                 <Card>
