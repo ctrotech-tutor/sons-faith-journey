@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, BookOpen, Globe } from 'lucide-react';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
-import bibleVersions from '@/data/json/index.json';
 
 interface BibleVerse {
   chapter: number;
@@ -19,6 +18,16 @@ interface BibleChapter {
   [key: string]: BibleVerse[];
 }
 
+interface BibleVersion {
+  name: string;
+  abbreviation: string;
+}
+
+interface BibleLanguage {
+  language: string;
+  versions: BibleVersion[];
+}
+
 const Bible = () => {
   const { passage, day } = useParams();
   const navigate = useNavigate();
@@ -28,13 +37,27 @@ const Bible = () => {
   const [loading, setLoading] = useState(true);
   const [bookName, setBookName] = useState('');
   const [chapterNumber, setChapterNumber] = useState(1);
+  const [bibleVersions, setBibleVersions] = useState<BibleLanguage[]>([]);
 
   useEffect(() => {
-    if (passage) {
+    loadBibleVersions();
+  }, []);
+
+  useEffect(() => {
+    if (passage && bibleVersions.length > 0) {
       loadBibleChapter();
       logBibleReading();
     }
-  }, [passage, selectedVersion]);
+  }, [passage, selectedVersion, bibleVersions]);
+
+  const loadBibleVersions = async () => {
+    try {
+      const versionsData = await import('@/data/json/index.json');
+      setBibleVersions(versionsData.default);
+    } catch (error) {
+      console.error('Error loading Bible versions:', error);
+    }
+  };
 
   const logBibleReading = async () => {
     await logActivity({
