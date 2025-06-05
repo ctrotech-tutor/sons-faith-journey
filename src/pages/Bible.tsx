@@ -200,7 +200,7 @@ const Bible = () => {
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Reading</span>
+              <span>Back</span>
             </Button>
 
             <div className="flex items-center space-x-4">
@@ -215,7 +215,7 @@ const Bible = () => {
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
-                <span>Copy</span>
+                <span></span>
               </Button>
 
               <div className="flex items-center space-x-2">
