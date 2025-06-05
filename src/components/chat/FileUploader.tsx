@@ -20,7 +20,7 @@ const FileUploader = ({ onUpload, onClose }: FileUploaderProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (10MB limit)
+    // Validate file size (30MB limit)
     if (!validateFileSize(file, 30)) {
       toast({
         title: 'File too large',
