@@ -1,4 +1,5 @@
 
+
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -6,17 +7,14 @@ import Layout from '@/components/Layout';
 import ScrollToTop from '@/components/ScrollToTop';
 
 // Pages
-import Home from '@/pages/Home';
+import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Reading from '@/pages/Reading';
 import Profile from '@/pages/Profile';
 import Community from '@/pages/Community';
 import Admin from '@/pages/Admin';
-import Signin from '@/pages/Signin';
-import Signup from '@/pages/Signup';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
-import Error404 from '@/pages/Error404';
+import Register from '@/pages/Register';
+import NotFound from '@/pages/NotFound';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import BiblePage from '@/pages/Bible';
@@ -47,18 +45,15 @@ function AppContent() {
           </div>
         }>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/signin" replace />} />
-            <Route path="/reading" element={user ? <Reading /> : <Navigate to="/signin" replace />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/signin" replace />} />
-            <Route path="/community" element={user ? <Community /> : <Navigate to="/signin" replace />} />
-            <Route path="/admin" element={user ? <Admin /> : <Navigate to="/signin" replace />} />
-            <Route path="/signin" element={<Signin />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/bible/:passage/:day" element={user ? <BiblePage /> : <Navigate to="/signin" replace />} />
-            <Route path="*" element={<Error404 />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/register" replace />} />
+            <Route path="/reading" element={user ? <Reading /> : <Navigate to="/register" replace />} />
+            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/register" replace />} />
+            <Route path="/community" element={user ? <Community /> : <Navigate to="/register" replace />} />
+            <Route path="/admin" element={user ? <Admin /> : <Navigate to="/register" replace />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/bible/:passage/:day" element={user ? <BiblePage /> : <Navigate to="/register" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </Layout>
@@ -75,3 +70,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,21 +1,30 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { getChallengeDay } from '@/lib/getChallengeDay';
 
 interface UserStats {
   totalReadingDays: number;
   readingStreak: number;
   messagesCount: number;
+  postsCount: number;
   timeSpentReading: number;
   readingProgress: number[];
+}
+
+interface Activity {
+  type: string;
+  data?: any;
+  timestamp: any;
 }
 
 const defaultStats: UserStats = {
   totalReadingDays: 0,
   readingStreak: 0,
   messagesCount: 0,
+  postsCount: 0,
   timeSpentReading: 0,
   readingProgress: [],
 };
@@ -23,13 +32,16 @@ const defaultStats: UserStats = {
 export const useActivitySync = () => {
   const { user } = useAuth();
   const [userStats, setUserStats] = useState<UserStats>(defaultStats);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadUserStats();
+      loadRecentActivities();
     } else {
       setUserStats(defaultStats);
+      setRecentActivities([]);
       setLoading(false);
     }
   }, [user]);
@@ -46,6 +58,7 @@ export const useActivitySync = () => {
           totalReadingDays: data.totalReadingDays || 0,
           readingStreak: data.readingStreak || 0,
           messagesCount: data.messagesCount || 0,
+          postsCount: data.postsCount || 0,
           timeSpentReading: data.timeSpentReading || 0,
           readingProgress: data.readingProgress || [],
         });
@@ -58,6 +71,32 @@ export const useActivitySync = () => {
       setUserStats(defaultStats);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRecentActivities = () => {
+    if (!user) return;
+
+    try {
+      const activitiesRef = collection(db, 'users', user.uid, 'activities');
+      const q = query(activitiesRef, orderBy('timestamp', 'desc'), limit(10));
+      
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const activities: Activity[] = [];
+        snapshot.forEach((doc) => {
+          activities.push({
+            type: doc.data().type || 'activity',
+            data: doc.data().data,
+            timestamp: doc.data().timestamp,
+          });
+        });
+        setRecentActivities(activities);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.error("Error loading recent activities:", error);
+      setRecentActivities([]);
     }
   };
 
@@ -144,6 +183,7 @@ export const useActivitySync = () => {
 
   return {
     userStats,
+    recentActivities,
     updateReadingProgress,
     getTodayDayNumber,
     trackActivity,
