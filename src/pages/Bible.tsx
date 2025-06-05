@@ -5,17 +5,14 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, BookOpen, Globe } from 'lucide-react';
+import { ArrowLeft, BookOpen, Globe, AlertCircle } from 'lucide-react';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
+import { parsePassage, formatVerseText } from '@/utils/bibleUtils';
 
 interface BibleVerse {
   chapter: number;
   verse: number;
   text: string;
-}
-
-interface BibleChapter {
-  [key: string]: BibleVerse[];
 }
 
 interface BibleVersion {
@@ -35,6 +32,7 @@ const Bible = () => {
   const [selectedVersion, setSelectedVersion] = useState('en_kjv');
   const [chapterData, setChapterData] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
   const [bookName, setBookName] = useState('');
   const [chapterNumber, setChapterNumber] = useState(1);
   const [bibleVersions, setBibleVersions] = useState<BibleLanguage[]>([]);
@@ -56,10 +54,13 @@ const Bible = () => {
       setBibleVersions(versionsData.default);
     } catch (error) {
       console.error('Error loading Bible versions:', error);
+      setError('Failed to load Bible versions');
     }
   };
 
   const logBibleReading = async () => {
+    if (!passage || !day) return;
+    
     await logActivity({
       type: 'bible_reading',
       timestamp: new Date(),
@@ -68,28 +69,60 @@ const Bible = () => {
   };
 
   const loadBibleChapter = async () => {
+    if (!passage) return;
+    
     setLoading(true);
+    setError('');
+    
     try {
-      // Parse passage (e.g., "Genesis 1-2" -> "Genesis", chapter 1)
-      const passageParts = passage?.split(' ');
-      if (!passageParts || passageParts.length < 2) return;
-
-      const book = passageParts[0];
-      const chapterRange = passageParts[1];
-      const firstChapter = parseInt(chapterRange.split('-')[0]);
-
-      setBookName(book);
-      setChapterNumber(firstChapter);
+      const decodedPassage = decodeURIComponent(passage);
+      const { bookName: parsedBookName, bookKey, chapterNumber: parsedChapter } = parsePassage(decodedPassage);
+      
+      console.log('Parsed passage:', { parsedBookName, bookKey, parsedChapter });
+      
+      if (!bookKey) {
+        setError(`Book "${parsedBookName}" not found. Please check the passage name.`);
+        setLoading(false);
+        return;
+      }
+      
+      setBookName(parsedBookName);
+      setChapterNumber(parsedChapter);
 
       // Load the selected Bible version
       const bibleData = await import(`@/data/json/${selectedVersion}.json`);
-      const bookData = bibleData.default[book];
-
-      if (bookData && bookData[firstChapter]) {
-        setChapterData(bookData[firstChapter]);
+      console.log('Bible data loaded, looking for book:', bookKey);
+      
+      const bookData = bibleData.default[bookKey];
+      if (!bookData) {
+        setError(`Book "${parsedBookName}" not found in ${selectedVersion}.`);
+        setLoading(false);
+        return;
       }
+      
+      const chapterVerses = bookData[parsedChapter.toString()];
+      if (!chapterVerses) {
+        setError(`Chapter ${parsedChapter} not found in ${parsedBookName}.`);
+        setLoading(false);
+        return;
+      }
+      
+      // Convert the chapter data to our verse format
+      const versesArray: BibleVerse[] = Object.entries(chapterVerses).map(([verseNum, text]) => ({
+        chapter: parsedChapter,
+        verse: parseInt(verseNum),
+        text: formatVerseText(text as string)
+      }));
+      
+      // Sort by verse number
+      versesArray.sort((a, b) => a.verse - b.verse);
+      
+      setChapterData(versesArray);
+      console.log('Chapter data loaded:', versesArray.length, 'verses');
+      
     } catch (error) {
       console.error('Error loading Bible chapter:', error);
+      setError('Failed to load the requested passage. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -109,6 +142,29 @@ const Bible = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Scripture...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-4">
+        <div className="max-w-4xl mx-auto pt-20">
+          <Card className="shadow-xl">
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Error Loading Passage</h2>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Button onClick={() => navigate('/reading')} className="mr-4">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Reading
+              </Button>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -171,24 +227,30 @@ const Bible = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
-            <div className="space-y-4">
-              {chapterData.map((verse, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex space-x-3"
-                >
-                  <span className="text-purple-600 font-bold text-sm mt-1 min-w-[2rem]">
-                    {verse.verse}
-                  </span>
-                  <p className="text-gray-800 leading-relaxed text-lg">
-                    {verse.text}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
+            {chapterData.length > 0 ? (
+              <div className="space-y-4">
+                {chapterData.map((verse, index) => (
+                  <motion.div
+                    key={`${verse.chapter}-${verse.verse}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="flex space-x-3"
+                  >
+                    <span className="text-purple-600 font-bold text-sm mt-1 min-w-[2rem] flex-shrink-0">
+                      {verse.verse}
+                    </span>
+                    <p className="text-gray-800 leading-relaxed text-lg">
+                      {verse.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No verses found for this chapter.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
