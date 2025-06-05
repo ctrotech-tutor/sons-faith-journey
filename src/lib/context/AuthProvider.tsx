@@ -1,3 +1,4 @@
+
 // lib/context/AuthProvider.tsx
 import {
   useState,
@@ -26,6 +27,13 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { getUserLocation } from '@/lib/location';
 
+interface UserSettings {
+  notifications?: boolean;
+  soundEnabled?: boolean;
+  language?: string;
+  autoSync?: boolean;
+}
+
 interface UserProfile {
   uid: string;
   email: string;
@@ -40,6 +48,7 @@ interface UserProfile {
   createdAt: Date;
   updatedAt?: Date;
   lastLoginAt?: Date;
+  settings?: UserSettings;
 }
 
 interface AuthContextType {
@@ -88,7 +97,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             isRegistered: data.isRegistered || false,
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
             updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : undefined,
-            lastLoginAt: new Date()
+            lastLoginAt: new Date(),
+            settings: data.settings || {
+              notifications: true,
+              soundEnabled: true,
+              language: 'en',
+              autoSync: true
+            }
           };
 
           if (!profile.location || profile.location === '') {
@@ -118,7 +133,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               isRegistered: false,
               createdAt: new Date(),
               updatedAt: new Date(),
-              lastLoginAt: new Date()
+              lastLoginAt: new Date(),
+              settings: {
+                notifications: true,
+                soundEnabled: true,
+                language: 'en',
+                autoSync: true
+              }
             };
             await setDoc(userDocRef, newProfile);
             setUserProfile(newProfile);
@@ -157,7 +178,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isRegistered: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-      lastLoginAt: new Date()
+      lastLoginAt: new Date(),
+      settings: {
+        notifications: true,
+        soundEnabled: true,
+        language: 'en',
+        autoSync: true
+      }
     };
 
     await setDoc(doc(db, 'users', userCredential.user.uid), newProfile);
