@@ -100,11 +100,12 @@ const MonthNavigation = ({ currentMonth, onMonthChange, totalDaysCompleted }: Mo
       <div className="flex items-center justify-center space-x-4">
         <Button
           variant="outline"
+							className="text-xs"
           onClick={() => onMonthChange(Math.max(1, currentMonth - 1))}
           disabled={currentMonth === 1}
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous Month
+          Prev
         </Button>
         
         <div className="text-center">
@@ -118,10 +119,11 @@ const MonthNavigation = ({ currentMonth, onMonthChange, totalDaysCompleted }: Mo
         
         <Button
           variant="outline"
+							className="text-xs"
           onClick={() => onMonthChange(Math.min(3, currentMonth + 1))}
           disabled={currentMonth === 3}
         >
-          Next Month
+          Next
           <ChevronRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
