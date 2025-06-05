@@ -227,7 +227,7 @@ const Bible = () => {
                   <SelectContent>
                     {bibleVersions.map((version) => (
                       <SelectItem key={version.value} value={version.value}>
-                        {version.label}
+                        {version.value}
                       </SelectItem>
                     ))}
                   </SelectContent>
