@@ -25,7 +25,7 @@ export default function ReadingPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900">
         <div className="max-w-4xl mx-auto pt-20">
           <Card className="shadow-xl dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-12 text-center">
