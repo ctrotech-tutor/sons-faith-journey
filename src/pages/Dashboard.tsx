@@ -9,19 +9,46 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, MessageSquare, Calendar, Trophy, Plus, Edit3, Target, Clock, Flame, Book } from 'lucide-react';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import ActivityDashboard from '@/components/ActivityDashboard';
 
 const Dashboard = () => {
   const { user, userProfile } = useAuth();
+  const { userStats, trackActivity, error } = useActivitySync();
   const navigate = useNavigate();
-  const { userStats } = useActivitySync();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const logPageVisit = async () => {
+      if (user) {
+        try {
+          await trackActivity('system', { 
+            message: 'Visited dashboard', 
+            pageType: 'dashboard'
+          });
+        } catch (err) {
+          console.error("Error logging dashboard visit:", err);
+        }
+      }
+    };
+    
+    logPageVisit();
+  }, [user, trackActivity]);
+
+  // Show error toast when there's a problem with activity tracking
+  useEffect(() => {
+    if (error) {
+      toast.error("Activity Sync Error", {
+        description: error
+      });
+    }
+  }, [error]);
 
   if (!user) {
     navigate('/');
@@ -69,14 +96,20 @@ const Dashboard = () => {
                 {/* Right - Action Button */}
                 <div className="flex justify-around sm:justify-end items-center gap-2">
                   <Button
-                    onClick={() => navigate('/create-post')}
+                    onClick={() => {
+                      navigate('/create-post');
+                      trackActivity('system', { action: 'create_post_clicked' });
+                    }}
                     className="group inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-700 hover:to-indigo-700 text-white px-5 py-2 rounded-full shadow-md transition-all"
                   >
                     <Plus className="h-4 w-4 group-active:scale-110 transition-transform" />
                     <span className="font-semibold">Create Post</span>
                   </Button>
                   <Button
-                    onClick={() => navigate('/reading')}
+                    onClick={() => {
+                      navigate('/reading');
+                      trackActivity('system', { action: 'reading_clicked' });
+                    }}
                     className="group inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 active:from-purple-700 hover:to-indigo-700 text-white px-5 py-2 rounded-full shadow-md transition-all"
                   >
                     <Book className="h-4 w-4 group-active:scale-110 transition-transform" />
@@ -165,28 +198,32 @@ const Dashboard = () => {
                 color: "blue",
                 icon: <BookOpen className="h-6 w-6 text-blue-600" />,
                 title: "Today's Reading",
-                desc: "Continue your journey"
+                desc: "Continue your journey",
+                logAction: "reading_nav_clicked"
               },
               {
                 to: "/community",
                 color: "green",
                 icon: <Users className="h-6 w-6 text-green-600" />,
                 title: "Community",
-                desc: "Connect with others"
+                desc: "Connect with others",
+                logAction: "community_nav_clicked"
               },
               {
                 to: "/church-room",
                 color: "purple",
                 icon: <MessageSquare className="h-6 w-6 text-purple-600" />,
                 title: "Church Room",
-                desc: "Join the conversation"
+                desc: "Join the conversation",
+                logAction: "church_room_nav_clicked"
               },
               {
                 to: "/profile",
                 color: "orange",
                 icon: <Trophy className="h-6 w-6 text-orange-600" />,
                 title: "My Profile",
-                desc: "View achievements"
+                desc: "View achievements",
+                logAction: "profile_nav_clicked"
               }
             ].map((action, i) => (
               <motion.div
@@ -195,7 +232,13 @@ const Dashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
               >
-                <Link to={action.to}>
+                <Link 
+                  to={action.to}
+                  onClick={() => trackActivity('system', { 
+                    action: action.logAction,
+                    target: action.to 
+                  })}
+                >
                   <div
                     className={`group bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl py-10 shadow-md hover:shadow-xl transition-all cursor-pointer`}
                   >

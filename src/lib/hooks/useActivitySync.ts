@@ -1,9 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp, query, collection, orderBy, limit, where } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp, query, collection, orderBy, limit, where, getDoc, setDoc, Timestamp, DocumentReference } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useToast } from '@/lib/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
 
 export interface UserActivity {
   type: 'reading_completed' | 'chat_message' | 'community_post' | 'profile_update' | 'login' | 'bible_reading' | 'system';
@@ -28,6 +29,7 @@ export interface ActivityFilter {
   type?: string | null;
   timeRange?: 'today' | 'week' | 'month' | 'all';
   searchTerm?: string;
+  sortBy?: 'newest' | 'oldest';
 }
 
 export const useActivitySync = () => {
@@ -48,16 +50,58 @@ export const useActivitySync = () => {
 
   // Track sync status
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [userDocRef, setUserDocRef] = useState<DocumentReference | null>(null);
+
+  // Initialize user document reference when user is authenticated
+  useEffect(() => {
+    if (user) {
+      const docRef = doc(db, 'users', user.uid);
+      setUserDocRef(docRef);
+    } else {
+      setUserDocRef(null);
+    }
+  }, [user]);
+
+  // Ensure user exists in Firestore
+  useEffect(() => {
+    const ensureUserExists = async () => {
+      if (!user || !userDocRef) return;
+      
+      try {
+        const docSnap = await getDoc(userDocRef);
+        
+        if (!docSnap.exists()) {
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            createdAt: serverTimestamp(),
+            lastActiveDate: new Date().toISOString(),
+            recentActivities: [],
+            readingProgress: [],
+            readingStreak: 0,
+            messagesCount: 0,
+            postsCount: 0,
+            timeSpentReading: 0
+          });
+          console.log("Created new user document in Firestore");
+        }
+      } catch (err) {
+        console.error("Error ensuring user exists:", err);
+      }
+    };
+    
+    ensureUserExists();
+  }, [user, userDocRef]);
 
   // Load user activities and stats
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userDocRef) return;
+    
     setLoading(true);
     setError(null);
 
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const unsubscribe = onSnapshot(userRef, (doc) => {
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           const data = doc.data();
           
@@ -92,6 +136,9 @@ export const useActivitySync = () => {
           
           setRecentActivities(processedActivities);
           setLastSync(new Date());
+        } else {
+          // Document doesn't exist, create it
+          ensureUserDocument();
         }
         setLoading(false);
       }, (err) => {
@@ -106,23 +153,54 @@ export const useActivitySync = () => {
       setError("Failed to set up activity tracking. Please refresh the page.");
       setLoading(false);
     }
-  }, [user]);
+  }, [user, userDocRef]);
+
+  const ensureUserDocument = async () => {
+    if (!user || !userDocRef) return;
+    
+    try {
+      await setDoc(userDocRef, {
+        uid: user.uid,
+        email: user.email,
+        createdAt: serverTimestamp(),
+        lastActiveDate: new Date().toISOString(),
+        recentActivities: [],
+        readingProgress: [],
+        readingStreak: 0,
+        messagesCount: 0,
+        postsCount: 0,
+        timeSpentReading: 0
+      }, { merge: true });
+    } catch (error) {
+      console.error('Error ensuring user document exists:', error);
+    }
+  };
 
   const logActivity = useCallback(async (activity: UserActivity) => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot log activity: User not authenticated or document reference missing");
+      return null;
+    }
 
     try {
+      // Create a proper timestamp that Firebase can handle
+      const timestamp = activity.timestamp || serverTimestamp();
+      
       const activityWithId = {
         ...activity,
         id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: activity.timestamp || serverTimestamp()
+        timestamp: timestamp
       };
       
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await updateDoc(userDocRef, {
         recentActivities: arrayUnion(activityWithId),
         lastActiveDate: new Date().toISOString(),
         [`${activity.type}_lastUpdate`]: serverTimestamp()
+      });
+      
+      // Show success message
+      sonnerToast.success("Activity logged", {
+        description: "Your activity has been recorded successfully."
       });
       
       return activityWithId.id;
@@ -135,13 +213,20 @@ export const useActivitySync = () => {
       });
       return null;
     }
-  }, [user, toast]);
+  }, [user, userDocRef, toast]);
 
   const updateReadingProgress = useCallback(async (day: number, completed: boolean) => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot update reading progress: User not authenticated or document reference missing");
+      toast({
+        title: "Authentication required",
+        description: "Please log in to track your reading progress.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      const userRef = doc(db, 'users', user.uid);
       let newProgress = [...userStats.readingProgress];
       
       if (completed && !newProgress.includes(day)) {
@@ -152,7 +237,7 @@ export const useActivitySync = () => {
 
       const streak = calculateStreak(newProgress);
 
-      await updateDoc(userRef, {
+      await updateDoc(userDocRef, {
         readingProgress: newProgress,
         totalReadingDays: newProgress.length,
         readingStreak: streak,
@@ -167,6 +252,14 @@ export const useActivitySync = () => {
           data: { day }
         });
       }
+      
+      // Show success toast
+      sonnerToast.success(completed ? "Reading marked as complete" : "Reading marked as incomplete", {
+        description: completed 
+          ? `Day ${day} has been marked as complete.` 
+          : `Day ${day} has been marked as incomplete.`
+      });
+      
     } catch (error) {
       console.error('Error updating reading progress:', error);
       toast({
@@ -175,10 +268,13 @@ export const useActivitySync = () => {
         variant: "destructive"
       });
     }
-  }, [user, userStats.readingProgress, userStats.timeSpentReading, toast, logActivity]);
+  }, [user, userDocRef, userStats.readingProgress, userStats.timeSpentReading, toast, logActivity]);
 
   const trackActivity = useCallback(async (activityType: string, details: any) => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot track activity: User not authenticated or document reference missing");
+      return null;
+    }
 
     try {
       return await logActivity({
@@ -188,15 +284,18 @@ export const useActivitySync = () => {
       });
     } catch (error) {
       console.error('Error tracking activity:', error);
+      return null;
     }
-  }, [user, logActivity]);
+  }, [user, userDocRef, logActivity]);
 
   const trackBibleReading = useCallback(async (day: number, timeSpent: number, passage?: string) => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot track Bible reading: User not authenticated or document reference missing");
+      return;
+    }
 
     try {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await updateDoc(userDocRef, {
         timeSpentReading: userStats.timeSpentReading + timeSpent,
         lastActiveDate: new Date().toISOString()
       });
@@ -206,13 +305,25 @@ export const useActivitySync = () => {
         timestamp: serverTimestamp(),
         data: { day, timeSpent, passage }
       });
+      
+      sonnerToast.success("Reading time tracked", {
+        description: `${timeSpent} minutes of reading time has been recorded.`
+      });
     } catch (error) {
       console.error('Error tracking Bible reading:', error);
+      toast({
+        title: "Failed to track reading time",
+        description: "We couldn't record your reading time. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, [user, userStats.timeSpentReading, logActivity]);
+  }, [user, userDocRef, userStats.timeSpentReading, logActivity, toast]);
 
   const clearActivity = useCallback(async (activityId: string) => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot clear activity: User not authenticated or document reference missing");
+      return false;
+    }
     
     try {
       // Filter out the activity to remove
@@ -220,8 +331,7 @@ export const useActivitySync = () => {
         activity => activity.id !== activityId
       );
       
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await updateDoc(userDocRef, {
         recentActivities: updatedActivities
       });
       
@@ -240,14 +350,16 @@ export const useActivitySync = () => {
       });
       return false;
     }
-  }, [user, recentActivities, toast]);
+  }, [user, userDocRef, recentActivities, toast]);
   
   const clearAllActivities = useCallback(async () => {
-    if (!user) return;
+    if (!user || !userDocRef) {
+      console.error("Cannot clear all activities: User not authenticated or document reference missing");
+      return false;
+    }
     
     try {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await updateDoc(userDocRef, {
         recentActivities: []
       });
       
@@ -266,13 +378,13 @@ export const useActivitySync = () => {
       });
       return false;
     }
-  }, [user, toast]);
+  }, [user, userDocRef, toast]);
 
   const calculateStreak = (progressArray: number[]) => {
     if (progressArray.length === 0) return 0;
     
     const today = getTodayDayNumber();
-    const sortedDays = progressArray.sort((a, b) => b - a);
+    const sortedDays = [...progressArray].sort((a, b) => b - a);
     let streak = 0;
     
     // Check from today backwards
@@ -336,6 +448,20 @@ export const useActivitySync = () => {
       filtered = filtered.filter(activity => {
         const activityDate = activity.timestamp?.toDate ? activity.timestamp.toDate() : new Date(activity.timestamp);
         return activityDate >= timeLimit;
+      });
+    }
+
+    // Sort activities
+    if (filter.sortBy) {
+      filtered.sort((a, b) => {
+        const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+        const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+        
+        if (filter.sortBy === 'newest') {
+          return dateB.getTime() - dateA.getTime();
+        } else {
+          return dateA.getTime() - dateB.getTime();
+        }
       });
     }
 

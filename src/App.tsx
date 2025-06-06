@@ -15,7 +15,7 @@ import {
 import { AuthProvider } from "@/lib/context/AuthProvider";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { useShield } from './lib/hooks/useShield';
-import {useMobileGuard} from './lib/hooks/useMobileGuard';
+import { useMobileGuard } from './lib/hooks/useMobileGuard';
 import ScrollToTop from "@/components/ScrollToTop";
 
 const Index = lazy(() => import("./pages/Index"));
@@ -33,10 +33,27 @@ const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Bible = lazy(() => import("./pages/Bible"));
 
-const queryClient = new QueryClient();
+// Create QueryClient with improved error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
+    },
+    mutations: {
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      }
+    }
+  }
+});
 
 const AppContent = () => {
-  //useShield();
+  // useShield();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -101,7 +118,7 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner position="top-right" closeButton={true} />
         <AuthProvider>
           <BrowserRouter>
             <AppContent />

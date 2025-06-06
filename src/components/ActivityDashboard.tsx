@@ -21,11 +21,13 @@ import {
   RefreshCw,
   Search,
   Clock,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
 import { useActivitySync, ActivityFilter, UserActivity } from '@/lib/hooks/useActivitySync';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { useToast } from '@/lib/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
 const ActivityDashboard = () => {
@@ -36,6 +38,7 @@ const ActivityDashboard = () => {
     clearAllActivities,
     filterActivities,
     loading,
+    error,
     lastSync
   } = useActivitySync();
   const { userProfile } = useAuth();
@@ -45,15 +48,37 @@ const ActivityDashboard = () => {
     type: null,
     timeRange: 'all',
     searchTerm: '',
+    sortBy: 'newest'
   });
   
   const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Apply filters whenever they change or activities update
   useEffect(() => {
-    setFilteredActivities(filterActivities(recentActivities, filter));
-  }, [recentActivities, filter, filterActivities]);
+    try {
+      setFilteredActivities(filterActivities(recentActivities, filter));
+    } catch (err) {
+      console.error("Error filtering activities:", err);
+      toast({
+        title: "Filtering error",
+        description: "There was a problem filtering your activities.",
+        variant: "destructive"
+      });
+    }
+  }, [recentActivities, filter, filterActivities, toast]);
+
+  // Show error if there's an issue with activity sync
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Activity sync error",
+        description: error,
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -62,14 +87,18 @@ const ActivityDashboard = () => {
       case 'community_post': return <Users className="h-4 w-4" />;
       case 'profile_update': return <Heart className="h-4 w-4" />;
       case 'bible_reading': return <BookOpen className="h-4 w-4 text-purple-600" />;
+      case 'login': return <Clock className="h-4 w-4" />;
+      case 'system': return <AlertCircle className="h-4 w-4" />;
       default: return <TrendingUp className="h-4 w-4" />;
     }
   };
 
   const getActivityText = (activity: UserActivity) => {
+    if (!activity) return "Unknown activity";
+    
     switch (activity.type) {
       case 'reading_completed':
-        return `Completed Day ${activity.data?.day} reading`;
+        return `Completed Day ${activity.data?.day || '?'} reading`;
       case 'bible_reading':
         return `Read ${activity.data?.passage || 'Bible passage'} for ${activity.data?.timeSpent || 0} minutes`;
       case 'chat_message':
@@ -78,6 +107,10 @@ const ActivityDashboard = () => {
         return 'Shared a community post';
       case 'profile_update':
         return 'Updated profile information';
+      case 'login':
+        return 'Logged into account';
+      case 'system':
+        return activity.data?.message || 'System activity';
       default:
         return 'Recent activity';
     }
@@ -95,15 +128,33 @@ const ActivityDashboard = () => {
   };
 
   const handleClearActivity = async (id: string) => {
-    if (await clearActivity(id)) {
-      // Success is handled by the toast in the hook
+    try {
+      if (await clearActivity(id)) {
+        // Success is handled by the toast in the hook
+      }
+    } catch (err) {
+      console.error("Error clearing activity:", err);
+      toast({
+        title: "Error removing activity",
+        description: "There was a problem removing this activity.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleClearAllActivities = async () => {
     if (window.confirm('Are you sure you want to clear all activity history?')) {
-      if (await clearAllActivities()) {
-        // Success is handled by the toast in the hook
+      try {
+        if (await clearAllActivities()) {
+          // Success is handled by the toast in the hook
+        }
+      } catch (err) {
+        console.error("Error clearing all activities:", err);
+        toast({
+          title: "Error clearing history",
+          description: "There was a problem clearing your activity history.",
+          variant: "destructive"
+        });
       }
     }
   };
@@ -111,6 +162,19 @@ const ActivityDashboard = () => {
   const refreshTimeAgo = () => {
     if (!lastSync) return '';
     return `Updated ${formatDistanceToNow(lastSync, { addSuffix: true })}`;
+  };
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      // The useEffect hook with the filter dependency will re-run
+      // Just apply the same filter again to trigger a refresh
+      setFilter({...filter});
+      sonnerToast.success("Refreshed", {
+        description: "Activity data has been refreshed."
+      });
+    }, 1000);
   };
 
   return (
@@ -180,10 +244,20 @@ const ActivityDashboard = () => {
                 <span>Recent Activities</span>
               </CardTitle>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {loading ? 'Loading activities...' : refreshTimeAgo()}
+                {loading || isRefreshing ? 'Loading activities...' : refreshTimeAgo()}
               </p>
             </div>
             <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={loading || isRefreshing}
+                className="flex items-center gap-1"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -197,6 +271,7 @@ const ActivityDashboard = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={handleClearAllActivities}
+                disabled={recentActivities.length === 0 || loading}
                 className="flex items-center gap-1 hover:text-red-600"
               >
                 <Trash2 className="h-4 w-4" />
@@ -231,6 +306,7 @@ const ActivityDashboard = () => {
                     <SelectItem value="chat_message">Chat Messages</SelectItem>
                     <SelectItem value="community_post">Community Posts</SelectItem>
                     <SelectItem value="profile_update">Profile Updates</SelectItem>
+                    <SelectItem value="login">Logins</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select
@@ -252,7 +328,7 @@ const ActivityDashboard = () => {
           )}
 
           <CardContent>
-            {loading ? (
+            {loading || isRefreshing ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
               </div>
