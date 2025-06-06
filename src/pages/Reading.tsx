@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useActivitySync } from '@/lib/hooks/useActivitySync'
@@ -56,6 +55,15 @@ export default function ReadingPage() {
 
   const monthData = getMonthData(currentMonth);
   const todayDay = getTodayDayNumber();
+
+  // Transform reading plan data to match ReadingDayCard props
+  const transformedDayData = monthData.map(day => ({
+    day: day.day,
+    title: `Day ${day.day} - ${day.theme}`,
+    description: `Continue your journey through ${day.passages.join(', ')}. Today's focus: ${day.theme}`,
+    passages: day.passages,
+    theme: day.theme
+  }));
 
   // Function to check if a day is locked
   const isDayLocked = (dayNumber: number) => {
@@ -211,7 +219,7 @@ export default function ReadingPage() {
 
               {/* Reading Days Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {monthData.map((dayData, index) => (
+                {transformedDayData.map((dayData, index) => (
                   <ReadingDayCard
                     key={dayData.day}
                     dayData={dayData}
