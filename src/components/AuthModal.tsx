@@ -144,7 +144,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'register' }: AuthModalProps
         exit={{ opacity: 0, scale: 0.9 }}
         className="w-full max-w-md"
       >
-        <Card className='min-h-screen'>
+        <Card className='min-h-screen rounded-[0px]'>
           <CardHeader>
             <CardTitle className="text-center">Join THE SONS</CardTitle>
           </CardHeader>
