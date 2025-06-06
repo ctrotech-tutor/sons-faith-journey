@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -5,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
 import { useTheme } from '@/lib/context/ThemeContext';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Camera, Save, ArrowLeft, MapPin, Phone, Calendar, Mail, 
   Edit, Settings, Activity, BarChart3, Shield, UserCog,
@@ -36,10 +38,15 @@ const Profile = () => {
   const navigate = useNavigate();
   const { userId } = useParams();
   const { theme, toggleTheme } = useTheme();
+  const [searchParams] = useSearchParams();
+  const tabFromURL = searchParams.get('tab');
 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Set the active tab based on URL param or default to 'overview'
+  const [activeTab, setActiveTab] = useState(tabFromURL || 'overview');
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -54,6 +61,12 @@ const Profile = () => {
   const [autoSync, setAutoSync] = useState(true);
 
   const isOwnProfile = !userId || userId === user?.uid;
+
+  useEffect(() => {
+    if (tabFromURL && ['overview', 'activity', 'stats', 'settings'].includes(tabFromURL)) {
+      setActiveTab(tabFromURL);
+    }
+  }, [tabFromURL]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -232,9 +245,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-purple-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-white to-purple-50 dark:from-gray-900 dark:to-gray-800 pb-32">
       {/* Header */}
-      <div className="fixed top-0 z-50 w-full bg-white/70 backdrop-blur-md py-3 flex items-center shadow-sm px-4">
+      <div className="fixed top-0 z-50 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md py-3 flex items-center shadow-sm px-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -244,7 +257,7 @@ const Profile = () => {
       </div>
 
       <div className="pt-20 px-4 max-w-4xl mx-auto">
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -258,7 +271,7 @@ const Profile = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="bg-white rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
             >
               <div className="flex flex-col items-center justify-center gap-4 relative">
                 {/* Avatar with upload and overlay */}
@@ -303,7 +316,7 @@ const Profile = () => {
               </div>
 
               {/* Contact Details */}
-              <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md">
+              <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md dark:bg-gray-700/20">
                 <h2 className="text-base font-semibold text-primary">Contact & Details</h2>
 
                 {/* Phone */}
@@ -404,14 +417,14 @@ const Profile = () => {
                     <CardDescription>Customize your visual experience</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <div className="text-gray-600">
+                        <div className="text-gray-600 dark:text-gray-400">
                           {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                         </div>
                         <div>
                           <p className="font-medium">Dark Mode</p>
-                          <p className="text-sm text-gray-600">Switch between light and dark themes</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Switch between light and dark themes</p>
                         </div>
                       </div>
                       <Switch
@@ -432,12 +445,12 @@ const Profile = () => {
                     <CardDescription>Manage your notification preferences</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <Bell className="h-4 w-4 text-gray-600" />
+                        <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                         <div>
                           <p className="font-medium">Push Notifications</p>
-                          <p className="text-sm text-gray-600">Receive reading reminders and updates</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Receive reading reminders and updates</p>
                         </div>
                       </div>
                       <Switch
@@ -449,12 +462,12 @@ const Profile = () => {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        {soundEnabled ? <Volume2 className="h-4 w-4 text-gray-600" /> : <VolumeX className="h-4 w-4 text-gray-600" />}
+                        {soundEnabled ? <Volume2 className="h-4 w-4 text-gray-600 dark:text-gray-400" /> : <VolumeX className="h-4 w-4 text-gray-600 dark:text-gray-400" />}
                         <div>
                           <p className="font-medium">Sound Effects</p>
-                          <p className="text-sm text-gray-600">Play sounds for interactions</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Play sounds for interactions</p>
                         </div>
                       </div>
                       <Switch
@@ -478,12 +491,12 @@ const Profile = () => {
                     <CardDescription>General application settings</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <Globe className="h-4 w-4 text-gray-600" />
+                        <Globe className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                         <div>
                           <p className="font-medium">Language</p>
-                          <p className="text-sm text-gray-600">Choose your preferred language</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Choose your preferred language</p>
                         </div>
                       </div>
                       <Select 
@@ -505,12 +518,12 @@ const Profile = () => {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <Activity className="h-4 w-4 text-gray-600" />
+                        <Activity className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                         <div>
                           <p className="font-medium">Auto Sync</p>
-                          <p className="text-sm text-gray-600">Automatically sync your progress</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Automatically sync your progress</p>
                         </div>
                       </div>
                       <Switch

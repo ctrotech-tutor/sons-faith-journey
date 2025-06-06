@@ -62,12 +62,12 @@ const Dashboard = () => {
                     </h1>
                   </div>
                   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    Welcome back to your <span className="font-medium text-purple-600 dark:text-purple-400">faith journey</span>. Let’s grow together.
+                    Welcome back to your <span className="font-medium text-purple-600 dark:text-purple-400">faith journey</span>. Let's grow together.
                   </p>
                 </div>
 
                 {/* Right - Action Button */}
-                <div className="flex justify-around sm:justify-end items-center">
+                <div className="flex justify-around sm:justify-end items-center gap-2">
                   <Button
                     onClick={() => navigate('/create-post')}
                     className="group inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-700 hover:to-indigo-700 text-white px-5 py-2 rounded-full shadow-md transition-all"
@@ -153,71 +153,70 @@ const Dashboard = () => {
           </motion.div>
 
           {/* Enhanced Quick Actions */}
-<motion.div
-  initial={{ opacity: 0, y: 30 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
->
-  {[
-    {
-      to: "/reading",
-      color: "blue",
-      icon: <BookOpen className="h-6 w-6 text-blue-600" />,
-      title: "Today's Reading",
-      desc: "Continue your journey"
-    },
-    {
-      to: "/community",
-      color: "green",
-      icon: <Users className="h-6 w-6 text-green-600" />,
-      title: "Community",
-      desc: "Connect with others"
-    },
-    {
-      to: "/church-room",
-      color: "purple",
-      icon: <MessageSquare className="h-6 w-6 text-purple-600" />,
-      title: "Church Room",
-      desc: "Join the conversation"
-    },
-    {
-      to: "/profile",
-      color: "orange",
-      icon: <Trophy className="h-6 w-6 text-orange-600" />,
-      title: "My Profile",
-      desc: "View achievements"
-    }
-  ].map((action, i) => (
-    <motion.div
-      key={action.to}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 + i * 0.1 }}
-    >
-      <Link to={action.to}>
-        <div
-          className={`group bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl py-10 shadow-md hover:shadow-xl transition-all cursor-pointer`}
-        >
-          <div
-            className={`bg-${action.color}-100 group-hover:bg-${action.color}-200 dark:bg-opacity-20 p-3 rounded-full w-fit mx-auto mb-4 transition-colors`}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
           >
-            {action.icon}
-          </div>
-          <h3 className="text-lg font-semibold text-center text-gray-900 dark:text-white mb-1">
-            {action.title}
-          </h3>
-          <p className="text-sm text-center text-gray-600 dark:text-gray-300">
-            {action.desc}
-          </p>
-        </div>
-      </Link>
-    </motion.div>
-  ))}
-</motion.div>
+            {[
+              {
+                to: "/reading",
+                color: "blue",
+                icon: <BookOpen className="h-6 w-6 text-blue-600" />,
+                title: "Today's Reading",
+                desc: "Continue your journey"
+              },
+              {
+                to: "/community",
+                color: "green",
+                icon: <Users className="h-6 w-6 text-green-600" />,
+                title: "Community",
+                desc: "Connect with others"
+              },
+              {
+                to: "/church-room",
+                color: "purple",
+                icon: <MessageSquare className="h-6 w-6 text-purple-600" />,
+                title: "Church Room",
+                desc: "Join the conversation"
+              },
+              {
+                to: "/profile",
+                color: "orange",
+                icon: <Trophy className="h-6 w-6 text-orange-600" />,
+                title: "My Profile",
+                desc: "View achievements"
+              }
+            ].map((action, i) => (
+              <motion.div
+                key={action.to}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.1 }}
+              >
+                <Link to={action.to}>
+                  <div
+                    className={`group bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl py-10 shadow-md hover:shadow-xl transition-all cursor-pointer`}
+                  >
+                    <div
+                      className={`bg-${action.color}-100 group-hover:bg-${action.color}-200 dark:bg-opacity-20 p-3 rounded-full w-fit mx-auto mb-4 transition-colors`}
+                    >
+                      {action.icon}
+                    </div>
+                    <h3 className="text-lg font-semibold text-center text-gray-900 dark:text-white mb-1">
+                      {action.title}
+                    </h3>
+                    <p className="text-sm text-center text-gray-600 dark:text-gray-300">
+                      {action.desc}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
 
-
-          {/* Recent Activity */}
+          {/* Activity Dashboard with full functionality */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

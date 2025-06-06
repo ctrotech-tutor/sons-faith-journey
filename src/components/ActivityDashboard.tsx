@@ -1,14 +1,59 @@
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, MessageCircle, Users, TrendingUp, Calendar, Heart, Flame, FileText } from 'lucide-react';
-import { useActivitySync } from '@/lib/hooks/useActivitySync';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import {
+  BookOpen,
+  MessageCircle, 
+  Users,
+  TrendingUp,
+  Calendar,
+  Heart,
+  Flame,
+  FileText,
+  Filter,
+  Trash2,
+  RefreshCw,
+  Search,
+  Clock,
+  EyeOff
+} from 'lucide-react';
+import { useActivitySync, ActivityFilter, UserActivity } from '@/lib/hooks/useActivitySync';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useToast } from '@/lib/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
 const ActivityDashboard = () => {
-  const { userStats, recentActivities } = useActivitySync();
+  const { 
+    userStats, 
+    recentActivities, 
+    clearActivity, 
+    clearAllActivities,
+    filterActivities,
+    loading,
+    lastSync
+  } = useActivitySync();
   const { userProfile } = useAuth();
+  const { toast } = useToast();
+
+  const [filter, setFilter] = useState<ActivityFilter>({
+    type: null,
+    timeRange: 'all',
+    searchTerm: '',
+  });
+  
+  const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Apply filters whenever they change or activities update
+  useEffect(() => {
+    setFilteredActivities(filterActivities(recentActivities, filter));
+  }, [recentActivities, filter, filterActivities]);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -16,150 +61,275 @@ const ActivityDashboard = () => {
       case 'chat_message': return <MessageCircle className="h-4 w-4" />;
       case 'community_post': return <Users className="h-4 w-4" />;
       case 'profile_update': return <Heart className="h-4 w-4" />;
+      case 'bible_reading': return <BookOpen className="h-4 w-4 text-purple-600" />;
       default: return <TrendingUp className="h-4 w-4" />;
     }
   };
 
-  const getActivityText = (activity: any) => {
+  const getActivityText = (activity: UserActivity) => {
     switch (activity.type) {
       case 'reading_completed':
         return `Completed Day ${activity.data?.day} reading`;
+      case 'bible_reading':
+        return `Read ${activity.data?.passage || 'Bible passage'} for ${activity.data?.timeSpent || 0} minutes`;
       case 'chat_message':
         return 'Sent a message in chat';
       case 'community_post':
         return 'Shared a community post';
       case 'profile_update':
-        return 'Updated profile';
+        return 'Updated profile information';
       default:
         return 'Recent activity';
     }
   };
+  
+  const formatActivityTime = (timestamp: any) => {
+    if (!timestamp) return 'Just now';
+    
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      return 'Unknown time';
+    }
+  };
+
+  const handleClearActivity = async (id: string) => {
+    if (await clearActivity(id)) {
+      // Success is handled by the toast in the hook
+    }
+  };
+
+  const handleClearAllActivities = async () => {
+    if (window.confirm('Are you sure you want to clear all activity history?')) {
+      if (await clearAllActivities()) {
+        // Success is handled by the toast in the hook
+      }
+    }
+  };
+
+  const refreshTimeAgo = () => {
+    if (!lastSync) return '';
+    return `Updated ${formatDistanceToNow(lastSync, { addSuffix: true })}`;
+  };
 
   return (
     <div className="space-y-6">
-     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-  {[
-    {
-      label: "Day Streak",
-      value: userStats.readingStreak,
-      color: "green",
-      icon: <Flame className="w-5 h-5" />,
-    },
-    {
-      label: "Days Read",
-      value: userStats.totalReadingDays,
-      color: "purple",
-      icon: <BookOpen className="w-5 h-5" />,
-    },
-    {
-      label: "Messages",
-      value: userStats.messagesCount,
-      color: "blue",
-      icon: <MessageCircle className="w-5 h-5" />,
-    },
-    {
-      label: "Posts",
-      value: userStats.postsCount,
-      color: "orange",
-      icon: <FileText className="w-5 h-5" />,
-    },
-  ].map((stat, index) => (
-    <motion.div
-      key={stat.label}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 * (index + 1) }}
-    >
-      <Card className="bg-white/60 dark:bg-gray-900/50 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-md">
-        <CardContent className="p-4 text-center space-y-2">
-          {/* Icon */}
-          <div
-            className={`mx-auto w-10 h-10 flex items-center justify-center rounded-full bg-${stat.color}-100 dark:bg-${stat.color}-800/30 text-${stat.color}-600 dark:text-${stat.color}-300 shadow-sm`}
-          >
-            {stat.icon}
-          </div>
-
-          {/* Stat Number */}
-          <div
-            className={`text-2xl font-extrabold text-${stat.color}-600 dark:text-${stat.color}-300`}
-          >
-            {stat.value}
-          </div>
-
-          {/* Label */}
-          <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  ))}
-</div>
-
-
-      <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
->
-  <Card className="bg-white/70 dark:bg-gray-900/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl">
-    <CardHeader>
-      <CardTitle className="flex items-center space-x-2 text-purple-700 dark:text-purple-300 text-lg font-semibold">
-        <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-        <span>Recent Activities</span>
-      </CardTitle>
-    </CardHeader>
-
-    <CardContent>
-      <div className="space-y-3">
-        {recentActivities.slice(0, 5).map((activity, index) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Day Streak",
+            value: userStats.readingStreak,
+            color: "green",
+            icon: <Flame className="w-5 h-5" />,
+          },
+          {
+            label: "Days Read",
+            value: userStats.totalReadingDays,
+            color: "purple",
+            icon: <BookOpen className="w-5 h-5" />,
+          },
+          {
+            label: "Messages",
+            value: userStats.messagesCount,
+            color: "blue",
+            icon: <MessageCircle className="w-5 h-5" />,
+          },
+          {
+            label: "Posts",
+            value: userStats.postsCount,
+            color: "orange",
+            icon: <FileText className="w-5 h-5" />,
+          },
+        ].map((stat, index) => (
           <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 + 0.3 }}
-            className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-800/40 rounded-xl border border-gray-200 dark:border-gray-700"
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 * (index + 1) }}
           >
-            {/* Icon Badge */}
-            <div className="flex-shrink-0 p-2 rounded-full bg-gradient-to-br from-purple-200 to-purple-400 dark:from-purple-600 dark:to-purple-700 shadow-inner">
-              {getActivityIcon(activity.type)}
-            </div>
-
-            {/* Activity Text */}
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                {getActivityText(activity)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {activity.timestamp?.toDate?.()?.toLocaleDateString?.() ?? "Just now"}
-              </p>
-              {/* Optional: use dayjs for better UX */}
-              {/* dayjs(activity.timestamp.toDate()).fromNow() */}
-            </div>
-
-            {/* Type Badge */}
-            <Badge variant="secondary" className="text-xs capitalize">
-              {activity.type.replace('_', ' ')}
-            </Badge>
+            <Card className="bg-white/60 dark:bg-gray-900/50 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-md">
+              <CardContent className="p-4 text-center space-y-2">
+                <div
+                  className={`mx-auto w-10 h-10 flex items-center justify-center rounded-full bg-${stat.color}-100 dark:bg-${stat.color}-800/30 text-${stat.color}-600 dark:text-${stat.color}-300 shadow-sm`}
+                >
+                  {stat.icon}
+                </div>
+                <div
+                  className={`text-2xl font-extrabold text-${stat.color}-600 dark:text-${stat.color}-300`}
+                >
+                  {stat.value}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+              </CardContent>
+            </Card>
           </motion.div>
         ))}
-
-        {/* Empty State */}
-        {recentActivities.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-center py-6 text-gray-500 dark:text-gray-400"
-          >
-            <Calendar className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="font-medium">No recent activities</p>
-            <p className="text-sm">Start reading or chatting to see your journey unfold.</p>
-          </motion.div>
-        )}
       </div>
-    </CardContent>
-  </Card>
-</motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
+      >
+        <Card className="bg-white/70 dark:bg-gray-900/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center space-x-2 text-purple-700 dark:text-purple-300 text-lg font-semibold">
+                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <span>Recent Activities</span>
+              </CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {loading ? 'Loading activities...' : refreshTimeAgo()}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-1"
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Filter</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleClearAllActivities}
+                className="flex items-center gap-1 hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
+            </div>
+          </CardHeader>
+
+          {showFilters && (
+            <div className="px-6 pb-2">
+              <div className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search activities..."
+                    value={filter.searchTerm}
+                    onChange={(e) => setFilter({...filter, searchTerm: e.target.value})}
+                    className="pl-8"
+                  />
+                </div>
+                <Select
+                  value={filter.type || 'all'}
+                  onValueChange={(value) => setFilter({...filter, type: value === 'all' ? null : value})}
+                >
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Activities</SelectItem>
+                    <SelectItem value="reading_completed">Reading Completed</SelectItem>
+                    <SelectItem value="bible_reading">Bible Reading</SelectItem>
+                    <SelectItem value="chat_message">Chat Messages</SelectItem>
+                    <SelectItem value="community_post">Community Posts</SelectItem>
+                    <SelectItem value="profile_update">Profile Updates</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={filter.timeRange || 'all'}
+                  onValueChange={(value) => setFilter({...filter, timeRange: value as any})}
+                >
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Time range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredActivities.slice(0, 5).map((activity, index) => (
+                  <motion.div
+                    key={activity.id || index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 + 0.3 }}
+                    className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-800/40 rounded-xl border border-gray-200 dark:border-gray-700 group relative"
+                  >
+                    <div className="flex-shrink-0 p-2 rounded-full bg-gradient-to-br from-purple-200 to-purple-400 dark:from-purple-600 dark:to-purple-700 shadow-inner">
+                      {getActivityIcon(activity.type)}
+                    </div>
+
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {getActivityText(activity)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatActivityTime(activity.timestamp)}
+                      </p>
+                    </div>
+
+                    <Badge variant="secondary" className="text-xs capitalize">
+                      {activity.type.replace(/_/g, ' ')}
+                    </Badge>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleClearActivity(activity.id || '')}
+                    >
+                      <EyeOff className="h-3 w-3" />
+                      <span className="sr-only">Hide</span>
+                    </Button>
+                  </motion.div>
+                ))}
+
+                {filteredActivities.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="text-center py-6 text-gray-500 dark:text-gray-400"
+                  >
+                    <Calendar className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="font-medium">No recent activities</p>
+                    <p className="text-sm">
+                      {filter.searchTerm || filter.type || filter.timeRange !== 'all'
+                        ? 'Try changing your filters to see more activities.'
+                        : 'Start reading or chatting to see your journey unfold.'}
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </CardContent>
+          
+          <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-4 pb-2">
+            <Button
+              variant="link"
+              size="sm"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-800"
+              onClick={() => window.location.href = '/profile?tab=activity'}
+            >
+              View all activities
+            </Button>
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+              {filteredActivities.length} activities
+            </p>
+          </CardFooter>
+        </Card>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -174,7 +344,6 @@ const ActivityDashboard = () => {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Completion Percentage */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700 dark:text-gray-300">Reading Completion</span>
               <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
@@ -182,8 +351,12 @@ const ActivityDashboard = () => {
               </span>
             </div>
 
-            {/* Animated Progress Bar */}
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <motion.div
+              className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
               <motion.div
                 initial={{ width: 0 }}
                 animate={{
@@ -192,9 +365,8 @@ const ActivityDashboard = () => {
                 transition={{ duration: 1, ease: "easeInOut" }}
                 className="bg-gradient-to-r from-purple-500 to-purple-700 h-2 rounded-full"
               />
-            </div>
+            </motion.div>
 
-            {/* Streak Encouragement */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -211,8 +383,6 @@ const ActivityDashboard = () => {
           </CardContent>
         </Card>
       </motion.div>
-
-
     </div>
   );
 };

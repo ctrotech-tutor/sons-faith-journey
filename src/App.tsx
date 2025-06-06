@@ -1,4 +1,5 @@
-import { Suspense, lazy } from "react";
+
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import {
   Route,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom";
 import { AuthProvider } from "@/lib/context/AuthProvider";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
@@ -37,6 +39,7 @@ const AppContent = () => {
   //useShield();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Detect if current path is for auth modal
   const authMatch = location.pathname.startsWith("/auth/");
