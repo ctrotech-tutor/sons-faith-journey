@@ -28,7 +28,7 @@ import UserStats from '@/components/profile/UserStats';
 import PrivacySettings from '@/components/profile/PrivacySettings';
 import AccountSettings from '@/components/profile/AccountSettings';
 import Layout from '@/components/Layout';
-import cn from '@/lib/utils/cn';
+import cn from '@/lib/utils';
 
 const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
   <div className={`animate-spin rounded-full ${size} ${border} border-purple-900 border-t-transparent`} />
