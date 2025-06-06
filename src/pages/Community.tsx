@@ -213,89 +213,121 @@ const Community = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header */}
-      <div className="fixed top-0 w-full bg-white border-b border-gray-200 z-50">
-        <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              The Son Hub
-            </h1>
-            <Button
-              size="sm"
-              onClick={() => navigate("/create-post")}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Post
-            </Button>
-          </div>
-          
-          {/* Filter Tabs */}
-          <div className="flex space-x-1 mt-3 bg-gray-100 rounded-lg p-1">
-            {['recent', 'liked', 'admin'].map((filterType) => (
-              <button
-                key={filterType}
-                onClick={() => setFilter(filterType as any)}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                  filter === filterType
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {filterType === 'recent' ? 'Recent' : filterType === 'liked' ? 'Popular' : 'Leaders'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <motion.div
+  initial={{ y: -30, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ duration: 0.6, ease: 'easeOut' }}
+  className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-white/20 dark:border-white/10 shadow-sm"
+>
+  <div className="max-w-md mx-auto px-4 py-3">
+    {/* Logo + Post Button */}
+    <div className="flex items-center justify-between">
+      <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">
+        The Son Hub
+      </h1>
+      <Button
+        size="sm"
+        onClick={() => navigate("/create-post")}
+        className="flex items-center gap-2 text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md hover:shadow-lg transition-all duration-300 px-4 py-2 rounded-lg"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="text-sm font-semibold">Post</span>
+      </Button>
+    </div>
+
+    {/* Filter Tabs */}
+    <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
+      {['recent', 'liked', 'admin'].map((filterType) => (
+        <button
+          key={filterType}
+          onClick={() => setFilter(filterType as any)}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+            filter === filterType
+              ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
+              : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
+          }`}
+        >
+          {filterType === 'recent' ? 'Recent' : filterType === 'liked' ? 'Popular' : 'Leaders'}
+        </button>
+      ))}
+    </div>
+  </div>
+</motion.div>
+
 
       {/* Main Feed */}
       <div className="pt-32 pb-20">
         <div className="max-w-md mx-auto">
           {/* Admin pending posts */}
-          {userProfile?.isAdmin && posts.filter(post => post.status === 'pending').length > 0 && (
-            <div className="mb-6 px-4">
-              <h3 className="text-lg font-semibold mb-3 text-orange-700">Pending Approval</h3>
-              {posts.filter(post => post.status === 'pending').map((post) => (
-                <Card key={post.id} className="mb-3 border-orange-200 bg-orange-50">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{post.authorName}</p>
-                        <p className="text-sm text-gray-500">
-                          {post.timestamp?.toDate?.()?.toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">Pending Approval</Badge>
-                  </div>
-                  
-                  <p className="text-gray-800 mb-4">{post.content}</p>
-                  
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => approvePost(post.id)}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      onClick={() => rejectPost(post.id)}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+          {userProfile?.isAdmin && posts.filter(p => p.status === 'pending').length > 0 && (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: 0.2 }}
+    className="mb-8 px-4"
+  >
+    <h3 className="text-xl font-bold mb-4 text-orange-700 dark:text-orange-300 tracking-tight">
+      Pending Approval
+    </h3>
+
+    <div className="space-y-4">
+      {posts.filter(p => p.status === 'pending').map((post) => (
+        <motion.div
+          key={post.id}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="rounded-xl border border-orange-200 dark:border-orange-400/30 bg-white/50 dark:bg-orange-900/20 backdrop-blur-sm shadow-md p-4"
+        >
+          {/* Author Info */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback>
+                  {post.authorName?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">{post.authorName}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {post.timestamp?.toDate?.()?.toLocaleDateString()}
+                </p>
+              </div>
             </div>
-          )}
+            <Badge variant="secondary" className="bg-orange-200 text-orange-900 dark:bg-orange-400/20 dark:text-orange-300">
+              Pending
+            </Badge>
+          </div>
+
+          {/* Post Content */}
+          <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">
+            {post.content}
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => approvePost(post.id)}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+            >
+              ✅ Approve
+            </Button>
+            <Button
+              onClick={() => rejectPost(post.id)}
+              variant="destructive"
+              size="sm"
+              className="shadow-sm"
+            >
+              ❌ Reject
+            </Button>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  </motion.div>
+)}
 
           {/* Posts Feed */}
           <div className="space-y-0">
@@ -463,7 +495,7 @@ const Community = () => {
               <h3 className="text-xl font-semibold text-gray-600 mb-2">Start the Conversation</h3>
               <p className="text-gray-500 mb-6">Be the first to share something meaningful with the community!</p>
               <Button 
-                onClick={() => setShowCreatePost(true)}
+                onClick={() => navigate('/create-post')}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 Create First Post
