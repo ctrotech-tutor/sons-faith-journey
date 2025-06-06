@@ -1,100 +1,121 @@
-import { useRef, useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import clsx from "clsx";
-import { RefreshCw, CheckCircle } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { FiCheck } from "react-icons/fi";
+import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PullToRefreshProps {
-  onRefresh: () => Promise<void>;
-  threshold?: number; // in px
-  height?: number;
+  onRefresh?: () => Promise<void>;
+  pullThreshold?: number;
+  vibration?: boolean;
+  spinnerDuration?: number; // How long to spin loader
+  checkDuration?: number;   // How long to show check before reload
 }
 
 export default function PullToRefresh({
   onRefresh,
-  threshold = 80,
-  height = 120,
+  pullThreshold = 80,
+  vibration = true,
+  spinnerDuration = 3000,
+  checkDuration = 500,
 }: PullToRefreshProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pull, setPull] = useState(0);
+  const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [complete, setComplete] = useState(false);
-  const startY = useRef<number | null>(null);
+  const [showIndicator, setShowIndicator] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
+
+  const startY = useRef(0);
+  const isTouching = useRef(false);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    const triggerHaptic = () => {
+      if (vibration && "vibrate" in navigator) navigator.vibrate(40);
+    };
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY > 0 || refreshing) return;
-      startY.current = e.touches[0].clientY;
+      if (window.scrollY === 0 && e.touches[0].clientY < 200 && !refreshing) {
+        isTouching.current = true;
+        startY.current = e.touches[0].clientY;
+        setShowIndicator(true);
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startY.current === null) return;
-      const delta = e.touches[0].clientY - startY.current;
-      if (delta > 0 && delta < height) {
-        setPull(delta);
+      if (!isTouching.current || refreshing) return;
+      const currentY = e.touches[0].clientY;
+      const distance = currentY - startY.current;
+
+      if (distance > 10) {
+        setPullDistance(Math.min(distance * 0.5, pullThreshold + 20));
         e.preventDefault();
       }
     };
 
-    const handleTouchEnd = async () => {
-      if (pull >= threshold) {
+    const handleTouchEnd = () => {
+      if (refreshing) return;
+
+      if (pullDistance > pullThreshold) {
+        triggerHaptic();
         setRefreshing(true);
-        navigator.vibrate?.(50); // haptic feedback
-        await onRefresh();
-        setComplete(true);
-        setTimeout(() => {
-          setComplete(false);
-          setRefreshing(false);
-          setPull(0);
-        }, 1200);
+        setPullDistance(pullThreshold);
+
+        // Optional refresh logic before animation
+        (onRefresh?.() ?? Promise.resolve())
+          .then(() => {
+            // Step 1: Spin loader
+            setShowCheck(false);
+            setTimeout(() => {
+              // Step 2: Show check
+              setShowCheck(true);
+              setTimeout(() => {
+                // Step 3: Reload
+                window.location.reload();
+              }, checkDuration);
+            }, spinnerDuration);
+          });
       } else {
-        setPull(0);
+        setPullDistance(0);
+        setShowIndicator(false);
       }
-      startY.current = null;
+
+      isTouching.current = false;
     };
 
-    el.addEventListener("touchstart", handleTouchStart, { passive: false });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-    el.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchstart", handleTouchStart, { passive: false });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd);
 
     return () => {
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-      el.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [pull, refreshing]);
+  }, [pullDistance, refreshing, onRefresh, pullThreshold, vibration, spinnerDuration, checkDuration]);
 
   return (
-    <div ref={ref} className="overflow-hidden">
-      <motion.div
-        animate={{ height: pull }}
-        className="flex justify-center items-end overflow-hidden"
-        style={{ height: pull }}
-      >
+    <AnimatePresence>
+      {showIndicator && (
         <motion.div
-          animate={{
-            rotate: refreshing ? 360 : 0,
-            opacity: pull > 10 ? 1 : 0,
-          }}
-          transition={{
-            repeat: refreshing ? Infinity : 0,
-            duration: 0.6,
-            ease: "linear",
-          }}
-          className={clsx(
-            "text-purple-700 transition-all",
-            complete && "text-green-500"
-          )}
+          initial={{ y: -60, opacity: 0 }}
+          animate={{ y: pullDistance, opacity: 1 }}
+          exit={{ y: -60, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className={`
+            fixed top-0 left-[45%] right-[50%] 
+            transform -translate-x-1/2 
+            flex items-center justify-center 
+            h-10 w-10 rounded-full 
+            bg-white dark:bg-gray-900 
+            text-purple-600 dark:text-purple-200 
+            shadow z-[9999]
+          `}
         >
-          {complete ? (
-            <CheckCircle className="w-7 h-7" />
+          {showCheck ? (
+            <FiCheck size={24} />
           ) : (
-            <RefreshCw className="w-7 h-7" />
+            <Loader2 size={24} className="animate-spin" />
           )}
         </motion.div>
-      </motion.div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

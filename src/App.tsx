@@ -81,9 +81,8 @@ const AppContent = () => {
 
   // Handle pull-to-refresh
   const handleRefresh = async () => {
-    // e.g. reload quotes, refetch data
-    window.location.reload();
     await new Promise((res) => setTimeout(res, 1000));
+
   };
 
   const LoadingFallback = () => (
@@ -98,9 +97,8 @@ const AppContent = () => {
   return (
     
     <Suspense fallback={<LoadingFallback />}>
-  
+      <PullToRefresh />
       <ScrollToTop />
-    
       {/* Main Routes */}
       <Routes>
         <Route path="/" element={<Index />} />
