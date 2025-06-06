@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -44,7 +45,7 @@ const Community = () => {
   const [filter, setFilter] = useState<'recent' | 'liked' | 'admin'>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
   const [quickComment, setQuickComment] = useState<{[key: string]: string}>({});
-  const [showCreatePost, setShowCreatePost] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -222,7 +223,7 @@ const Community = () => {
             </h1>
             <Button
               size="sm"
-              onClick={() => setShowCreatePost(true)}
+              onClick={() => navigate("/create-post")}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
               <Plus className="h-4 w-4 mr-2" />

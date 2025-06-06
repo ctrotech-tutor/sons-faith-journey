@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, BookOpen, Globe, AlertCircle, Loader2, Copy, Check } from 'lucide-react';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
 import { useToast } from '@/components/ui/use-toast';
+import PullToRefresh from '@/components/PullToRefresh'
 
 interface BibleVerse {
   chapter: number;
@@ -42,6 +43,15 @@ const Bible = () => {
       logBibleReading();
     }
   }, [passage, selectedVersion]);
+
+  const handleRefresh = async () => {
+    if (passage) {
+      setTimeout(async () => {
+        await loadBibleChapter();
+        await logBibleReading();
+      }, 2000);
+    }
+  };
 
   const logBibleReading = async () => {
     if (!passage || !day) return;
@@ -154,6 +164,8 @@ const Bible = () => {
     }
   };
 
+  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
@@ -167,6 +179,22 @@ const Bible = () => {
 
   if (error) {
     return (
+      <>
+      <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Error Loading Passage</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+            <Button onClick={() => navigate('/reading')} className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Reading
+            </Button>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        </div>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 p-4">
         <div className="max-w-4xl mx-auto pt-20">
           <Card className="shadow-xl dark:bg-gray-800 dark:border-gray-700">
@@ -185,10 +213,13 @@ const Bible = () => {
           </Card>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+    <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900">
       {/* Fixed Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b dark:border-gray-700 shadow-sm">
@@ -312,6 +343,7 @@ const Bible = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

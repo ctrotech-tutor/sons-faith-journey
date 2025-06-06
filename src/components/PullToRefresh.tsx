@@ -8,7 +8,7 @@ interface PullToRefreshProps {
   pullThreshold?: number;
   vibration?: boolean;
   spinnerDuration?: number; // How long to spin loader
-  checkDuration?: number;   // How long to show check before reload
+  checkDuration?: number;   // How long to show check before fade + reload
 }
 
 export default function PullToRefresh({
@@ -61,14 +61,22 @@ export default function PullToRefresh({
         // Optional refresh logic before animation
         (onRefresh?.() ?? Promise.resolve())
           .then(() => {
-            // Step 1: Spin loader
-            setShowCheck(false);
+            setShowCheck(false); // Step 1: Loader spins
             setTimeout(() => {
-              // Step 2: Show check
-              setShowCheck(true);
+              setShowCheck(true); // Step 2: Checkmark shows
               setTimeout(() => {
-                // Step 3: Reload
-                window.location.reload();
+                // Step 3: Soft Fade → Reload
+                c
+                setTimeout(() => {
+                  //window.location.reload(); // Soft manual reload
+                  setPullDistance(0);
+                  setShowIndicator(false);
+                  setRefreshing(false);
+                  setShowCheck(false);
+                  document.body.style.opacity = "1";
+                  document.body.style.overflow = "unset";
+
+                }, 400);
               }, checkDuration);
             }, spinnerDuration);
           });
@@ -89,7 +97,15 @@ export default function PullToRefresh({
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [pullDistance, refreshing, onRefresh, pullThreshold, vibration, spinnerDuration, checkDuration]);
+  }, [
+    pullDistance,
+    refreshing,
+    onRefresh,
+    pullThreshold,
+    vibration,
+    spinnerDuration,
+    checkDuration,
+  ]);
 
   return (
     <AnimatePresence>
