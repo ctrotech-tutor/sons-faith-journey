@@ -1,149 +1,153 @@
 
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Circle, BookOpen, Calendar, Lock } from 'lucide-react';
-import { ReadingDay } from '@/data/readingPlan';
-import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Lock, BookOpen, ChevronRight, Calendar, SquareCheck, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useActivitySync } from '@/lib/hooks/useActivitySync';
 
 interface ReadingDayCardProps {
-  dayData: ReadingDay;
+  dayData: {
+    day: number;
+    title: string;
+    description: string;
+    passages: string[];
+    theme?: string;
+  };
   isCompleted: boolean;
   isToday: boolean;
   isLocked: boolean;
+  isProcessing?: boolean;
   onToggleComplete: (completed: boolean) => void;
-  animationDelay: number;
+  animationDelay?: number;
 }
 
-const ReadingDayCard = ({ 
-  dayData, 
-  isCompleted, 
-  isToday, 
+const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
+  dayData,
+  isCompleted,
+  isToday,
   isLocked,
-  onToggleComplete, 
-  animationDelay 
-}: ReadingDayCardProps) => {
-  const navigate = useNavigate();
-
-  const handlePassageClick = (passage: string) => {
-    if (isLocked) return;
-    navigate(`/bible/${encodeURIComponent(passage)}/${dayData.day}`);
-  };
+  isProcessing = false,
+  onToggleComplete,
+  animationDelay = 0
+}) => {
+  const { loading } = useActivitySync();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: animationDelay }}
+      transition={{ delay: animationDelay, duration: 0.4 }}
       className="h-full"
     >
-      <Card className={`h-full transition-all duration-300 hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 ${
-        isLocked
-          ? 'opacity-60 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
-          : isToday 
-          ? 'ring-2 ring-purple-500 dark:ring-purple-400 shadow-purple-100 dark:shadow-purple-900/50' 
-          : isCompleted 
-          ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700' 
-          : 'hover:shadow-md dark:hover:shadow-gray-900/50'
-      }`}>
-        <CardContent className="p-6 h-full flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+      <Card 
+        className={`
+          border-2 h-full flex flex-col
+          ${isToday ? 'border-purple-500 dark:border-purple-400 shadow-lg shadow-purple-100 dark:shadow-purple-900/20' : 'border-gray-200 dark:border-gray-700'}
+          ${isLocked ? 'opacity-60' : ''}
+          ${isCompleted ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40' : 'bg-white dark:bg-gray-800'}
+        `}
+      >
+        <CardContent className="p-4 md:p-6 flex-grow space-y-2">
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              {isLocked ? (
-                <Lock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-              ) : (
-                <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              )}
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Day {dayData.day}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              {isToday && !isLocked && (
-                <Badge className="bg-purple-600 dark:bg-purple-500 text-white text-xs">Today</Badge>
-              )}
-              {isLocked && (
-                <Badge variant="outline" className="text-xs text-gray-500 dark:text-gray-400 dark:border-gray-600">Locked</Badge>
-              )}
-              {isCompleted && !isLocked && (
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <Badge 
+                variant={isCompleted ? "success" : isToday ? "purple" : "outline"}
+                className={`
+                  ${isCompleted ? 'bg-green-500 hover:bg-green-600' : isToday ? 'bg-purple-500 hover:bg-purple-600' : ''}
+                `}
+              >
+                Day {dayData.day}
+              </Badge>
+              
+              {isToday && !isCompleted && (
+                <Badge variant="outline" className="animate-pulse bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-700">
+                  Today
+                </Badge>
               )}
             </div>
+            
+            {isLocked ? (
+              <Lock className="h-5 w-5 text-gray-400" />
+            ) : isCompleted ? (
+              <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
+            ) : (
+              <BookOpen className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+            )}
           </div>
 
-          {/* Date */}
-          <div className="mb-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {new Date(dayData.date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric'
-              })}
-            </p>
-          </div>
+          <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+            {dayData.title}
+          </h3>
 
-          {/* Theme */}
-          <div className="mb-4">
-            <Badge variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-300">
-              {dayData.theme}
-            </Badge>
-          </div>
-
-          {/* Passages */}
-          <div className="flex-1 mb-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Today's Reading</span>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+            {dayData.description}
+          </p>
+          
+          <div className="pt-2">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Today's Reading:
             </div>
-            <div className="space-y-1">
-              {dayData.passages.map((passage, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePassageClick(passage)}
-                  disabled={isLocked}
-                  className={`w-full text-left text-sm p-2 rounded transition-colors ${
-                    isLocked 
-                      ? 'bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/50 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer'
-                  }`}
+            <div className="flex flex-wrap gap-1">
+              {dayData.passages.map((passage, i) => (
+                <Badge
+                  key={i}
+                  variant="outline" 
+                  className="text-xs bg-gray-50 dark:bg-gray-700/50"
                 >
                   {passage}
-                </button>
+                </Badge>
               ))}
             </div>
           </div>
-
-          {/* Action Button */}
-          <Button
-            onClick={() => onToggleComplete(!isCompleted)}
-            disabled={isLocked}
-            variant={isCompleted ? "outline" : "default"}
-            className={`w-full ${
-              isLocked
-                ? 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                : isCompleted 
-                ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50' 
-                : 'bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600'
-            }`}
-          >
-            {isLocked ? (
-              <>
-                <Lock className="h-4 w-4 mr-2" />
-                Locked
-              </>
-            ) : isCompleted ? (
-              <>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Completed
-              </>
-            ) : (
-              <>
-                <Circle className="h-4 w-4 mr-2" />
-                Mark Complete
-              </>
-            )}
-          </Button>
         </CardContent>
+        
+        <CardFooter className="px-4 md:px-6 pb-4 pt-0 flex flex-wrap justify-between gap-2">
+          <Link 
+            to={`/bible/${dayData.passages[0]}/${dayData.day}`}
+            className={`${isLocked ? 'pointer-events-none opacity-50' : ''}`}
+          >
+            <Button 
+              variant="outline"
+              size="sm" 
+              className="text-xs"
+              disabled={isLocked}
+            >
+              <BookOpen className="mr-1 h-3 w-3" />
+              Read
+              <ChevronRight className="ml-1 h-3 w-3" />
+            </Button>
+          </Link>
+          
+          {!isLocked && (
+            <Button
+              variant={isCompleted ? "ghost" : "outline"}
+              size="sm"
+              className={`text-xs ${isCompleted ? 'text-green-600 hover:text-green-700 dark:text-green-400' : ''}`}
+              onClick={() => onToggleComplete(!isCompleted)}
+              disabled={isProcessing || loading}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  Updating...
+                </>
+              ) : isCompleted ? (
+                <>
+                  <SquareCheck className="mr-1 h-3 w-3" />
+                  Completed
+                </>
+              ) : (
+                <>
+                  <Calendar className="mr-1 h-3 w-3" />
+                  Mark Complete
+                </>
+              )}
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </motion.div>
   );

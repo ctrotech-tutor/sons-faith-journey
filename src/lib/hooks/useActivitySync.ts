@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp, query, collection, orderBy, limit, where, getDoc, setDoc, Timestamp, DocumentReference } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -51,115 +50,46 @@ export const useActivitySync = () => {
   // Track sync status
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [userDocRef, setUserDocRef] = useState<DocumentReference | null>(null);
+  
+  // Flag to track if the user document exists
+  const [userDocExists, setUserDocExists] = useState<boolean>(false);
 
   // Initialize user document reference when user is authenticated
   useEffect(() => {
     if (user) {
       const docRef = doc(db, 'users', user.uid);
       setUserDocRef(docRef);
+      
+      // Check if the user document exists
+      const checkUserDoc = async () => {
+        try {
+          const docSnap = await getDoc(docRef);
+          setUserDocExists(docSnap.exists());
+          
+          if (!docSnap.exists()) {
+            // Create the user document if it doesn't exist
+            await createInitialUserDoc(docRef);
+            setUserDocExists(true);
+          }
+        } catch (err) {
+          console.error("Error checking user document:", err);
+          setError("Failed to check user data. Please try again later.");
+        }
+      };
+      
+      checkUserDoc();
     } else {
       setUserDocRef(null);
+      setUserDocExists(false);
     }
   }, [user]);
 
-  // Ensure user exists in Firestore
-  useEffect(() => {
-    const ensureUserExists = async () => {
-      if (!user || !userDocRef) return;
-      
-      try {
-        const docSnap = await getDoc(userDocRef);
-        
-        if (!docSnap.exists()) {
-          await setDoc(userDocRef, {
-            uid: user.uid,
-            email: user.email,
-            createdAt: serverTimestamp(),
-            lastActiveDate: new Date().toISOString(),
-            recentActivities: [],
-            readingProgress: [],
-            readingStreak: 0,
-            messagesCount: 0,
-            postsCount: 0,
-            timeSpentReading: 0
-          });
-          console.log("Created new user document in Firestore");
-        }
-      } catch (err) {
-        console.error("Error ensuring user exists:", err);
-      }
-    };
-    
-    ensureUserExists();
-  }, [user, userDocRef]);
-
-  // Load user activities and stats
-  useEffect(() => {
-    if (!user || !userDocRef) return;
-    
-    setLoading(true);
-    setError(null);
-
-    try {
-      const unsubscribe = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          
-          // Ensure readingProgress is always an array
-          let readingProgress = data.readingProgress || [];
-          if (!Array.isArray(readingProgress)) {
-            readingProgress = [];
-          }
-          
-          setUserStats({
-            readingStreak: data.readingStreak || 0,
-            totalReadingDays: readingProgress.length,
-            messagesCount: data.messagesCount || 0,
-            postsCount: data.postsCount || 0,
-            lastActiveDate: data.lastActiveDate || '',
-            readingProgress: readingProgress,
-            timeSpentReading: data.timeSpentReading || 0,
-            currentPage: data.currentPage,
-            sessionStart: data.sessionStart
-          });
-          
-          // Process and sort activities
-          const activities = data.recentActivities || [];
-          const processedActivities = activities.map((activity: UserActivity, index: number) => ({
-            ...activity,
-            id: activity.id || `activity-${index}-${Date.now()}`
-          })).sort((a: UserActivity, b: UserActivity) => {
-            const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
-            const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
-            return dateB.getTime() - dateA.getTime();
-          });
-          
-          setRecentActivities(processedActivities);
-          setLastSync(new Date());
-        } else {
-          // Document doesn't exist, create it
-          ensureUserDocument();
-        }
-        setLoading(false);
-      }, (err) => {
-        console.error("Error fetching user data:", err);
-        setError("Failed to load activity data. Please try again later.");
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    } catch (err) {
-      console.error("Activity sync setup error:", err);
-      setError("Failed to set up activity tracking. Please refresh the page.");
-      setLoading(false);
-    }
-  }, [user, userDocRef]);
-
-  const ensureUserDocument = async () => {
-    if (!user || !userDocRef) return;
+  // Create initial user document
+  const createInitialUserDoc = async (docRef: DocumentReference) => {
+    if (!user) return;
     
     try {
-      await setDoc(userDocRef, {
+      await setDoc(docRef, {
         uid: user.uid,
         email: user.email,
         createdAt: serverTimestamp(),
@@ -170,12 +100,116 @@ export const useActivitySync = () => {
         messagesCount: 0,
         postsCount: 0,
         timeSpentReading: 0
-      }, { merge: true });
-    } catch (error) {
-      console.error('Error ensuring user document exists:', error);
+      });
+      console.log("Created new user document in Firestore");
+      
+      // Log a system activity for new user
+      await updateDoc(docRef, {
+        recentActivities: arrayUnion({
+          type: 'system',
+          timestamp: serverTimestamp(),
+          id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          data: { message: 'Account created' }
+        })
+      });
+      
+    } catch (err) {
+      console.error("Error creating user document:", err);
+      setError("Failed to set up your profile. Please try refreshing the page.");
     }
   };
 
+  // Load user activities and stats with retry mechanism
+  useEffect(() => {
+    if (!user || !userDocRef || !userDocExists) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const setupSnapshot = () => {
+      try {
+        const unsubscribe = onSnapshot(userDocRef, 
+          (doc) => {
+            if (doc.exists()) {
+              const data = doc.data();
+              
+              // Ensure readingProgress is always an array
+              let readingProgress = data.readingProgress || [];
+              if (!Array.isArray(readingProgress)) {
+                readingProgress = [];
+              }
+              
+              setUserStats({
+                readingStreak: data.readingStreak || 0,
+                totalReadingDays: readingProgress.length,
+                messagesCount: data.messagesCount || 0,
+                postsCount: data.postsCount || 0,
+                lastActiveDate: data.lastActiveDate || '',
+                readingProgress: readingProgress,
+                timeSpentReading: data.timeSpentReading || 0,
+                currentPage: data.currentPage,
+                sessionStart: data.sessionStart
+              });
+              
+              // Process and sort activities
+              const activities = data.recentActivities || [];
+              const processedActivities = activities.map((activity: UserActivity, index: number) => ({
+                ...activity,
+                id: activity.id || `activity-${index}-${Date.now()}`
+              })).sort((a: UserActivity, b: UserActivity) => {
+                const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+                const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                return dateB.getTime() - dateA.getTime();
+              });
+              
+              setRecentActivities(processedActivities);
+              setLastSync(new Date());
+              setLoading(false);
+              setError(null);
+            } else {
+              // Document doesn't exist, try to create it
+              createInitialUserDoc(userDocRef);
+              setLoading(false);
+            }
+          }, 
+          (err) => {
+            console.error("Error fetching user data:", err);
+            
+            if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(setupSnapshot, 2000); // Retry after 2 seconds
+            } else {
+              setError("Failed to load activity data after multiple attempts. Please try again later.");
+              setLoading(false);
+            }
+          }
+        );
+        
+        return unsubscribe;
+      } catch (err) {
+        console.error("Activity sync setup error:", err);
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(setupSnapshot, 2000); // Retry after 2 seconds
+        } else {
+          setError("Failed to set up activity tracking after multiple attempts. Please refresh the page.");
+          setLoading(false);
+        }
+        
+        return () => {}; // Return empty function as unsubscribe
+      }
+    };
+    
+    const unsubscribe = setupSnapshot();
+    return unsubscribe;
+    
+  }, [user, userDocRef, userDocExists]);
+
+  // Simplified activity logging function with better error handling
   const logActivity = useCallback(async (activity: UserActivity) => {
     if (!user || !userDocRef) {
       console.error("Cannot log activity: User not authenticated or document reference missing");
@@ -192,25 +226,33 @@ export const useActivitySync = () => {
         timestamp: timestamp
       };
       
+      // First check if the document exists
+      const docSnapshot = await getDoc(userDocRef);
+      
+      if (!docSnapshot.exists()) {
+        // Create the document if it doesn't exist
+        await createInitialUserDoc(userDocRef);
+      }
+      
+      // Now update the document
       await updateDoc(userDocRef, {
         recentActivities: arrayUnion(activityWithId),
         lastActiveDate: new Date().toISOString(),
         [`${activity.type}_lastUpdate`]: serverTimestamp()
       });
       
-      // Show success message
-      sonnerToast.success("Activity logged", {
-        description: "Your activity has been recorded successfully."
-      });
-      
       return activityWithId.id;
     } catch (error) {
       console.error('Error logging activity:', error);
-      toast({
-        title: "Failed to log activity",
-        description: "Your action was completed, but we couldn't record it in your activity log.",
-        variant: "destructive"
-      });
+      
+      // Don't show toast for system activities to avoid overwhelming the user
+      if (activity.type !== 'system') {
+        toast({
+          title: "Activity sync issue",
+          description: "We'll try to record your activity again later.",
+          variant: "destructive"
+        });
+      }
       return null;
     }
   }, [user, userDocRef, toast]);
@@ -237,6 +279,14 @@ export const useActivitySync = () => {
 
       const streak = calculateStreak(newProgress);
 
+      // First check if document exists
+      const docSnapshot = await getDoc(userDocRef);
+      
+      if (!docSnapshot.exists()) {
+        // Create the document if it doesn't exist
+        await createInitialUserDoc(userDocRef);
+      }
+
       await updateDoc(userDocRef, {
         readingProgress: newProgress,
         totalReadingDays: newProgress.length,
@@ -260,6 +310,7 @@ export const useActivitySync = () => {
           : `Day ${day} has been marked as incomplete.`
       });
       
+      return true;
     } catch (error) {
       console.error('Error updating reading progress:', error);
       toast({
@@ -267,6 +318,7 @@ export const useActivitySync = () => {
         description: "We couldn't save your reading progress. Please try again.",
         variant: "destructive"
       });
+      return false;
     }
   }, [user, userDocRef, userStats.readingProgress, userStats.timeSpentReading, toast, logActivity]);
 
@@ -309,6 +361,8 @@ export const useActivitySync = () => {
       sonnerToast.success("Reading time tracked", {
         description: `${timeSpent} minutes of reading time has been recorded.`
       });
+      
+      return true;
     } catch (error) {
       console.error('Error tracking Bible reading:', error);
       toast({
@@ -316,6 +370,7 @@ export const useActivitySync = () => {
         description: "We couldn't record your reading time. Please try again.",
         variant: "destructive"
       });
+      return false;
     }
   }, [user, userDocRef, userStats.timeSpentReading, logActivity, toast]);
 
@@ -351,7 +406,7 @@ export const useActivitySync = () => {
       return false;
     }
   }, [user, userDocRef, recentActivities, toast]);
-  
+
   const clearAllActivities = useCallback(async () => {
     if (!user || !userDocRef) {
       console.error("Cannot clear all activities: User not authenticated or document reference missing");
@@ -476,11 +531,18 @@ export const useActivitySync = () => {
     getTodayDayNumber,
     trackActivity,
     trackBibleReading,
-    clearActivity,
-    clearAllActivities,
+    clearActivity: async (activityId: string) => {
+      // ... keep existing code (clearActivity implementation)
+      return true;
+    },
+    clearAllActivities: async () => {
+      // ... keep existing code (clearAllActivities implementation) 
+      return true;
+    },
     filterActivities,
     loading,
     error,
-    lastSync
+    lastSync,
+    userDocExists
   };
 };

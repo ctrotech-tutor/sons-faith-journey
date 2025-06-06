@@ -54,6 +54,24 @@ const ActivityDashboard = () => {
   const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [displayCount, setDisplayCount] = useState(3);
+
+  // Determine initial display count based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setDisplayCount(3);
+      } else if (window.innerWidth < 1024) {
+        setDisplayCount(4);
+      } else {
+        setDisplayCount(5);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Apply filters whenever they change or activities update
   useEffect(() => {
@@ -177,9 +195,13 @@ const ActivityDashboard = () => {
     }, 1000);
   };
 
+  const loadMore = () => {
+    setDisplayCount(prev => prev + 5);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[
           {
             label: "Day Streak",
@@ -213,18 +235,18 @@ const ActivityDashboard = () => {
             transition={{ delay: 0.1 * (index + 1) }}
           >
             <Card className="bg-white/60 dark:bg-gray-900/50 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-md">
-              <CardContent className="p-4 text-center space-y-2">
+              <CardContent className="p-3 md:p-4 text-center space-y-1 md:space-y-2">
                 <div
-                  className={`mx-auto w-10 h-10 flex items-center justify-center rounded-full bg-${stat.color}-100 dark:bg-${stat.color}-800/30 text-${stat.color}-600 dark:text-${stat.color}-300 shadow-sm`}
+                  className={`mx-auto w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-${stat.color}-100 dark:bg-${stat.color}-800/30 text-${stat.color}-600 dark:text-${stat.color}-300 shadow-sm`}
                 >
                   {stat.icon}
                 </div>
                 <div
-                  className={`text-2xl font-extrabold text-${stat.color}-600 dark:text-${stat.color}-300`}
+                  className={`text-xl md:text-2xl font-extrabold text-${stat.color}-600 dark:text-${stat.color}-300`}
                 >
                   {stat.value}
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -237,9 +259,9 @@ const ActivityDashboard = () => {
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
       >
         <Card className="bg-white/70 dark:bg-gray-900/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4">
             <div>
-              <CardTitle className="flex items-center space-x-2 text-purple-700 dark:text-purple-300 text-lg font-semibold">
+              <CardTitle className="flex items-center space-x-2 text-purple-700 dark:text-purple-300 text-base md:text-lg font-semibold">
                 <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <span>Recent Activities</span>
               </CardTitle>
@@ -247,41 +269,41 @@ const ActivityDashboard = () => {
                 {loading || isRefreshing ? 'Loading activities...' : refreshTimeAgo()}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 md:space-x-2">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleManualRefresh}
                 disabled={loading || isRefreshing}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 h-8 w-8 md:h-auto md:w-auto p-0 md:p-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
+                <span className="hidden md:inline">Refresh</span>
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 h-8 w-8 md:h-auto md:w-auto p-0 md:p-2"
               >
                 <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline">Filter</span>
+                <span className="hidden md:inline">Filter</span>
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={handleClearAllActivities}
                 disabled={recentActivities.length === 0 || loading}
-                className="flex items-center gap-1 hover:text-red-600"
+                className="flex items-center gap-1 hover:text-red-600 h-8 w-8 md:h-auto md:w-auto p-0 md:p-2"
               >
                 <Trash2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Clear</span>
+                <span className="hidden md:inline">Clear</span>
               </Button>
             </div>
           </CardHeader>
 
           {showFilters && (
-            <div className="px-6 pb-2">
+            <div className="px-4 md:px-6 pb-2">
               <div className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg mb-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
@@ -327,27 +349,27 @@ const ActivityDashboard = () => {
             </div>
           )}
 
-          <CardContent>
+          <CardContent className="px-4 md:px-6 py-2 md:py-3">
             {loading || isRefreshing ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-6 md:py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredActivities.slice(0, 5).map((activity, index) => (
+              <div className="space-y-2 md:space-y-3">
+                {filteredActivities.slice(0, displayCount).map((activity, index) => (
                   <motion.div
                     key={activity.id || index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 + 0.3 }}
-                    className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-800/40 rounded-xl border border-gray-200 dark:border-gray-700 group relative"
+                    className="flex items-center space-x-3 p-2 md:p-3 bg-gray-100 dark:bg-gray-800/40 rounded-xl border border-gray-200 dark:border-gray-700 group relative"
                   >
                     <div className="flex-shrink-0 p-2 rounded-full bg-gradient-to-br from-purple-200 to-purple-400 dark:from-purple-600 dark:to-purple-700 shadow-inner">
                       {getActivityIcon(activity.type)}
                     </div>
 
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                         {getActivityText(activity)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -355,7 +377,7 @@ const ActivityDashboard = () => {
                       </p>
                     </div>
 
-                    <Badge variant="secondary" className="text-xs capitalize">
+                    <Badge variant="secondary" className="text-xs capitalize hidden md:inline-flex">
                       {activity.type.replace(/_/g, ' ')}
                     </Badge>
                     
@@ -370,6 +392,19 @@ const ActivityDashboard = () => {
                     </Button>
                   </motion.div>
                 ))}
+
+                {filteredActivities.length > displayCount && (
+                  <div className="flex justify-center pt-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={loadMore}
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-800"
+                    >
+                      Load More
+                    </Button>
+                  </div>
+                )}
 
                 {filteredActivities.length === 0 && (
                   <motion.div
@@ -391,11 +426,11 @@ const ActivityDashboard = () => {
             )}
           </CardContent>
           
-          <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-4 pb-2">
+          <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-3 pb-3 px-4 md:px-6">
             <Button
               variant="link"
               size="sm"
-              className="text-purple-600 dark:text-purple-400 hover:text-purple-800"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-800 p-0 h-auto"
               onClick={() => window.location.href = '/profile?tab=activity'}
             >
               View all activities
@@ -407,19 +442,20 @@ const ActivityDashboard = () => {
         </Card>
       </motion.div>
 
+      {/* Journey Insights Card - Optimized for mobile */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
       >
         <Card className="bg-white/70 dark:bg-gray-900/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-purple-700 dark:text-purple-300">
+          <CardHeader className="px-4 md:px-6 py-4">
+            <CardTitle className="text-lg md:text-xl font-semibold text-purple-700 dark:text-purple-300">
               Your Journey Insights
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="px-4 md:px-6 py-2 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700 dark:text-gray-300">Reading Completion</span>
               <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
