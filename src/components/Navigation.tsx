@@ -86,7 +86,7 @@ const currentLabel = getCurrentNavLabel();
                 <div className="">
                   <img src={Assets.Logo4} alt="THE SONS Logo" className='h-10 w-10 rounded-lg object-cover'/>
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent dark:text-purple-300">
                   THE SONS
                 </span>
               </Link>
@@ -110,9 +110,9 @@ const currentLabel = getCurrentNavLabel();
               <div className="shadow-sm bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg">
                 <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent dark:text-purple-300">
                 {currentLabel.toUpperCase()}
-              </span>
+              </h2>
             </Link>
             <Button
               size="sm"

@@ -373,7 +373,7 @@ const Calendar_Page = () => {
                                 {...props}
                                 className={cn(
                                   "w-full h-10 text-sm relative",
-                                  props.className
+                                  "flex items-center justify-center rounded-lg",
                                 )}
                               >
                                 {date.getDate()}

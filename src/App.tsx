@@ -32,6 +32,7 @@ const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Bible = lazy(() => import("./pages/Bible"));
+const Calendar = lazy(() => import("./pages/Calendar"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -106,7 +107,8 @@ const AppContent = () => {
         <Route path="/reading" element={<Reading />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/bible/:passage/:day" element={<Bible />} />
-        
+        <Route path="/calendar" element={<Calendar />} />
+      
         <Route path="*" element={<NotFound />} />
       </Routes>
 
