@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { useShield } from './lib/hooks/useShield';
 import { useMobileGuard } from './lib/hooks/useMobileGuard';
 import ScrollToTop from "@/components/ScrollToTop";
-
+import PullToRefresh from "@/components/PullToRefresh";
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -59,6 +59,7 @@ const queryClient = new QueryClient({
 
 const AppContent = () => {
   // useShield();
+  //useDisablePullToRefresh();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -78,6 +79,13 @@ const AppContent = () => {
     return <BlockUI />;
   }
 
+  // Handle pull-to-refresh
+  const handleRefresh = async () => {
+    // e.g. reload quotes, refetch data
+    window.location.reload();
+    await new Promise((res) => setTimeout(res, 1000));
+  };
+
   const LoadingFallback = () => (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
@@ -88,7 +96,9 @@ const AppContent = () => {
   );
 
   return (
+    
     <Suspense fallback={<LoadingFallback />}>
+  
       <ScrollToTop />
     
       {/* Main Routes */}
@@ -108,7 +118,6 @@ const AppContent = () => {
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/bible/:passage/:day" element={<Bible />} />
         <Route path="/calendar" element={<Calendar />} />
-      
         <Route path="*" element={<NotFound />} />
       </Routes>
 
