@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Flag, Trash2, Clock, Check, CheckCheck } from 'lucide-react';
+import { MoreVertical, Flag, Trash2, Clock, Check, CheckCheck, Heart, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/lib/context/ThemeContext';
 
 interface ChatMessageProps {
   message: {
@@ -35,8 +36,10 @@ const ChatMessage = ({
   canModerate,
   showStatus 
 }: ChatMessageProps) => {
+  const { theme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
 
   const handleMouseDown = () => {
     const timer = setTimeout(() => {
@@ -51,6 +54,11 @@ const ChatMessage = ({
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+  };
+
+  const handleReport = () => {
+    onReport();
+    setShowMenu(false);
   };
 
   const getStatusIcon = () => {
@@ -70,11 +78,14 @@ const ChatMessage = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
-        'flex flex-col space-y-2 p-3 rounded-xl max-w-[80%] relative group',
+        'flex flex-col space-y-2 p-4 rounded-2xl max-w-[85%] relative group transition-all duration-200 hover:shadow-lg',
         isOwn 
-          ? 'bg-purple-600 text-white ml-auto' 
-          : 'bg-white shadow-sm border mr-auto'
+          ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white ml-auto shadow-purple-200' 
+          : theme === 'dark' 
+            ? 'bg-gray-800 border border-gray-700 text-gray-100 mr-auto shadow-gray-900'
+            : 'bg-white shadow-sm border border-gray-100 mr-auto shadow-gray-200'
       )}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -84,16 +95,19 @@ const ChatMessage = ({
     >
       {/* Sender Name */}
       {!isOwn && (
-        <p className="text-xs font-semibold text-purple-600 mb-1">
-          {message.senderName}
-        </p>
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+          <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+            {message.senderName}
+          </p>
+        </div>
       )}
 
       {/* Message Content */}
       {message.message && (
         <p className={cn(
-          'text-sm leading-relaxed',
-          isOwn ? 'text-white' : 'text-gray-800'
+          'text-sm leading-relaxed break-words',
+          isOwn ? 'text-white' : theme === 'dark' ? 'text-gray-100' : 'text-gray-800'
         )}>
           {message.message}
         </p>
@@ -101,12 +115,12 @@ const ChatMessage = ({
 
       {/* Media Content */}
       {message.mediaUrl && (
-        <div className="mt-2">
+        <div className="mt-2 rounded-lg overflow-hidden">
           {message.mediaType === 'image' && (
             <img
               src={message.mediaUrl}
               alt="Shared image"
-              className="max-w-full h-auto rounded-lg"
+              className="max-w-full h-auto rounded-lg cursor-pointer hover:scale-105 transition-transform"
             />
           )}
           {message.mediaType === 'video' && (
@@ -133,7 +147,10 @@ const ChatMessage = ({
             <Badge
               key={key}
               variant="secondary"
-              className="text-xs px-2 py-1 bg-white/20 text-current"
+              className={cn(
+                "text-xs px-2 py-1 cursor-pointer hover:scale-105 transition-transform",
+                isOwn ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
+              )}
             >
               {getReactionEmoji(key)} {count}
             </Badge>
@@ -141,23 +158,46 @@ const ChatMessage = ({
         </div>
       )}
 
-      {/* Timestamp and Status */}
-      <div className={cn(
-        'flex items-center justify-between text-xs mt-2',
-        isOwn ? 'text-purple-200' : 'text-gray-500'
-      )}>
-        <span>
-          {message.timestamp?.toDate?.()?.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }) || 'Now'}
-        </span>
-        
-        {isOwn && showStatus && (
-          <div className="flex items-center space-x-1">
-            {getStatusIcon()}
-          </div>
-        )}
+      {/* Quick Actions */}
+      <div className="flex items-center justify-between mt-2">
+        {/* Timestamp and Status */}
+        <div className={cn(
+          'flex items-center space-x-2 text-xs',
+          isOwn ? 'text-purple-200' : theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+        )}>
+          <span>
+            {message.timestamp?.toDate?.()?.toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }) || 'Now'}
+          </span>
+          
+          {isOwn && showStatus && (
+            <div className="flex items-center space-x-1">
+              {getStatusIcon()}
+            </div>
+          )}
+        </div>
+
+        {/* Quick React Button */}
+        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-white/20"
+            onClick={() => setIsLiked(!isLiked)}
+          >
+            <Heart className={cn("h-3 w-3", isLiked ? "fill-red-500 text-red-500" : "text-gray-400")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-white/20"
+            onClick={onLongPress}
+          >
+            <MessageCircle className="h-3 w-3 text-gray-400" />
+          </Button>
+        </div>
       </div>
 
       {/* Menu Button */}
@@ -165,7 +205,7 @@ const ChatMessage = ({
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 w-6 p-0"
+          className="h-6 w-6 p-0 hover:bg-white/20"
           onClick={() => setShowMenu(!showMenu)}
         >
           <MoreVertical className="h-3 w-3" />
@@ -177,7 +217,10 @@ const ChatMessage = ({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-8 right-2 bg-white rounded-lg shadow-lg border p-2 z-10 min-w-[120px]"
+          className={cn(
+            "absolute top-8 right-2 rounded-lg shadow-lg border p-2 z-10 min-w-[120px]",
+            theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          )}
         >
           <Button
             variant="ghost"
@@ -186,7 +229,10 @@ const ChatMessage = ({
               onLongPress();
               setShowMenu(false);
             }}
-            className="w-full justify-start text-gray-700 hover:bg-gray-100"
+            className={cn(
+              "w-full justify-start hover:bg-gray-100 dark:hover:bg-gray-700",
+              theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+            )}
           >
             React
           </Button>
@@ -195,11 +241,8 @@ const ChatMessage = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                onReport();
-                setShowMenu(false);
-              }}
-              className="w-full justify-start text-red-600 hover:bg-red-50"
+              onClick={handleReport}
+              className="w-full justify-start text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               <Flag className="h-3 w-3 mr-2" />
               Report
@@ -210,13 +253,22 @@ const ChatMessage = ({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-red-600 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               <Trash2 className="h-3 w-3 mr-2" />
               Delete
             </Button>
           )}
         </motion.div>
+      )}
+
+      {/* Message Reported Indicator */}
+      {message.reported && (
+        <div className="absolute -top-1 -right-1">
+          <Badge variant="destructive" className="text-xs px-1 py-0">
+            Reported
+          </Badge>
+        </div>
       )}
     </motion.div>
   );

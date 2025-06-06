@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -144,12 +143,13 @@ export const useChurchRoom = () => {
     };
 
     setMessages(prev => [...prev, messageData as Message]);
+    const messageToSend = newMessage;
     setNewMessage('');
 
     if (!isOnline) {
       const queuedMsg: QueuedMessage = {
         id: messageData.id,
-        message: newMessage,
+        message: messageToSend,
         timestamp: new Date()
       };
       
@@ -169,7 +169,7 @@ export const useChurchRoom = () => {
       await addDoc(collection(db, 'chats/churchRoom/messages'), {
         senderId: user.uid,
         senderName: userProfile.displayName,
-        message: newMessage,
+        message: messageToSend,
         reactions: {},
         userReactions: {},
         reported: false,
@@ -224,7 +224,14 @@ export const useChurchRoom = () => {
   };
 
   const reportMessage = async (messageId: string) => {
-    if (!user) return;
+    if (!user || !isOnline) {
+      toast({
+        title: 'Cannot Report',
+        description: 'You need to be online to report messages.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
       const messageRef = doc(db, 'chats/churchRoom/messages', messageId);
@@ -232,12 +239,36 @@ export const useChurchRoom = () => {
         reported: true
       });
 
+      // Also create a report record for admin review
+      await addDoc(collection(db, 'reportedMessages'), {
+        messageId,
+        reportedBy: user.uid,
+        reportedByName: userProfile?.displayName,
+        timestamp: new Date(),
+        chatRoom: 'churchRoom',
+        reason: 'Inappropriate content'
+      });
+
+      // Update local state immediately
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, reported: true }
+            : msg
+        )
+      );
+
       toast({
         title: 'Message Reported',
-        description: 'Thank you for helping keep our community safe.'
+        description: 'Thank you for helping keep our community safe. Our team will review this message.'
       });
     } catch (error) {
       console.error('Error reporting message:', error);
+      toast({
+        title: 'Report Failed',
+        description: 'Unable to report message. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -27,6 +26,9 @@ import ProfileEditModal from '@/components/profile/ProfileEditModal';
 import ActivityHistory from '@/components/profile/ActivityHistory';
 import UserStats from '@/components/profile/UserStats';
 import PrivacySettings from '@/components/profile/PrivacySettings';
+import AccountSettings from '@/components/profile/AccountSettings';
+import Layout from '@/components/Layout';
+import cn from '@/lib/utils/cn';
 
 const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
   <div className={`animate-spin rounded-full ${size} ${border} border-purple-900 border-t-transparent`} />
@@ -245,354 +247,178 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-purple-50 dark:from-gray-900 dark:to-gray-800 pb-32">
-      {/* Header */}
-      <div className="fixed top-0 z-50 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md py-3 flex items-center shadow-sm px-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="ml-4 text-lg font-semibold">
-          {isOwnProfile ? 'My Profile' : `${profile.displayName || 'User'}'s Profile`}
-        </h1>
-      </div>
+    <Layout>
+      <div className={cn(
+        "min-h-screen transition-colors duration-200",
+        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+      )}>
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+          {/* Header */}
+          <div className="fixed top-0 z-50 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-md py-3 flex items-center shadow-sm px-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="ml-4 text-lg font-semibold">
+              {isOwnProfile ? 'My Profile' : `${profile.displayName || 'User'}'s Profile`}
+            </h1>
+          </div>
 
-      <div className="pt-20 px-4 max-w-4xl mx-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="stats">Stats</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+          {/* Profile Content Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className={cn(
+              "grid w-full grid-cols-4 transition-colors",
+              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+            )}>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="settings">Account</TabsTrigger>
+              <TabsTrigger value="privacy">Privacy</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Profile Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
-            >
-              <div className="flex flex-col items-center justify-center gap-4 relative">
-                {/* Avatar with upload and overlay */}
-                <div className="relative group">
-                  <div className="rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-indigo-500 shadow-lg">
-                    <Avatar className="h-24 w-24 border-background transition-all duration-300 group-active:scale-105">
-                      <AvatarImage src={profilePhoto || profile?.profilePhoto || ''} />
-                      <AvatarFallback className="text-2xl font-semibold bg-muted text-muted-foreground">
-                        {displayName?.charAt(0) || currentEmail?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
+            <TabsContent value="overview" className="space-y-6">
+              {/* Profile Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex flex-col gap-4 items-center shadow-lg"
+              >
+                <div className="flex flex-col items-center justify-center gap-4 relative">
+                  {/* Avatar with upload and overlay */}
+                  <div className="relative group">
+                    <div className="rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-indigo-500 shadow-lg">
+                      <Avatar className="h-24 w-24 border-background transition-all duration-300 group-active:scale-105">
+                        <AvatarImage src={profilePhoto || profile?.profilePhoto || ''} />
+                        <AvatarFallback className="text-2xl font-semibold bg-muted text-muted-foreground">
+                          {displayName?.charAt(0) || currentEmail?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+
+                    {isOwnProfile && (
+                      <label className="absolute bottom-1 right-1 bg-purple-600 text-white p-2 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform">
+                        <Camera className="h-4 w-4" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
+                        <Spinner />
+                      </div>
+                    )}
                   </div>
 
-                  {isOwnProfile && (
-                    <label className="absolute bottom-1 right-1 bg-purple-600 text-white p-2 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform">
-                      <Camera className="h-4 w-4" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-
-                  {uploading && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
-                      <Spinner />
-                    </div>
-                  )}
-                </div>
-
-                {/* Name and Bio */}
-                <div className="text-center space-y-1">
-                  <h3 className="text-xl font-bold text-foreground leading-tight">
-                    {displayName || currentEmail || 'User'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    {bio || 'No bio added yet'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Contact Details */}
-              <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md dark:bg-gray-700/20">
-                <h2 className="text-base font-semibold text-primary">Contact & Details</h2>
-
-                {/* Phone */}
-                <div className="flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="bg-primary/10 p-1.5 rounded-md">
-                      <Phone className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium">Phone</span>
+                  {/* Name and Bio */}
+                  <div className="text-center space-y-1">
+                    <h3 className="text-xl font-bold text-foreground leading-tight">
+                      {displayName || currentEmail || 'User'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                      {bio || 'No bio added yet'}
+                    </p>
                   </div>
-                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                    {profile?.phone || 'N/A'}
-                  </span>
                 </div>
 
-                {/* Location */}
-                <div className="flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="bg-emerald-100 dark:bg-emerald-900/20 p-1.5 rounded-md">
-                      <MapPin className="h-4 w-4 text-emerald-500" />
+                {/* Contact Details */}
+                <div className="w-full bg-white/5 rounded-xl p-3 space-y-4 backdrop-blur-md dark:bg-gray-700/20">
+                  <h2 className="text-base font-semibold text-primary">Contact & Details</h2>
+
+                  {/* Phone */}
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="bg-primary/10 p-1.5 rounded-md">
+                        <Phone className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="text-sm font-medium">Phone</span>
                     </div>
-                    <span className="text-sm font-medium">Location</span>
+                    <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                      {profile?.phone || 'N/A'}
+                    </span>
                   </div>
-                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                    {profile?.location || 'N/A'}
-                  </span>
-                </div>
 
-                {/* Joined */}
-                <div className="flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="bg-purple-100 dark:bg-purple-900/20 p-1.5 rounded-md">
-                      <Calendar className="h-4 w-4 text-purple-500" />
+                  {/* Location */}
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="bg-emerald-100 dark:bg-emerald-900/20 p-1.5 rounded-md">
+                        <MapPin className="h-4 w-4 text-emerald-500" />
+                      </div>
+                      <span className="text-sm font-medium">Location</span>
                     </div>
-                    <span className="text-sm font-medium">Joined</span>
+                    <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                      {profile?.location || 'N/A'}
+                    </span>
                   </div>
-                  <span className="text-sm text-right text-foreground font-semibold">
-                    {profile?.createdAt?.toDate?.().toLocaleDateString?.('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    }) || 'Unknown'}
-                  </span>
-                </div>
 
-                {/* Email */}
-                <div className="flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="bg-blue-100 dark:bg-blue-900/20 p-1.5 rounded-md">
-                      <Mail className="h-4 w-4 text-blue-500" />
+                  {/* Joined */}
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="bg-purple-100 dark:bg-purple-900/20 p-1.5 rounded-md">
+                        <Calendar className="h-4 w-4 text-purple-500" />
+                      </div>
+                      <span className="text-sm font-medium">Joined</span>
                     </div>
-                    <span className="text-sm font-medium">Email</span>
+                    <span className="text-sm text-right text-foreground font-semibold">
+                      {profile?.createdAt?.toDate?.().toLocaleDateString?.('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      }) || 'Unknown'}
+                    </span>
                   </div>
-                  <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                    {currentEmail || 'Unknown'}
-                  </span>
+
+                  {/* Email */}
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="bg-blue-100 dark:bg-blue-900/20 p-1.5 rounded-md">
+                        <Mail className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <span className="text-sm font-medium">Email</span>
+                    </div>
+                    <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
+                      {currentEmail || 'Unknown'}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {isOwnProfile && (
-                <div className="flex gap-2 w-full">
-                  <Button 
-                    onClick={() => setShowEditModal(true)} 
-                    className="flex-1"
-                    variant="outline"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Profile
-                  </Button>
-                  {hasChanges && (
-                    <Button onClick={handleSave} disabled={loading}>
-                      {loading ? <Spinner /> : <><Save className="mr-2 h-4 w-4" /> Save</>}
+                {isOwnProfile && (
+                  <div className="flex gap-2 w-full">
+                    <Button 
+                      onClick={() => setShowEditModal(true)} 
+                      className="flex-1"
+                      variant="outline"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Profile
                     </Button>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </TabsContent>
+                    {hasChanges && (
+                      <Button onClick={handleSave} disabled={loading}>
+                        {loading ? <Spinner /> : <><Save className="mr-2 h-4 w-4" /> Save</>}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </TabsContent>
 
-          <TabsContent value="activity" className="space-y-6">
-            <ActivityHistory />
-          </TabsContent>
+            <TabsContent value="activity" className="space-y-6">
+              <ActivityHistory />
+            </TabsContent>
 
-          <TabsContent value="stats" className="space-y-6">
-            <UserStats />
-          </TabsContent>
+            <TabsContent value="settings">
+              <AccountSettings />
+            </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            {isOwnProfile && (
-              <>
-                {/* Theme Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Palette className="h-5 w-5" />
-                      Appearance
-                    </CardTitle>
-                    <CardDescription>Customize your visual experience</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="text-gray-600 dark:text-gray-400">
-                          {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                        </div>
-                        <div>
-                          <p className="font-medium">Dark Mode</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Switch between light and dark themes</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={theme === 'dark'}
-                        onCheckedChange={toggleTheme}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Notification Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bell className="h-5 w-5" />
-                      Notifications
-                    </CardTitle>
-                    <CardDescription>Manage your notification preferences</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        <div>
-                          <p className="font-medium">Push Notifications</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Receive reading reminders and updates</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={notifications}
-                        onCheckedChange={(checked) => {
-                          setNotifications(checked);
-                          updateSetting('notifications', checked);
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        {soundEnabled ? <Volume2 className="h-4 w-4 text-gray-600 dark:text-gray-400" /> : <VolumeX className="h-4 w-4 text-gray-600 dark:text-gray-400" />}
-                        <div>
-                          <p className="font-medium">Sound Effects</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Play sounds for interactions</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={soundEnabled}
-                        onCheckedChange={(checked) => {
-                          setSoundEnabled(checked);
-                          updateSetting('soundEnabled', checked);
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* App Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Smartphone className="h-5 w-5" />
-                      App Settings
-                    </CardTitle>
-                    <CardDescription>General application settings</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <Globe className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        <div>
-                          <p className="font-medium">Language</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Choose your preferred language</p>
-                        </div>
-                      </div>
-                      <Select 
-                        value={language} 
-                        onValueChange={(value) => {
-                          setLanguage(value);
-                          updateSetting('language', value);
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="es">Español</SelectItem>
-                          <SelectItem value="fr">Français</SelectItem>
-                          <SelectItem value="de">Deutsch</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <Activity className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        <div>
-                          <p className="font-medium">Auto Sync</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Automatically sync your progress</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={autoSync}
-                        onCheckedChange={(checked) => {
-                          setAutoSync(checked);
-                          updateSetting('autoSync', checked);
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <PrivacySettings />
-
-                {/* Account Management */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Account Management</CardTitle>
-                    <CardDescription>Update your core account details</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button variant="outline" className="w-full" onClick={() => setShowEditModal(true)}>
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Change Display Name
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Update Email
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Reset Password
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Connected Account */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Connected Account</CardTitle>
-                    <CardDescription>Google account linked to your profile</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <GoogleLinkManager />
-                  </CardContent> 
-                </Card>
-
-                {/* Data Management */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Data Management</CardTitle>
-                    <CardDescription>Manage or export your personal data</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button variant="outline" className="w-full" onClick={handleExportData}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download My Data
-                    </Button>
-                    <Button variant="destructive" className="w-full" onClick={handleDeleteAccount}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete My Account
-                    </Button>
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="privacy" className="space-y-6">
+              <PrivacySettings />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
       {/* Profile Edit Modal */}
@@ -600,7 +426,7 @@ const Profile = () => {
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
       />
-    </div>
+    </Layout>
   );
 };
 
