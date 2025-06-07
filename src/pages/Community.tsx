@@ -90,7 +90,7 @@ const Community = () => {
 
   // Filter posts based on selected filter
   useEffect(() => {
-    let sorted = [...posts];
+    const sorted = [...posts];
     
     switch (filter) {
       case 'trending':
