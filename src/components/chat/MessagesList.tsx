@@ -21,10 +21,7 @@ interface MessagesListProps {
   currentUserId: string;
   onLongPress: (messageId: string) => void;
   onReport: (messageId: string) => void;
-  onPin?: (messageId: string) => void;
   canModerate?: boolean;
-  pinnedMessages?: string[];
-  unreadMessageIndex?: number;
 }
 
 const MessagesList = ({ 
@@ -32,10 +29,7 @@ const MessagesList = ({
   currentUserId, 
   onLongPress, 
   onReport, 
-  onPin,
-  canModerate,
-  pinnedMessages = [],
-  unreadMessageIndex = -1
+  canModerate 
 }: MessagesListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -57,31 +51,16 @@ const MessagesList = ({
           <p className="text-gray-500">Start a conversation and build community together</p>
         </div>
       ) : (
-        messages.map((message, index) => (
-          <div key={message.id}>
-            {/* Unread marker */}
-            {index === unreadMessageIndex && unreadMessageIndex > 0 && (
-              <div className="relative my-2">
-                <div className="absolute left-0 right-0 flex items-center">
-                  <div className="flex-1 h-px bg-red-500"></div>
-                  <span className="mx-2 text-xs text-red-500 bg-white px-2 py-1 rounded">
-                    New messages
-                  </span>
-                  <div className="flex-1 h-px bg-red-500"></div>
-                </div>
-              </div>
-            )}
-            
-            <ChatMessage
-              message={message}
-              isOwn={message.senderId === currentUserId}
-              onLongPress={() => onLongPress(message.id)}
-              onReport={() => onReport(message.id)}
-              canModerate={canModerate}
-              showStatus={true}
-              data-message-id={message.id}
-            />
-          </div>
+        messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            message={message}
+            isOwn={message.senderId === currentUserId}
+            onLongPress={() => onLongPress(message.id)}
+            onReport={() => onReport(message.id)}
+            canModerate={canModerate}
+            showStatus={true}
+          />
         ))
       )}
       <div ref={messagesEndRef} />
