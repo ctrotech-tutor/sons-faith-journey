@@ -1,17 +1,17 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X, BookmarkCheck, Flame, TrendingUp } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import CommentsModal from '@/components/community/CommentsModal';
+import CommentsSlideUp from '@/components/community/CommentsSlideUp';
 
 interface CommunityPost {
   id: string;
@@ -42,11 +42,14 @@ const Community = () => {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [filter, setFilter] = useState<'recent' | 'liked' | 'admin'>('recent');
+  const [filter, setFilter] = useState<'recent' | 'trending' | 'popular' | 'admin'>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
   const [quickComment, setQuickComment] = useState<{ [key: string]: string }>({});
   const [expandedPosts, setExpandedPosts] = useState<{ [postId: string]: boolean }>({});
   const [likeAnimations, setLikeAnimations] = useState<{ [postId: string]: boolean }>({});
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<string>>(new Set());
+  const [bookmarkAnimations, setBookmarkAnimations] = useState<{ [postId: string]: boolean }>({});
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -72,10 +75,34 @@ const Community = () => {
       });
 
       setPosts(filteredPosts);
+      
+      // Count unread posts (posts created in last 24 hours that user hasn't seen)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentPosts = filteredPosts.filter(post => 
+        post.timestamp?.toDate() > oneDayAgo && post.authorId !== user.uid
+      );
+      setUnreadCount(recentPosts.length);
     });
 
     return unsubscribe;
   }, [user, userProfile]);
+
+  // Load user's bookmarks
+  useEffect(() => {
+    if (!user) return;
+
+    const bookmarksQuery = query(
+      collection(db, 'bookmarks'),
+      where('userId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(bookmarksQuery, (snapshot) => {
+      const bookmarkIds = new Set(snapshot.docs.map(doc => doc.data().postId));
+      setBookmarkedPosts(bookmarkIds);
+    });
+
+    return unsubscribe;
+  }, [user]);
 
   const toggleExpanded = (postId: string) => {
     setExpandedPosts(prev => ({ ...prev, [postId]: !prev[postId] }));
@@ -103,15 +130,77 @@ const Community = () => {
   };
 
   const handleLike = (postId: string) => {
-    toggleLike(postId); // your actual like toggle
+    toggleLike(postId);
     setLikeAnimations((prev) => ({ ...prev, [postId]: true }));
 
-    // Reset animation state after a short delay
     setTimeout(() => {
       setLikeAnimations((prev) => ({ ...prev, [postId]: false }));
     }, 300);
   };
 
+  const toggleBookmark = async (postId: string) => {
+    if (!user) return;
+
+    try {
+      const isBookmarked = bookmarkedPosts.has(postId);
+      
+      if (isBookmarked) {
+        // Remove bookmark
+        const bookmarkQuery = query(
+          collection(db, 'bookmarks'),
+          where('userId', '==', user.uid),
+          where('postId', '==', postId)
+        );
+        const snapshot = await getDocs(bookmarkQuery);
+        snapshot.docs.forEach(async (docSnapshot) => {
+          await deleteDoc(doc(db, 'bookmarks', docSnapshot.id));
+        });
+        
+        toast({
+          title: 'Bookmark Removed',
+          description: 'Post removed from your bookmarks.'
+        });
+      } else {
+        // Add bookmark
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+          await addDoc(collection(db, 'bookmarks'), {
+            userId: user.uid,
+            postId: postId,
+            authorId: post.authorId,
+            authorName: post.authorName,
+            content: post.content,
+            mediaUrl: post.mediaUrl,
+            mediaType: post.mediaType,
+            likes: post.likes,
+            likeCount: post.likeCount,
+            commentCount: post.commentCount,
+            timestamp: post.timestamp,
+            isAdmin: post.isAdmin,
+            bookmarkedAt: new Date()
+          });
+          
+          toast({
+            title: 'Post Bookmarked',
+            description: 'Post saved to your bookmarks.'
+          });
+        }
+      }
+
+      // Trigger animation
+      setBookmarkAnimations(prev => ({ ...prev, [postId]: true }));
+      setTimeout(() => {
+        setBookmarkAnimations(prev => ({ ...prev, [postId]: false }));
+      }, 300);
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update bookmark. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const sharePost = async (postId: string) => {
     try {
@@ -141,6 +230,9 @@ const Community = () => {
         authorName: userProfile.displayName || user.email,
         content: comment,
         likes: [],
+        likeCount: 0,
+        replies: [],
+        replyCount: 0,
         timestamp: new Date()
       });
 
@@ -206,13 +298,21 @@ const Community = () => {
   };
 
   const getFilteredPosts = () => {
+    const approvedPosts = posts.filter(post => post.status === 'approved');
+    
     switch (filter) {
-      case 'liked':
-        return posts.filter(post => post.status === 'approved').sort((a, b) => b.likeCount - a.likeCount);
+      case 'trending':
+        // Posts with high engagement in last 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return approvedPosts
+          .filter(post => post.timestamp?.toDate() > oneDayAgo)
+          .sort((a, b) => (b.likeCount + b.commentCount) - (a.likeCount + a.commentCount));
+      case 'popular':
+        return approvedPosts.sort((a, b) => b.likeCount - a.likeCount);
       case 'admin':
-        return posts.filter(post => post.isAdmin && post.status === 'approved');
+        return approvedPosts.filter(post => post.isAdmin);
       default:
-        return posts.filter(post => post.status === 'approved');
+        return approvedPosts;
     }
   };
 
@@ -220,7 +320,7 @@ const Community = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center shadow-lg max-w-md">
-          <h2 className="text-2xl font-bold mb-4">Join Our Community</h2>
+          <h2 className="text-2xl font-bold mb-4 dark:text-white">Join Our Community</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">Connect with like-minded believers and share your journey.</p>
           <Button onClick={() => window.location.href = '/auth/login'}>
             Sign In to Continue
@@ -239,39 +339,61 @@ const Community = () => {
         className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-white/20 dark:border-white/10 shadow-sm"
       >
         <div className="max-w-md mx-auto px-4 py-3">
-          {/* Logo + Post Button */}
+          {/* Logo + Action Buttons */}
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">
               The Son Hub
             </h1>
-            <Button
-              size="sm"
-              onClick={() => navigate("/create-post")}
-              className="flex items-center gap-2 text-white bg-gradient-to-r from-purple-600 to-purple-900 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300 px-4 py-2 rounded-lg"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-sm font-semibold">Post</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => navigate("/bookmarks")}
+                variant="outline"
+                className="flex items-center gap-1 text-xs"
+              >
+                <Bookmark className="h-3 w-3" />
+                Saved
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate("/create-post")}
+                className="flex items-center gap-2 text-white bg-gradient-to-r from-purple-600 to-purple-900 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300 px-4 py-2 rounded-lg"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm font-semibold">Post</span>
+              </Button>
+            </div>
           </div>
 
           {/* Filter Tabs */}
           <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
-            {['recent', 'liked', 'admin'].map((filterType) => (
+            {[
+              { key: 'recent', label: 'Recent', icon: null },
+              { key: 'trending', label: 'Trending', icon: Flame },
+              { key: 'popular', label: 'Popular', icon: TrendingUp },
+              { key: 'admin', label: 'Leaders', icon: null }
+            ].map((filterType) => (
               <button
-                key={filterType}
-                onClick={() => setFilter(filterType as any)}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${filter === filterType
-                  ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
-                  : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
-                  }`}
+                key={filterType.key}
+                onClick={() => setFilter(filterType.key as any)}
+                className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 ${
+                  filter === filterType.key
+                    ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
+                }`}
               >
-                {filterType === 'recent' ? 'Recent' : filterType === 'liked' ? 'Popular' : 'Leaders'}
+                {filterType.icon && <filterType.icon className="h-3 w-3" />}
+                {filterType.label}
+                {filterType.key === 'recent' && unreadCount > 0 && (
+                  <Badge variant="destructive" className="h-4 w-4 p-0 text-xs flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
               </button>
             ))}
           </div>
         </div>
       </motion.div>
-
 
       {/* Main Feed */}
       <div className="pt-32 pb-20">
@@ -356,7 +478,6 @@ const Community = () => {
                 transition={{ delay: index * 0.05 }}
               >
                 <Card className="rounded-none border-x-0 border-t-0 last:border-b-0 shadow-none dark:bg-gray-900/60 dark:border-gray-700 transition-colors">
-
                   {/* Post Header */}
                   <div className="flex items-center justify-between px-4 pt-4 pb-2">
                     <div className="flex items-center space-x-3">
@@ -421,13 +542,13 @@ const Community = () => {
                           }}
                         >
                           <Heart
-                            className={`h-6 w-6 transition-colors duration-300 ${post.likes.includes(user.uid)
+                            className={`h-6 w-6 transition-colors duration-300 ${
+                              post.likes.includes(user.uid)
                                 ? 'fill-red-500 text-red-500'
                                 : 'text-gray-700 dark:text-gray-300'
-                              }`}
+                            }`}
                           />
                         </motion.button>
-
 
                         {/* Comment */}
                         <Button
@@ -450,14 +571,25 @@ const Community = () => {
                         </Button>
                       </div>
 
-                      {/* Save */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
+                      {/* Bookmark */}
+                      <motion.button
+                        onClick={() => toggleBookmark(post.id)}
+                        className="h-8 w-8 p-0"
+                        animate={{
+                          scale: bookmarkAnimations[post.id] ? 1.2 : 1,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 10,
+                        }}
                       >
-                        <Bookmark className="h-6 w-6" />
-                      </Button>
+                        {bookmarkedPosts.has(post.id) ? (
+                          <BookmarkCheck className="h-6 w-6 text-purple-600 fill-purple-600" />
+                        ) : (
+                          <Bookmark className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                        )}
+                      </motion.button>
                     </div>
 
                     {/* Like Count */}
@@ -490,7 +622,6 @@ const Community = () => {
                         )}
                       </p>
                     </motion.div>
-
 
                     {/* View Comments */}
                     {post.commentCount > 0 && (
@@ -543,12 +674,11 @@ const Community = () => {
             ))}
           </div>
 
-
           {getFilteredPosts().length === 0 && (
             <div className="text-center py-20 px-4">
               <div className="text-6xl mb-4">💬</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">Start the Conversation</h3>
-              <p className="text-gray-500 mb-6">Be the first to share something meaningful with the community!</p>
+              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Start the Conversation</h3>
+              <p className="text-gray-500 dark:text-gray-500 mb-6">Be the first to share something meaningful with the community!</p>
               <Button
                 onClick={() => navigate('/create-post')}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -560,8 +690,8 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Comments Modal */}
-      <CommentsModal
+      {/* Comments Slide Up */}
+      <CommentsSlideUp
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}
         onClose={() => setSelectedPostForComments(null)}

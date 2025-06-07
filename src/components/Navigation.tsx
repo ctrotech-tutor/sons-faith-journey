@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -23,12 +22,12 @@ import {
   User,
 } from 'lucide-react';
 
-
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userProfile, logout } = useAuth();
+  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
 
   const handleLogout = async () => {
     try {
@@ -44,8 +43,19 @@ const Navigation = () => {
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/community', icon: Users, label: 'Community' },
-    { path: '/church-room', icon: MessageCircle, label: 'Church Room', badge: 'Chat' },
+    { 
+      path: '/community', 
+      icon: Users, 
+      label: 'Community',
+      unreadCount: unreadCounts.community
+    },
+    { 
+      path: '/church-room', 
+      icon: MessageCircle, 
+      label: 'Church Room', 
+      badge: 'Chat',
+      unreadCount: unreadCounts.chat
+    },
     { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/reading', icon: BookOpen, label: 'Readings' },
@@ -56,24 +66,57 @@ const Navigation = () => {
     { path: '/admin-inbox', icon: Heart, label: 'Admin Inbox' },
   ];
 
- const getCurrentNavLabel = () => {
-  if (location.pathname === '/') return 'THE SONS';
+  const getCurrentNavLabel = () => {
+    if (location.pathname === '/') return 'THE SONS';
 
-  const allItems = [
-    ...navItems,
-    ...adminItems,
-    { path: '/profile', label: 'Profile' },
-  ];
+    const allItems = [
+      ...navItems,
+      ...adminItems,
+      { path: '/profile', label: 'Profile' },
+    ];
 
-  // Sort by descending path length so /dashboard comes before /
-  allItems.sort((a, b) => b.path.length - a.path.length);
+    // Sort by descending path length so /dashboard comes before /
+    allItems.sort((a, b) => b.path.length - a.path.length);
 
-  const current = allItems.find(item => location.pathname.startsWith(item.path));
-  return current?.label || 'THE SONS';
-};
+    const current = allItems.find(item => location.pathname.startsWith(item.path));
+    return current?.label || 'THE SONS';
+  };
 
-const currentLabel = getCurrentNavLabel();
+  const currentLabel = getCurrentNavLabel();
 
+  // Listen for unread notifications
+  useEffect(() => {
+    if (!user) return;
+
+    // Check for new community posts
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const communityQuery = query(
+      collection(db, 'communityPosts'),
+      where('timestamp', '>', oneDayAgo),
+      where('authorId', '!=', user.uid),
+      where('status', '==', 'approved')
+    );
+
+    const unsubscribeCommunity = onSnapshot(communityQuery, (snapshot) => {
+      setUnreadCounts(prev => ({ ...prev, community: snapshot.docs.length }));
+    });
+
+    // Check for new chat messages
+    const chatQuery = query(
+      collection(db, 'churchMessages'),
+      where('timestamp', '>', oneDayAgo),
+      where('senderId', '!=', user.uid)
+    );
+
+    const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
+      setUnreadCounts(prev => ({ ...prev, chat: snapshot.docs.length }));
+    });
+
+    return () => {
+      unsubscribeCommunity();
+      unsubscribeChat();
+    };
+  }, [user]);
 
   // Render for unauthenticated users
   if (!user) {
@@ -173,25 +216,35 @@ const currentLabel = getCurrentNavLabel();
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors relative ${isActive(item.path)
                   ? 'bg-purple-100 text-purple-700 dark:bg-gray-800  dark:text-purple-200'
                   : 'text-gray-600 active:bg-gray-100 dark:active:bg-gray-800 dark:text-gray-300'
                   }`}
               >
                 <item.icon className="h-5 w-5" />
                 <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    variant={item.badge === 'Private' ? 'secondary' : 'default'}
-                    className={
-                      item.badge === 'Private'
-                        ? 'bg-purple-100 text-blue-800 dark:bg-gray-800 dark:text-purple-200'
-                        : 'bg-purple-600 text-white dark:bg-purple-200 dark:text-gray-900'
-                    }
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
+                <div className="flex items-center space-x-1">
+                  {item.badge && (
+                    <Badge
+                      variant={item.badge === 'Private' ? 'secondary' : 'default'}
+                      className={
+                        item.badge === 'Private'
+                          ? 'bg-purple-100 text-blue-800 dark:bg-gray-800 dark:text-purple-200'
+                          : 'bg-purple-600 text-white dark:bg-purple-200 dark:text-gray-900'
+                      }
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {item.unreadCount && item.unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="h-5 w-5 p-0 text-xs flex items-center justify-center animate-pulse"
+                    >
+                      {item.unreadCount > 9 ? '9+' : item.unreadCount}
+                    </Badge>
+                  )}
+                </div>
               </Link>
             ))}
 
