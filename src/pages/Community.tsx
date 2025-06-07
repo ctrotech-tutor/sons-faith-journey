@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X, BookmarkCheck, Flame, TrendingUp } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X, BookmarkCheck, Flame, TrendingUp, Clock } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -24,9 +24,12 @@ interface CommunityPost {
   likeCount: number;
   comments: Comment[];
   commentCount: number;
+  shareCount: number;
   status: 'approved' | 'pending' | 'rejected';
   timestamp: any;
   isAdmin: boolean;
+  engagementScore?: number;
+  trendingScore?: number;
 }
 
 interface Comment {
@@ -53,6 +56,37 @@ const Community = () => {
 
   const navigate = useNavigate();
 
+  // Advanced algorithm for calculating post scores
+  const calculateEngagementScore = (post: CommunityPost) => {
+    const hoursSincePost = (Date.now() - post.timestamp?.toDate()?.getTime()) / (1000 * 60 * 60);
+    const timeDecay = Math.exp(-hoursSincePost / 24); // Decay over 24 hours
+    
+    const likeWeight = 1;
+    const commentWeight = 3;
+    const shareWeight = 5;
+    
+    const engagementPoints = 
+      (post.likeCount * likeWeight) + 
+      (post.commentCount * commentWeight) + 
+      ((post.shareCount || 0) * shareWeight);
+    
+    return engagementPoints * timeDecay;
+  };
+
+  const calculateTrendingScore = (post: CommunityPost) => {
+    const now = Date.now();
+    const postTime = post.timestamp?.toDate()?.getTime() || now;
+    const hoursSincePost = (now - postTime) / (1000 * 60 * 60);
+    
+    // Only consider posts from last 48 hours for trending
+    if (hoursSincePost > 48) return 0;
+    
+    const recentEngagement = post.likeCount + (post.commentCount * 2);
+    const timeBoost = Math.max(0, 48 - hoursSincePost) / 48;
+    
+    return recentEngagement * timeBoost;
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -62,10 +96,20 @@ const Community = () => {
     );
 
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
-      const newPosts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as CommunityPost[];
+      const newPosts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const post = {
+          id: doc.id,
+          ...data,
+          shareCount: data.shareCount || 0
+        } as CommunityPost;
+        
+        // Calculate advanced scores
+        post.engagementScore = calculateEngagementScore(post);
+        post.trendingScore = calculateTrendingScore(post);
+        
+        return post;
+      });
 
       const filteredPosts = newPosts.filter(post => {
         if (userProfile?.isAdmin) {
@@ -87,7 +131,7 @@ const Community = () => {
     return unsubscribe;
   }, [user, userProfile]);
 
-  // Load user's bookmarks
+  // Load user's bookmarks with real-time updates
   useEffect(() => {
     if (!user) return;
 
@@ -124,8 +168,18 @@ const Community = () => {
         likes: updatedLikes,
         likeCount: updatedLikes.length
       });
+
+      // Trigger haptic feedback on mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
     } catch (error) {
       console.error('Error toggling like:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update like. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -161,22 +215,23 @@ const Community = () => {
           description: 'Post removed from your bookmarks.'
         });
       } else {
-        // Add bookmark
-        const post = posts.find(p => p.id === postId);
-        if (post) {
+        // Add bookmark with complete post data
+        const postDoc = await getDoc(doc(db, 'communityPosts', postId));
+        if (postDoc.exists()) {
+          const postData = postDoc.data();
           await addDoc(collection(db, 'bookmarks'), {
             userId: user.uid,
             postId: postId,
-            authorId: post.authorId,
-            authorName: post.authorName,
-            content: post.content,
-            mediaUrl: post.mediaUrl,
-            mediaType: post.mediaType,
-            likes: post.likes,
-            likeCount: post.likeCount,
-            commentCount: post.commentCount,
-            timestamp: post.timestamp,
-            isAdmin: post.isAdmin,
+            authorId: postData.authorId,
+            authorName: postData.authorName,
+            content: postData.content,
+            mediaUrl: postData.mediaUrl,
+            mediaType: postData.mediaType,
+            likes: postData.likes || [],
+            likeCount: postData.likeCount || 0,
+            commentCount: postData.commentCount || 0,
+            timestamp: postData.timestamp,
+            isAdmin: postData.isAdmin || false,
             bookmarkedAt: new Date()
           });
           
@@ -205,15 +260,34 @@ const Community = () => {
   const sharePost = async (postId: string) => {
     try {
       const shareUrl = `${window.location.origin}/community?post=${postId}`;
-      await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: 'Link Copied',
-        description: 'Post link has been copied to clipboard.'
-      });
+      
+      // Update share count in database
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        await updateDoc(doc(db, 'communityPosts', postId), {
+          shareCount: (post.shareCount || 0) + 1
+        });
+      }
+
+      // Use native share API if available, otherwise copy to clipboard
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Community Post - THE SONS',
+          text: `Check out this post from ${post?.authorName}`,
+          url: shareUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: 'Link Copied',
+          description: 'Post link has been copied to clipboard.'
+        });
+      }
     } catch (error) {
+      console.error('Share failed:', error);
       toast({
         title: 'Share Failed',
-        description: 'Unable to copy link to clipboard.',
+        description: 'Unable to share post. Please try again.',
         variant: 'destructive'
       });
     }
@@ -302,17 +376,20 @@ const Community = () => {
     
     switch (filter) {
       case 'trending':
-        // Posts with high engagement in last 24 hours
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         return approvedPosts
-          .filter(post => post.timestamp?.toDate() > oneDayAgo)
-          .sort((a, b) => (b.likeCount + b.commentCount) - (a.likeCount + a.commentCount));
+          .filter(post => (post.trendingScore || 0) > 0)
+          .sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0));
       case 'popular':
-        return approvedPosts.sort((a, b) => b.likeCount - a.likeCount);
+        return approvedPosts
+          .sort((a, b) => (b.engagementScore || 0) - (a.engagementScore || 0));
       case 'admin':
         return approvedPosts.filter(post => post.isAdmin);
-      default:
-        return approvedPosts;
+      default: // recent
+        return approvedPosts.sort((a, b) => {
+          const timeA = a.timestamp?.toDate()?.getTime() || 0;
+          const timeB = b.timestamp?.toDate()?.getTime() || 0;
+          return timeB - timeA;
+        });
     }
   };
 
@@ -365,10 +442,10 @@ const Community = () => {
             </div>
           </div>
 
-          {/* Filter Tabs */}
+          {/* Enhanced Filter Tabs */}
           <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
             {[
-              { key: 'recent', label: 'Recent', icon: null },
+              { key: 'recent', label: 'Recent', icon: Clock },
               { key: 'trending', label: 'Trending', icon: Flame },
               { key: 'popular', label: 'Popular', icon: TrendingUp },
               { key: 'admin', label: 'Leaders', icon: null }
@@ -385,7 +462,7 @@ const Community = () => {
                 {filterType.icon && <filterType.icon className="h-3 w-3" />}
                 {filterType.label}
                 {filterType.key === 'recent' && unreadCount > 0 && (
-                  <Badge variant="destructive" className="h-4 w-4 p-0 text-xs flex items-center justify-center">
+                  <Badge variant="destructive" className="h-4 w-4 p-0 text-xs flex items-center justify-center animate-pulse">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </Badge>
                 )}
@@ -494,6 +571,12 @@ const Community = () => {
                               Leader
                             </Badge>
                           )}
+                          {/* Trending indicator */}
+                          {filter === 'trending' && post.trendingScore && post.trendingScore > 10 && (
+                            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-1 py-0">
+                              🔥
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {post.timestamp?.toDate?.()?.toLocaleDateString()}
@@ -592,12 +675,28 @@ const Community = () => {
                       </motion.button>
                     </div>
 
-                    {/* Like Count */}
-                    {post.likeCount > 0 && (
-                      <p className="font-semibold text-sm dark:text-gray-100">
-                        {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}
-                      </p>
-                    )}
+                    {/* Enhanced Stats */}
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center space-x-4">
+                        {post.likeCount > 0 && (
+                          <span className="font-medium">
+                            {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}
+                          </span>
+                        )}
+                        {post.commentCount > 0 && (
+                          <span>{post.commentCount} comments</span>
+                        )}
+                        {(post.shareCount || 0) > 0 && (
+                          <span>{post.shareCount} shares</span>
+                        )}
+                      </div>
+                      {/* Engagement Score for debugging (admin only) */}
+                      {userProfile?.isAdmin && (
+                        <span className="text-xs text-purple-600">
+                          E: {post.engagementScore?.toFixed(1)} | T: {post.trendingScore?.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
 
                     {/* Post Text */}
                     <motion.div
@@ -677,8 +776,18 @@ const Community = () => {
           {getFilteredPosts().length === 0 && (
             <div className="text-center py-20 px-4">
               <div className="text-6xl mb-4">💬</div>
-              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Start the Conversation</h3>
-              <p className="text-gray-500 dark:text-gray-500 mb-6">Be the first to share something meaningful with the community!</p>
+              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                {filter === 'trending' ? 'No Trending Posts' : 
+                 filter === 'popular' ? 'No Popular Posts Yet' :
+                 filter === 'admin' ? 'No Leader Posts' :
+                 'Start the Conversation'}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-500 mb-6">
+                {filter === 'trending' ? 'Posts will appear here when they gain traction!' :
+                 filter === 'popular' ? 'Posts will appear here based on engagement!' :
+                 filter === 'admin' ? 'Leaders haven\'t posted yet!' :
+                 'Be the first to share something meaningful with the community!'}
+              </p>
               <Button
                 onClick={() => navigate('/create-post')}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
@@ -690,7 +799,7 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Comments Slide Up */}
+      {/* Enhanced Comments Slide Up */}
       <CommentsSlideUp
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}

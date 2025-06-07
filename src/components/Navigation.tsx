@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -121,6 +120,7 @@ const Navigation = () => {
     };
   }, [user]);
 
+  
   // Render for unauthenticated users
   if (!user) {
     return (
