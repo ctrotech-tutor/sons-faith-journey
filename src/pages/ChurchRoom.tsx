@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useChurchRoom } from '@/lib/hooks/useChurchRoom';
@@ -266,7 +265,7 @@ const ChurchRoom = () => {
                 "text-xs p-2 rounded mb-1",
                 theme === 'dark' ? 'bg-gray-700' : 'bg-white'
               )}>
-                <span className="font-medium">{message.senderName}:</span> {message.content}
+                <span className="font-medium">{message.senderName}:</span> {message.message}
               </div>
             );
           })}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { collection, query, orderBy, onSnapshot, addDoc, where, updateDoc, doc } from 'firebase/firestore';
@@ -21,7 +20,7 @@ import {
   Filter,
   Search,
   ArrowLeft,
-  Online,
+  Circle,
   Shield
 } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
@@ -389,7 +388,7 @@ const AdminInbox = () => {
                                   {thread.userName}
                                 </p>
                                 {thread.isOnline && (
-                                  <Online className="h-3 w-3 text-green-500" />
+                                  <Circle className="h-3 w-3 text-green-500 fill-current" />
                                 )}
                               </div>
                               <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
