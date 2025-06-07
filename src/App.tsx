@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { useShield } from './lib/hooks/useShield';
 import { useMobileGuard } from './lib/hooks/useMobileGuard';
 import ScrollToTop from "@/components/ScrollToTop";
+import PostApproval from "./pages/PostApproval";
 //import PullToRefresh from "@/components/PullToRefresh";
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
@@ -33,6 +34,7 @@ const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Bible = lazy(() => import("./pages/Bible"));
 const Calendar = lazy(() => import("./pages/Calendar"));
+const Bookmark = lazy(() => import("./pages/Bookmarks"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -110,6 +112,8 @@ const AppContent = () => {
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/bible/:passage/:day" element={<Bible />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/bookmarks" element={<Bookmark />} />
+        <Route path="/post-approval" element={<PostApproval />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

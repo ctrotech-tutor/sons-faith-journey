@@ -53,6 +53,7 @@ const Community = () => {
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<string>>(new Set());
   const [bookmarkAnimations, setBookmarkAnimations] = useState<{ [postId: string]: boolean }>({});
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -60,16 +61,16 @@ const Community = () => {
   const calculateEngagementScore = (post: CommunityPost) => {
     const hoursSincePost = (Date.now() - post.timestamp?.toDate()?.getTime()) / (1000 * 60 * 60);
     const timeDecay = Math.exp(-hoursSincePost / 24); // Decay over 24 hours
-    
+
     const likeWeight = 1;
     const commentWeight = 3;
     const shareWeight = 5;
-    
-    const engagementPoints = 
-      (post.likeCount * likeWeight) + 
-      (post.commentCount * commentWeight) + 
+
+    const engagementPoints =
+      (post.likeCount * likeWeight) +
+      (post.commentCount * commentWeight) +
       ((post.shareCount || 0) * shareWeight);
-    
+
     return engagementPoints * timeDecay;
   };
 
@@ -77,13 +78,13 @@ const Community = () => {
     const now = Date.now();
     const postTime = post.timestamp?.toDate()?.getTime() || now;
     const hoursSincePost = (now - postTime) / (1000 * 60 * 60);
-    
+
     // Only consider posts from last 48 hours for trending
     if (hoursSincePost > 48) return 0;
-    
+
     const recentEngagement = post.likeCount + (post.commentCount * 2);
     const timeBoost = Math.max(0, 48 - hoursSincePost) / 48;
-    
+
     return recentEngagement * timeBoost;
   };
 
@@ -103,11 +104,11 @@ const Community = () => {
           ...data,
           shareCount: data.shareCount || 0
         } as CommunityPost;
-        
+
         // Calculate advanced scores
         post.engagementScore = calculateEngagementScore(post);
         post.trendingScore = calculateTrendingScore(post);
-        
+
         return post;
       });
 
@@ -119,10 +120,10 @@ const Community = () => {
       });
 
       setPosts(filteredPosts);
-      
+
       // Count unread posts (posts created in last 24 hours that user hasn't seen)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const recentPosts = filteredPosts.filter(post => 
+      const recentPosts = filteredPosts.filter(post =>
         post.timestamp?.toDate() > oneDayAgo && post.authorId !== user.uid
       );
       setUnreadCount(recentPosts.length);
@@ -197,7 +198,7 @@ const Community = () => {
 
     try {
       const isBookmarked = bookmarkedPosts.has(postId);
-      
+
       if (isBookmarked) {
         // Remove bookmark
         const bookmarkQuery = query(
@@ -209,7 +210,7 @@ const Community = () => {
         snapshot.docs.forEach(async (docSnapshot) => {
           await deleteDoc(doc(db, 'bookmarks', docSnapshot.id));
         });
-        
+
         toast({
           title: 'Bookmark Removed',
           description: 'Post removed from your bookmarks.'
@@ -234,7 +235,7 @@ const Community = () => {
             isAdmin: postData.isAdmin || false,
             bookmarkedAt: new Date()
           });
-          
+
           toast({
             title: 'Post Bookmarked',
             description: 'Post saved to your bookmarks.'
@@ -260,7 +261,7 @@ const Community = () => {
   const sharePost = async (postId: string) => {
     try {
       const shareUrl = `${window.location.origin}/community?post=${postId}`;
-      
+
       // Update share count in database
       const post = posts.find(p => p.id === postId);
       if (post) {
@@ -373,7 +374,7 @@ const Community = () => {
 
   const getFilteredPosts = () => {
     const approvedPosts = posts.filter(post => post.status === 'approved');
-    
+
     switch (filter) {
       case 'trending':
         return approvedPosts
@@ -429,7 +430,6 @@ const Community = () => {
                 className="flex items-center gap-1 text-xs"
               >
                 <Bookmark className="h-3 w-3" />
-                Saved
               </Button>
               <Button
                 size="sm"
@@ -445,7 +445,6 @@ const Community = () => {
           {/* Enhanced Filter Tabs */}
           <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
             {[
-              { key: 'recent', label: 'Recent', icon: Clock },
               { key: 'trending', label: 'Trending', icon: Flame },
               { key: 'popular', label: 'Popular', icon: TrendingUp },
               { key: 'admin', label: 'Leaders', icon: null }
@@ -453,19 +452,18 @@ const Community = () => {
               <button
                 key={filterType.key}
                 onClick={() => setFilter(filterType.key as any)}
-                className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 ${
-                  filter === filterType.key
+                className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 ${filter === filterType.key
                     ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
-                }`}
+                  }`}
               >
                 {filterType.icon && <filterType.icon className="h-3 w-3" />}
                 {filterType.label}
-                {filterType.key === 'recent' && unreadCount > 0 && (
+                {/* {filterType.key === 'recent' && unreadCount > 0 && (
                   <Badge variant="destructive" className="h-4 w-4 p-0 text-xs flex items-center justify-center animate-pulse">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </Badge>
-                )}
+                )} */}
               </button>
             ))}
           </div>
@@ -625,11 +623,10 @@ const Community = () => {
                           }}
                         >
                           <Heart
-                            className={`h-6 w-6 transition-colors duration-300 ${
-                              post.likes.includes(user.uid)
+                            className={`h-6 w-6 transition-colors duration-300 ${post.likes.includes(user.uid)
                                 ? 'fill-red-500 text-red-500'
                                 : 'text-gray-700 dark:text-gray-300'
-                            }`}
+                              }`}
                           />
                         </motion.button>
 
@@ -706,7 +703,7 @@ const Community = () => {
                       transition={{ duration: 0.3 }}
                       className='bg-white dark:bg-gray-900/60'
                     >
-                      <p className="text-sm dark:text-gray-200">
+                      <p className="text-sm dark:text-gray-200 break-all">
                         <span className="font-semibold">{post.authorName}</span>{" "}
                         {expandedPosts[post.id] || post.content.length <= 150
                           ? post.content
@@ -777,16 +774,16 @@ const Community = () => {
             <div className="text-center py-20 px-4">
               <div className="text-6xl mb-4">💬</div>
               <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                {filter === 'trending' ? 'No Trending Posts' : 
-                 filter === 'popular' ? 'No Popular Posts Yet' :
-                 filter === 'admin' ? 'No Leader Posts' :
-                 'Start the Conversation'}
+                {filter === 'trending' ? 'No Trending Posts' :
+                  filter === 'popular' ? 'No Popular Posts Yet' :
+                    filter === 'admin' ? 'No Leader Posts' :
+                      'Start the Conversation'}
               </h3>
               <p className="text-gray-500 dark:text-gray-500 mb-6">
                 {filter === 'trending' ? 'Posts will appear here when they gain traction!' :
-                 filter === 'popular' ? 'Posts will appear here based on engagement!' :
-                 filter === 'admin' ? 'Leaders haven\'t posted yet!' :
-                 'Be the first to share something meaningful with the community!'}
+                  filter === 'popular' ? 'Posts will appear here based on engagement!' :
+                    filter === 'admin' ? 'Leaders haven\'t posted yet!' :
+                      'Be the first to share something meaningful with the community!'}
               </p>
               <Button
                 onClick={() => navigate('/create-post')}
