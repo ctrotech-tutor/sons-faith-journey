@@ -447,7 +447,7 @@ const Community = () => {
             {[
               { key: 'trending', label: 'Trending', icon: Flame },
               { key: 'popular', label: 'Popular', icon: TrendingUp },
-              { key: 'admin', label: 'Leaders', icon: null }
+              { key: 'recent', label: 'Recent', icon: Clock },
             ].map((filterType) => (
               <button
                 key={filterType.key}
@@ -473,6 +473,7 @@ const Community = () => {
       {/* Main Feed */}
       <div className="pt-32 pb-20">
         <div className="max-w-md mx-auto">
+          
           {/* Admin pending posts */}
           {userProfile?.isAdmin && posts.filter(p => p.status === 'pending').length > 0 && (
             <motion.div
@@ -545,6 +546,7 @@ const Community = () => {
 
           {/* Posts Feed */}
           <div className="space-y-0">
+            
             {getFilteredPosts().map((post, index) => (
               <motion.div
                 key={post.id}
