@@ -22,7 +22,9 @@ import {
   MessageCircle,
   Heart,
   User,
+  CheckCircle2
 } from 'lucide-react';
+
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,6 +68,7 @@ const Navigation = () => {
   const adminItems = [
     { path: '/admin', icon: Settings, label: 'Admin Panel' },
     { path: '/admin-inbox', icon: Heart, label: 'Admin Inbox' },
+    { path: '/post-approval', icon: CheckCircle2, label: 'Post Approval' }
   ];
 
   const getCurrentNavLabel = () => {

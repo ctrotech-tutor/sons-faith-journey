@@ -248,10 +248,10 @@ const ChurchRoom = () => {
       {/* Pinned Messages */}
       {pinnedMessages.length > 0 && (
         <div className={cn(
-          "border-b p-2 max-h-32 overflow-y-auto",
+          "border-b p-2 max-h-16 overflow-y-auto top-[4.5rem] w-full left-0 right-0 z-50 relative hidden",
           theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-yellow-50 border-yellow-200'
         )}>
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center space-x-2 mb-2 fixed bg-yellow-50 w-full top-[4.5rem">
             <Pin className="h-4 w-4 text-yellow-600" />
             <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
               Pinned Messages
