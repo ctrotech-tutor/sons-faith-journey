@@ -66,7 +66,8 @@ export default function PullToRefresh({
               setShowCheck(true); // Step 2: Checkmark shows
               setTimeout(() => {
                 // Step 3: Soft Fade → Reload
-                c
+                document.body.style.opacity = "0.8";
+                document.body.style.overflow = "hidden";
                 setTimeout(() => {
                   //window.location.reload(); // Soft manual reload
                   setPullDistance(0);

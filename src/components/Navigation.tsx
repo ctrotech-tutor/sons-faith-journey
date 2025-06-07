@@ -1,11 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Assets } from '@/assets/assets';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { db } from '@/lib/firebase';
 import {
   Home,
   LayoutDashboard,
