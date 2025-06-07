@@ -1,18 +1,25 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useChurchRoom } from '@/lib/hooks/useChurchRoom';
 import { useTheme } from '@/lib/context/ThemeContext';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessagesList from '@/components/chat/MessagesList';
 import QueuedMessagesNotice from '@/components/chat/QueuedMessagesNotice';
 import ChatInput from '@/components/chat/ChatInput';
 import ReactionsOverlay from '@/components/chat/ReactionsOverlay';
 import FileUploader from '@/components/chat/FileUploader';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Pin, PinOff, ArrowDown } from 'lucide-react';
+import { useToast } from '@/lib/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 const ChurchRoom = () => {
   const { theme } = useTheme();
+  const { toast } = useToast();
   const {
     messages,
     newMessage,
@@ -31,6 +38,13 @@ const ChurchRoom = () => {
   const [showReactions, setShowReactions] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState<string[]>([]);
+  const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const unreadMarkerRef = useRef<HTMLDivElement>(null);
 
   const reactionEmojis = [
     { emoji: '🙏', key: 'pray' },
@@ -39,6 +53,145 @@ const ChurchRoom = () => {
     { emoji: '👍', key: 'thumbs' },
     { emoji: '✨', key: 'amen' }
   ];
+
+  // Load last read message and pinned messages from localStorage
+  useEffect(() => {
+    if (user) {
+      const lastRead = localStorage.getItem(`churchRoom_lastRead_${user.uid}`);
+      const pinned = localStorage.getItem(`churchRoom_pinned`);
+      
+      if (lastRead) {
+        setLastReadMessageId(lastRead);
+      }
+      if (pinned) {
+        setPinnedMessages(JSON.parse(pinned));
+      }
+    }
+  }, [user]);
+
+  // Calculate unread messages and scroll behavior
+  useEffect(() => {
+    if (!messages.length || !user) return;
+
+    let unreadStartIndex = -1;
+    
+    if (lastReadMessageId) {
+      const lastReadIndex = messages.findIndex(m => m.id === lastReadMessageId);
+      unreadStartIndex = lastReadIndex + 1;
+    } else {
+      // If no last read message, consider all messages as read except new ones
+      unreadStartIndex = messages.length;
+    }
+
+    const unreadMessages = messages.slice(unreadStartIndex);
+    const newUnreadCount = unreadMessages.filter(m => m.senderId !== user.uid).length;
+    setUnreadCount(newUnreadCount);
+
+    // Only scroll to unread messages on initial load, not on new messages
+    if (newUnreadCount > 0 && !hasScrolledToUnread && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      
+      setTimeout(() => {
+        if (unreadMarkerRef.current) {
+          unreadMarkerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (unreadStartIndex < messages.length) {
+          // Scroll to first unread message
+          const messageElements = container.querySelectorAll('[data-message-id]');
+          const firstUnreadElement = messageElements[unreadStartIndex];
+          if (firstUnreadElement) {
+            firstUnreadElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+        setHasScrolledToUnread(true);
+      }, 100);
+    }
+  }, [messages, lastReadMessageId, user, hasScrolledToUnread]);
+
+  // Check if user is at bottom of messages
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollToBottom(!isAtBottom && messages.length > 5);
+      
+      // Mark messages as read when user scrolls to bottom
+      if (isAtBottom && unreadCount > 0) {
+        markMessagesAsRead();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [messages, unreadCount]);
+
+  const markMessagesAsRead = () => {
+    if (!user || messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    setLastReadMessageId(lastMessage.id);
+    localStorage.setItem(`churchRoom_lastRead_${user.uid}`, lastMessage.id);
+    setUnreadCount(0);
+  };
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+      markMessagesAsRead();
+    }
+  };
+
+  const togglePinMessage = async (messageId: string) => {
+    if (!userProfile?.isAdmin) {
+      toast({
+        title: 'Permission Denied',
+        description: 'Only admins can pin messages.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const isPinned = pinnedMessages.includes(messageId);
+      let updatedPinned;
+
+      if (isPinned) {
+        updatedPinned = pinnedMessages.filter(id => id !== messageId);
+        toast({
+          title: 'Message Unpinned',
+          description: 'Message has been unpinned from the chat.'
+        });
+      } else {
+        updatedPinned = [...pinnedMessages, messageId];
+        toast({
+          title: 'Message Pinned',
+          description: 'Message has been pinned to the chat.'
+        });
+      }
+
+      setPinnedMessages(updatedPinned);
+      localStorage.setItem(`churchRoom_pinned`, JSON.stringify(updatedPinned));
+
+      // Update message in database
+      await updateDoc(doc(db, 'churchMessages', messageId), {
+        pinned: !isPinned,
+        pinnedBy: user?.uid,
+        pinnedAt: !isPinned ? new Date() : null
+      });
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to pin/unpin message.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleReactionAdd = async (messageId: string, reactionKey: string) => {
     await addReaction(messageId, reactionKey);
@@ -52,6 +205,11 @@ const ChurchRoom = () => {
 
   const handleReportMessage = async (messageId: string) => {
     await reportMessage(messageId);
+  };
+
+  const getUnreadMessageIndex = () => {
+    if (!lastReadMessageId || !messages.length) return -1;
+    return messages.findIndex(m => m.id === lastReadMessageId) + 1;
   };
 
   if (!user) {
@@ -88,13 +246,86 @@ const ChurchRoom = () => {
     )}>
       <ChatHeader messageCount={messages.length} isOnline={isOnline} />
       
-      <MessagesList
-        messages={messages}
-        currentUserId={user.uid}
-        onLongPress={setShowReactions}
-        onReport={handleReportMessage}
-        canModerate={userProfile?.isAdmin}
-      />
+      {/* Pinned Messages */}
+      {pinnedMessages.length > 0 && (
+        <div className={cn(
+          "border-b p-2 max-h-32 overflow-y-auto",
+          theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-yellow-50 border-yellow-200'
+        )}>
+          <div className="flex items-center space-x-2 mb-2">
+            <Pin className="h-4 w-4 text-yellow-600" />
+            <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Pinned Messages
+            </span>
+          </div>
+          {pinnedMessages.map(messageId => {
+            const message = messages.find(m => m.id === messageId);
+            if (!message) return null;
+            return (
+              <div key={messageId} className={cn(
+                "text-xs p-2 rounded mb-1",
+                theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+              )}>
+                <span className="font-medium">{message.senderName}:</span> {message.content}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
+      <div className="flex-1 relative">
+        <div 
+          ref={messagesContainerRef}
+          className="h-full overflow-y-auto"
+        >
+          <MessagesList
+            messages={messages}
+            currentUserId={user.uid}
+            onLongPress={setShowReactions}
+            onReport={handleReportMessage}
+            onPin={userProfile?.isAdmin ? togglePinMessage : undefined}
+            canModerate={userProfile?.isAdmin}
+            pinnedMessages={pinnedMessages}
+            unreadMessageIndex={getUnreadMessageIndex()}
+          />
+          
+          {/* Unread messages marker */}
+          {unreadCount > 0 && getUnreadMessageIndex() >= 0 && (
+            <div ref={unreadMarkerRef} className="relative">
+              <div className="absolute left-0 right-0 flex items-center">
+                <div className="flex-1 h-px bg-red-500"></div>
+                <Badge variant="destructive" className="mx-2 text-xs">
+                  {unreadCount} new message{unreadCount > 1 ? 's' : ''}
+                </Badge>
+                <div className="flex-1 h-px bg-red-500"></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scroll to bottom button */}
+        {showScrollToBottom && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute bottom-4 right-4"
+          >
+            <Button
+              onClick={scrollToBottom}
+              size="sm"
+              className="rounded-full h-10 w-10 p-0 shadow-lg bg-purple-600 hover:bg-purple-700"
+            >
+              <ArrowDown className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </motion.div>
+        )}
+      </div>
 
       <QueuedMessagesNotice 
         queuedCount={queuedMessages.length} 
@@ -150,6 +381,8 @@ const ChurchRoom = () => {
           onReaction={handleReactionAdd}
           onClose={() => setShowReactions(null)}
           userReaction={messages.find(m => m.id === showReactions)?.userReactions[user.uid]}
+          onPin={userProfile?.isAdmin ? () => togglePinMessage(showReactions) : undefined}
+          isPinned={pinnedMessages.includes(showReactions)}
         />
       )}
 

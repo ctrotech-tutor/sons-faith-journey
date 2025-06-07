@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { ArrowLeft, MoreVertical, Shield, Wifi, WifiOff, Clock } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Shield, Wifi, WifiOff, Clock, ArrowDown } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -48,7 +48,12 @@ const ChatWithSupervisor = () => {
   const [isUrgent, setIsUrgent] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
+  const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Monitor online status
   useEffect(() => {
@@ -67,11 +72,18 @@ const ChatWithSupervisor = () => {
     };
   }, []);
 
-  // Load messages from cache on mount
+  // Load messages and last read from cache
   useEffect(() => {
-    const cachedMessages = localStorage.getItem(`supervisorChat_${user?.uid}_messages`);
-    if (cachedMessages) {
-      setMessages(JSON.parse(cachedMessages));
+    if (user) {
+      const cachedMessages = localStorage.getItem(`supervisorChat_${user.uid}_messages`);
+      const lastRead = localStorage.getItem(`supervisorChat_lastRead_${user.uid}`);
+      
+      if (cachedMessages) {
+        setMessages(JSON.parse(cachedMessages));
+      }
+      if (lastRead) {
+        setLastReadMessageId(lastRead);
+      }
     }
   }, [user?.uid]);
 
@@ -91,16 +103,80 @@ const ChatWithSupervisor = () => {
       })) as PrivateMessage[];
       
       setMessages(newMessages);
-      // Cache latest 50 messages for offline access
       localStorage.setItem(`supervisorChat_${user.uid}_messages`, JSON.stringify(newMessages.slice(-50)));
-      scrollToBottom();
     });
 
     return unsubscribe;
   }, [user, isOnline]);
 
+  // Calculate unread messages and handle scroll behavior
+  useEffect(() => {
+    if (!messages.length || !user) return;
+
+    let unreadStartIndex = -1;
+    
+    if (lastReadMessageId) {
+      const lastReadIndex = messages.findIndex(m => m.id === lastReadMessageId);
+      unreadStartIndex = lastReadIndex + 1;
+    } else {
+      unreadStartIndex = messages.length;
+    }
+
+    const unreadMessages = messages.slice(unreadStartIndex);
+    const newUnreadCount = unreadMessages.filter(m => m.senderType === 'admin').length;
+    setUnreadCount(newUnreadCount);
+
+    // Scroll to unread messages on initial load
+    if (newUnreadCount > 0 && !hasScrolledToUnread && messagesContainerRef.current) {
+      setTimeout(() => {
+        if (unreadStartIndex < messages.length) {
+          const container = messagesContainerRef.current;
+          if (container) {
+            const messageElements = container.querySelectorAll('[data-message-id]');
+            const firstUnreadElement = messageElements[unreadStartIndex];
+            if (firstUnreadElement) {
+              firstUnreadElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }
+        setHasScrolledToUnread(true);
+      }, 100);
+    }
+  }, [messages, lastReadMessageId, user, hasScrolledToUnread]);
+
+  // Check if user is at bottom
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollToBottom(!isAtBottom && messages.length > 5);
+      
+      if (isAtBottom && unreadCount > 0) {
+        markMessagesAsRead();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [messages, unreadCount]);
+
+  const markMessagesAsRead = () => {
+    if (!user || messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    setLastReadMessageId(lastMessage.id);
+    localStorage.setItem(`supervisorChat_lastRead_${user.uid}`, lastMessage.id);
+    setUnreadCount(0);
+  };
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      markMessagesAsRead();
+    }
   };
 
   const syncQueuedMessages = async () => {
@@ -328,10 +404,9 @@ const ChatWithSupervisor = () => {
               ) : (
                 <WifiOff className="h-4 w-4 text-red-300" />
               )}
-              {messages.some(m => m.urgent && !m.answered) && (
+              {unreadCount > 0 && (
                 <Badge variant="destructive" className="text-xs">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Urgent
+                  {unreadCount} new
                 </Badge>
               )}
             </div>
@@ -343,102 +418,149 @@ const ChatWithSupervisor = () => {
       </div>
 
       {/* Chat Messages Container */}
-      <div 
-        className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100"
-        style={{ 
-          userSelect: 'none',
-          WebkitUserSelect: 'none'
-        }}
-      >
-        {messages.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🤝</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Private Support Channel</h3>
-            <p className="text-gray-500 mb-4">
-              Share your prayer requests, questions, or concerns with our spiritual team
-            </p>
-            <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700 max-w-md mx-auto">
-              <p className="font-medium mb-2">How can THE SONS team help you?</p>
-              <ul className="text-left space-y-1">
-                <li>• Prayer requests and spiritual guidance</li>
-                <li>• Personal struggles and challenges</li>
-                <li>• Questions about faith and scripture</li>
-                <li>• Confidential counseling support</li>
-              </ul>
-            </div>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div key={message.id} className={`flex ${message.senderType === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                message.senderType === 'user'
-                  ? 'bg-[#FF9606] text-white'
-                  : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-              }`}>
-                {message.senderType === 'admin' && (
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-blue-600">THE SONS Team</span>
-                  </div>
-                )}
-                
-                {message.mediaUrl && (
-                  <div className="mb-2">
-                    {message.mediaType === 'image' && (
-                      <img src={message.mediaUrl} alt="Shared" className="rounded-lg max-w-full" />
-                    )}
-                    {message.mediaType === 'audio' && (
-                      <audio controls className="w-full">
-                        <source src={message.mediaUrl} type="audio/mpeg" />
-                      </audio>
-                    )}
-                  </div>
-                )}
-                
-                {message.content && (
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                )}
-                
-                <div className="flex items-center justify-between mt-1">
-                  <span className={`text-xs ${
-                    message.senderType === 'user' ? 'text-white/70' : 'text-gray-500'
-                  }`}>
-                    {message.timestamp?.toDate?.()?.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) || 'Just now'}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    {message.urgent && (
-                      <Badge variant="destructive" className="text-xs py-0 px-1">
-                        Urgent
-                      </Badge>
-                    )}
-                    {message.status === 'pending' && (
-                      <Clock className="h-3 w-3 text-yellow-500" />
-                    )}
-                    {message.status === 'sent' && (
-                      <span className="text-xs">✓</span>
-                    )}
-                    {message.status === 'delivered' && (
-                      <span className="text-xs">✓✓</span>
-                    )}
-                  </div>
-                </div>
+      <div className="flex-1 relative">
+        <div 
+          ref={messagesContainerRef}
+          className="h-full overflow-y-auto p-4 space-y-3 bg-gray-100"
+          style={{ 
+            userSelect: 'none',
+            WebkitUserSelect: 'none'
+          }}
+        >
+          {messages.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🤝</div>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">Private Support Channel</h3>
+              <p className="text-gray-500 mb-4">
+                Share your prayer requests, questions, or concerns with our spiritual team
+              </p>
+              <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700 max-w-md mx-auto">
+                <p className="font-medium mb-2">How can THE SONS team help you?</p>
+                <ul className="text-left space-y-1">
+                  <li>• Prayer requests and spiritual guidance</li>
+                  <li>• Personal struggles and challenges</li>
+                  <li>• Questions about faith and scripture</li>
+                  <li>• Confidential counseling support</li>
+                </ul>
               </div>
             </div>
-          ))
-        )}
+          ) : (
+            messages.map((message, index) => {
+              const isUnreadStart = lastReadMessageId && 
+                messages.findIndex(m => m.id === lastReadMessageId) + 1 === index &&
+                message.senderType === 'admin';
+              
+              return (
+                <div key={message.id}>
+                  {isUnreadStart && unreadCount > 0 && (
+                    <div className="flex items-center my-4">
+                      <div className="flex-1 h-px bg-red-500"></div>
+                      <Badge variant="destructive" className="mx-2 text-xs">
+                        {unreadCount} new message{unreadCount > 1 ? 's' : ''}
+                      </Badge>
+                      <div className="flex-1 h-px bg-red-500"></div>
+                    </div>
+                  )}
+                  
+                  <div 
+                    data-message-id={message.id}
+                    className={`flex ${message.senderType === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                      message.senderType === 'user'
+                        ? 'bg-[#FF9606] text-white'
+                        : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
+                    }`}>
+                      {message.senderType === 'admin' && (
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Shield className="h-4 w-4 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-600">THE SONS Team</span>
+                        </div>
+                      )}
+                      
+                      {message.mediaUrl && (
+                        <div className="mb-2">
+                          {message.mediaType === 'image' && (
+                            <img src={message.mediaUrl} alt="Shared" className="rounded-lg max-w-full" />
+                          )}
+                          {message.mediaType === 'audio' && (
+                            <audio controls className="w-full">
+                              <source src={message.mediaUrl} type="audio/mpeg" />
+                            </audio>
+                          )}
+                        </div>
+                      )}
+                      
+                      {message.content && (
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      )}
+                      
+                      <div className="flex items-center justify-between mt-1">
+                        <span className={`text-xs ${
+                          message.senderType === 'user' ? 'text-white/70' : 'text-gray-500'
+                        }`}>
+                          {message.timestamp?.toDate?.()?.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) || 'Just now'}
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          {message.urgent && (
+                            <Badge variant="destructive" className="text-xs py-0 px-1">
+                              Urgent
+                            </Badge>
+                          )}
+                          {message.status === 'pending' && (
+                            <Clock className="h-3 w-3 text-yellow-500" />
+                          )}
+                          {message.status === 'sent' && (
+                            <span className="text-xs">✓</span>
+                          )}
+                          {message.status === 'delivered' && (
+                            <span className="text-xs">✓✓</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
 
-        {!isOnline && queuedMessages.length > 0 && (
-          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3 text-center">
-            <p className="text-yellow-800 text-sm">
-              {queuedMessages.length} message(s) queued. Will send when back online.
-            </p>
-          </div>
+          {!isOnline && queuedMessages.length > 0 && (
+            <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3 text-center">
+              <p className="text-yellow-800 text-sm">
+                {queuedMessages.length} message(s) queued. Will send when back online.
+              </p>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Scroll to bottom button */}
+        {showScrollToBottom && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute bottom-4 right-4"
+          >
+            <Button
+              onClick={scrollToBottom}
+              size="sm"
+              className="rounded-full h-10 w-10 p-0 shadow-lg bg-purple-600 hover:bg-purple-700"
+            >
+              <ArrowDown className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </motion.div>
         )}
-        
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Chat Input Footer */}
