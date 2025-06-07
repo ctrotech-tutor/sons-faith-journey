@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -17,9 +16,6 @@ interface Message {
   reported: boolean;
   timestamp: any;
   status?: 'pending' | 'sent' | 'delivered';
-  pinned?: boolean;
-  pinnedBy?: string;
-  pinnedAt?: any;
 }
 
 interface QueuedMessage {
@@ -69,7 +65,7 @@ export const useChurchRoom = () => {
     if (!user || !isOnline) return;
 
     const messagesQuery = query(
-      collection(db, 'churchMessages'),
+      collection(db, 'chats/churchRoom/messages'),
       orderBy('timestamp', 'asc')
     );
 
@@ -92,7 +88,7 @@ export const useChurchRoom = () => {
 
     for (const queuedMsg of queuedMessages) {
       try {
-        await addDoc(collection(db, 'churchMessages'), {
+        await addDoc(collection(db, 'chats/churchRoom/messages'), {
           senderId: user?.uid,
           senderName: userProfile?.displayName,
           message: queuedMsg.message,
@@ -101,8 +97,7 @@ export const useChurchRoom = () => {
           reactions: {},
           userReactions: {},
           reported: false,
-          timestamp: queuedMsg.timestamp,
-          pinned: false
+          timestamp: queuedMsg.timestamp
         });
       } catch (error) {
         console.error('Error syncing queued message:', error);
@@ -144,8 +139,7 @@ export const useChurchRoom = () => {
       userReactions: {},
       reported: false,
       timestamp: new Date(),
-      status: isOnline ? 'sent' : 'pending',
-      pinned: false
+      status: isOnline ? 'sent' : 'pending'
     };
 
     setMessages(prev => [...prev, messageData as Message]);
@@ -172,15 +166,14 @@ export const useChurchRoom = () => {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, 'churchMessages'), {
+      await addDoc(collection(db, 'chats/churchRoom/messages'), {
         senderId: user.uid,
         senderName: userProfile.displayName,
         message: messageToSend,
         reactions: {},
         userReactions: {},
         reported: false,
-        timestamp: new Date(),
-        pinned: false
+        timestamp: new Date()
       });
     } catch (error) {
       console.error('Error sending message:', error);
@@ -198,7 +191,7 @@ export const useChurchRoom = () => {
     if (!user || !isOnline) return;
 
     try {
-      const messageRef = doc(db, 'churchMessages', messageId);
+      const messageRef = doc(db, 'chats/churchRoom/messages', messageId);
       const message = messages.find(m => m.id === messageId);
       
       if (!message) return;
@@ -241,7 +234,7 @@ export const useChurchRoom = () => {
     }
 
     try {
-      const messageRef = doc(db, 'churchMessages', messageId);
+      const messageRef = doc(db, 'chats/churchRoom/messages', messageId);
       await updateDoc(messageRef, {
         reported: true
       });
@@ -279,60 +272,6 @@ export const useChurchRoom = () => {
     }
   };
 
-  const togglePinMessage = async (messageId: string) => {
-    if (!user || !userProfile?.isAdmin || !isOnline) {
-      toast({
-        title: 'Cannot Pin',
-        description: 'Only admins can pin messages and you need to be online.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      const messageRef = doc(db, 'churchMessages', messageId);
-      const message = messages.find(m => m.id === messageId);
-      
-      if (!message) return;
-
-      const isPinned = message.pinned || false;
-      
-      await updateDoc(messageRef, {
-        pinned: !isPinned,
-        pinnedBy: !isPinned ? user.uid : null,
-        pinnedAt: !isPinned ? new Date() : null
-      });
-
-      // Update local state immediately
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
-            ? { 
-                ...msg, 
-                pinned: !isPinned,
-                pinnedBy: !isPinned ? user.uid : undefined,
-                pinnedAt: !isPinned ? new Date() : undefined
-              }
-            : msg
-        )
-      );
-
-      toast({
-        title: isPinned ? 'Message Unpinned' : 'Message Pinned',
-        description: isPinned 
-          ? 'Message has been unpinned from the chat.'
-          : 'Message has been pinned to the chat.'
-      });
-    } catch (error) {
-      console.error('Error toggling pin:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to pin/unpin message. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const handleMediaUpload = async (mediaUrl: string, mediaType: 'image' | 'audio' | 'video') => {
     if (!user || !userProfile) return;
 
@@ -347,8 +286,7 @@ export const useChurchRoom = () => {
       userReactions: {},
       reported: false,
       timestamp: new Date(),
-      status: isOnline ? 'sent' : 'pending',
-      pinned: false
+      status: isOnline ? 'sent' : 'pending'
     };
 
     setMessages(prev => [...prev, messageData as Message]);
@@ -374,7 +312,7 @@ export const useChurchRoom = () => {
     }
 
     try {
-      await addDoc(collection(db, 'churchMessages'), {
+      await addDoc(collection(db, 'chats/churchRoom/messages'), {
         senderId: user.uid,
         senderName: userProfile.displayName,
         message: '',
@@ -383,8 +321,7 @@ export const useChurchRoom = () => {
         reactions: {},
         userReactions: {},
         reported: false,
-        timestamp: new Date(),
-        pinned: false
+        timestamp: new Date()
       });
 
       toast({
@@ -412,7 +349,6 @@ export const useChurchRoom = () => {
     addReaction,
     reportMessage,
     handleMediaUpload,
-    togglePinMessage,
     user,
     userProfile
   };
