@@ -111,7 +111,7 @@ const AppContent = () => {
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/bible/:passage/:day" element={<Bible />} />
         <Route path="/calendar" element={<Calendar />} />
-        <Route path="/bookmark" element={<Bookmark />} />
+        <Route path="/bookmarks" element={<Bookmark />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
