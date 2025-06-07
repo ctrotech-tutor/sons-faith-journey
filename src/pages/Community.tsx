@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -44,7 +44,10 @@ const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [filter, setFilter] = useState<'recent' | 'liked' | 'admin'>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
-  const [quickComment, setQuickComment] = useState<{[key: string]: string}>({});
+  const [quickComment, setQuickComment] = useState<{ [key: string]: string }>({});
+  const [expandedPosts, setExpandedPosts] = useState<{ [postId: string]: boolean }>({});
+  const [likeAnimations, setLikeAnimations] = useState<{ [postId: string]: boolean }>({});
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,19 +63,23 @@ const Community = () => {
         id: doc.id,
         ...doc.data()
       })) as CommunityPost[];
-      
+
       const filteredPosts = newPosts.filter(post => {
         if (userProfile?.isAdmin) {
           return true;
         }
         return post.status === 'approved';
       });
-      
+
       setPosts(filteredPosts);
     });
 
     return unsubscribe;
   }, [user, userProfile]);
+
+  const toggleExpanded = (postId: string) => {
+    setExpandedPosts(prev => ({ ...prev, [postId]: !prev[postId] }));
+  };
 
   const toggleLike = async (postId: string) => {
     if (!user) return;
@@ -82,7 +89,7 @@ const Community = () => {
 
     try {
       const isLiked = post.likes.includes(user.uid);
-      const updatedLikes = isLiked 
+      const updatedLikes = isLiked
         ? post.likes.filter(id => id !== user.uid)
         : [...post.likes, user.uid];
 
@@ -94,6 +101,17 @@ const Community = () => {
       console.error('Error toggling like:', error);
     }
   };
+
+  const handleLike = (postId: string) => {
+    toggleLike(postId); // your actual like toggle
+    setLikeAnimations((prev) => ({ ...prev, [postId]: true }));
+
+    // Reset animation state after a short delay
+    setTimeout(() => {
+      setLikeAnimations((prev) => ({ ...prev, [postId]: false }));
+    }, 300);
+  };
+
 
   const sharePost = async (postId: string) => {
     try {
@@ -215,45 +233,44 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <motion.div
-  initial={{ y: -30, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  transition={{ duration: 0.6, ease: 'easeOut' }}
-  className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-white/20 dark:border-white/10 shadow-sm"
->
-  <div className="max-w-md mx-auto px-4 py-3">
-    {/* Logo + Post Button */}
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">
-        The Son Hub
-      </h1>
-      <Button
-        size="sm"
-        onClick={() => navigate("/create-post")}
-        className="flex items-center gap-2 text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-md hover:shadow-lg transition-all duration-300 px-4 py-2 rounded-lg"
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-white/20 dark:border-white/10 shadow-sm"
       >
-        <Plus className="h-4 w-4" />
-        <span className="text-sm font-semibold">Post</span>
-      </Button>
-    </div>
+        <div className="max-w-md mx-auto px-4 py-3">
+          {/* Logo + Post Button */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">
+              The Son Hub
+            </h1>
+            <Button
+              size="sm"
+              onClick={() => navigate("/create-post")}
+              className="flex items-center gap-2 text-white bg-gradient-to-r from-purple-600 to-purple-900 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300 px-4 py-2 rounded-lg"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="text-sm font-semibold">Post</span>
+            </Button>
+          </div>
 
-    {/* Filter Tabs */}
-    <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
-      {['recent', 'liked', 'admin'].map((filterType) => (
-        <button
-          key={filterType}
-          onClick={() => setFilter(filterType as any)}
-          className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-            filter === filterType
-              ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
-              : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
-          }`}
-        >
-          {filterType === 'recent' ? 'Recent' : filterType === 'liked' ? 'Popular' : 'Leaders'}
-        </button>
-      ))}
-    </div>
-  </div>
-</motion.div>
+          {/* Filter Tabs */}
+          <div className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
+            {['recent', 'liked', 'admin'].map((filterType) => (
+              <button
+                key={filterType}
+                onClick={() => setFilter(filterType as any)}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${filter === filterType
+                  ? 'bg-white dark:bg-gray-800 text-purple-800 dark:text-purple-200 shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300'
+                  }`}
+              >
+                {filterType === 'recent' ? 'Recent' : filterType === 'liked' ? 'Popular' : 'Leaders'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
 
 
       {/* Main Feed */}
@@ -261,73 +278,73 @@ const Community = () => {
         <div className="max-w-md mx-auto">
           {/* Admin pending posts */}
           {userProfile?.isAdmin && posts.filter(p => p.status === 'pending').length > 0 && (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.2 }}
-    className="mb-8 px-4"
-  >
-    <h3 className="text-xl font-bold mb-4 text-orange-700 dark:text-orange-300 tracking-tight">
-      Pending Approval
-    </h3>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-8 px-4"
+            >
+              <h3 className="text-xl font-bold mb-4 text-orange-700 dark:text-orange-300 tracking-tight">
+                Pending Approval
+              </h3>
 
-    <div className="space-y-4">
-      {posts.filter(p => p.status === 'pending').map((post) => (
-        <motion.div
-          key={post.id}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-          className="rounded-xl border border-orange-200 dark:border-orange-400/30 bg-white/50 dark:bg-orange-900/20 backdrop-blur-sm shadow-md p-4"
-        >
-          {/* Author Info */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>
-                  {post.authorName?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">{post.authorName}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {post.timestamp?.toDate?.()?.toLocaleDateString()}
-                </p>
+              <div className="space-y-4">
+                {posts.filter(p => p.status === 'pending').map((post) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="rounded-xl border border-orange-200 dark:border-orange-400/30 bg-white/50 dark:bg-orange-900/20 backdrop-blur-sm shadow-md p-4"
+                  >
+                    {/* Author Info */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>
+                            {post.authorName?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white">{post.authorName}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {post.timestamp?.toDate?.()?.toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="bg-orange-200 text-orange-900 dark:bg-orange-400/20 dark:text-orange-300">
+                        Pending
+                      </Badge>
+                    </div>
+
+                    {/* Post Content */}
+                    <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => approvePost(post.id)}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                      >
+                        ✅ Approve
+                      </Button>
+                      <Button
+                        onClick={() => rejectPost(post.id)}
+                        variant="destructive"
+                        size="sm"
+                        className="shadow-sm"
+                      >
+                        ❌ Reject
+                      </Button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            </div>
-            <Badge variant="secondary" className="bg-orange-200 text-orange-900 dark:bg-orange-400/20 dark:text-orange-300">
-              Pending
-            </Badge>
-          </div>
-
-          {/* Post Content */}
-          <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">
-            {post.content}
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => approvePost(post.id)}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
-            >
-              ✅ Approve
-            </Button>
-            <Button
-              onClick={() => rejectPost(post.id)}
-              variant="destructive"
-              size="sm"
-              className="shadow-sm"
-            >
-              ❌ Reject
-            </Button>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  </motion.div>
-)}
+            </motion.div>
+          )}
 
           {/* Posts Feed */}
           <div className="space-y-0">
@@ -336,49 +353,50 @@ const Community = () => {
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
-                <Card className="rounded-none border-x-0 border-t-0 last:border-b-0 shadow-none">
+                <Card className="rounded-none border-x-0 border-t-0 last:border-b-0 shadow-none dark:bg-gray-900/60 dark:border-gray-700 transition-colors">
+
                   {/* Post Header */}
-                  <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center justify-between px-4 pt-4 pb-2">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
+                      <Avatar className="h-8 w-8 ring-1 ring-gray-300 dark:ring-gray-600">
+                        <AvatarFallback className="text-xs dark:text-gray-300">
                           {post.authorName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <p className="font-semibold text-sm">{post.authorName}</p>
+                          <p className="font-semibold text-sm dark:text-white">{post.authorName}</p>
                           {post.isAdmin && (
-                            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0">
+                            <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs px-2 py-0">
                               Leader
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {post.timestamp?.toDate?.()?.toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  {/* Post Media */}
+                  {/* Media */}
                   {post.mediaUrl && (
-                    <div className="w-full">
+                    <div className="w-full bg-black/5 dark:bg-white/5">
                       {post.mediaType === 'image' ? (
-                        <img 
-                          src={post.mediaUrl} 
-                          alt="Post media" 
+                        <img
+                          src={post.mediaUrl}
+                          alt="Post"
                           className="w-full aspect-square object-cover"
                         />
                       ) : (
-                        <video 
-                          src={post.mediaUrl} 
-                          controls 
+                        <video
+                          src={post.mediaUrl}
+                          controls
                           className="w-full aspect-square object-cover"
                         />
                       )}
@@ -386,66 +404,100 @@ const Community = () => {
                   )}
 
                   {/* Post Actions */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="px-4 py-3 space-y-2">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
+                        {/* Like */}
+                        <motion.button
+                          onClick={() => handleLike(post.id)}
+                          className="h-8 w-8 p-0"
+                          animate={{
+                            scale: likeAnimations[post.id] ? 1.2 : 1,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 10,
+                          }}
+                        >
+                          <Heart
+                            className={`h-6 w-6 transition-colors duration-300 ${post.likes.includes(user.uid)
+                                ? 'fill-red-500 text-red-500'
+                                : 'text-gray-700 dark:text-gray-300'
+                              }`}
+                          />
+                        </motion.button>
+
+
+                        {/* Comment */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleLike(post.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Heart
-                            className={`h-6 w-6 ${
-                              post.likes.includes(user.uid)
-                                ? 'fill-red-500 text-red-500'
-                                : 'text-gray-700'
-                            }`}
-                          />
-                        </Button>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
                           onClick={() => setSelectedPostForComments(post.id)}
                         >
-                          <MessageCircle className="h-6 w-6 text-gray-700" />
+                          <MessageCircle className="h-6 w-6" />
                         </Button>
 
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 w-8 p-0"
+                        {/* Share */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
                           onClick={() => sharePost(post.id)}
                         >
-                          <Share2 className="h-6 w-6 text-gray-700" />
+                          <Share2 className="h-6 w-6" />
                         </Button>
                       </div>
-                      
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Bookmark className="h-6 w-6 text-gray-700" />
+
+                      {/* Save */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
+                      >
+                        <Bookmark className="h-6 w-6" />
                       </Button>
                     </div>
 
                     {/* Like Count */}
                     {post.likeCount > 0 && (
-                      <p className="font-semibold text-sm mb-2">
+                      <p className="font-semibold text-sm dark:text-gray-100">
                         {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}
                       </p>
                     )}
 
-                    {/* Post Content */}
-                    <p className="text-sm mb-2">
-                      <span className="font-semibold">{post.authorName}</span> {post.content}
-                    </p>
+                    {/* Post Text */}
+                    <motion.div
+                      layout
+                      initial={false}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className='bg-white dark:bg-gray-900/60'
+                    >
+                      <p className="text-sm dark:text-gray-200">
+                        <span className="font-semibold">{post.authorName}</span>{" "}
+                        {expandedPosts[post.id] || post.content.length <= 150
+                          ? post.content
+                          : `${post.content.slice(0, 150)}... `}
+                        {post.content.length > 150 && (
+                          <button
+                            onClick={() => toggleExpanded(post.id)}
+                            className="text-blue-500 font-medium ml-1 hover:underline dark:text-blue-400"
+                          >
+                            {expandedPosts[post.id] ? "Show less" : "Read more"}
+                          </button>
+                        )}
+                      </p>
+                    </motion.div>
 
-                    {/* Comments */}
+
+                    {/* View Comments */}
                     {post.commentCount > 0 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-500 p-0 h-auto text-sm"
+                        className="text-gray-500 dark:text-gray-400 p-0 h-auto text-sm"
                         onClick={() => setSelectedPostForComments(post.id)}
                       >
                         View all {post.commentCount} comments
@@ -453,18 +505,20 @@ const Community = () => {
                     )}
 
                     {/* Add Comment */}
-                    <div className="flex items-center space-x-2 mt-3">
+                    <div className="flex items-center space-x-2 pt-1">
                       <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-xs dark:text-gray-300">
                           {userProfile?.displayName?.charAt(0) || user?.email?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 flex space-x-2">
+                      <div className="flex-1 flex items-center border-b border-gray-200 dark:border-neutral-700">
                         <input
                           value={quickComment[post.id] || ''}
-                          onChange={(e) => setQuickComment(prev => ({ ...prev, [post.id]: e.target.value }))}
+                          onChange={(e) =>
+                            setQuickComment((prev) => ({ ...prev, [post.id]: e.target.value }))
+                          }
                           placeholder="Add a comment..."
-                          className="flex-1 text-sm border-none outline-none bg-transparent placeholder-gray-500"
+                          className="flex-1 text-sm border-none outline-none bg-transparent placeholder-gray-500 dark:placeholder-gray-400 dark:text-white"
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               addQuickComment(post.id);
@@ -489,12 +543,13 @@ const Community = () => {
             ))}
           </div>
 
+
           {getFilteredPosts().length === 0 && (
             <div className="text-center py-20 px-4">
               <div className="text-6xl mb-4">💬</div>
               <h3 className="text-xl font-semibold text-gray-600 mb-2">Start the Conversation</h3>
               <p className="text-gray-500 mb-6">Be the first to share something meaningful with the community!</p>
-              <Button 
+              <Button
                 onClick={() => navigate('/create-post')}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
