@@ -1,4 +1,3 @@
-
 import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -34,6 +33,7 @@ const CreatePost = lazy(() => import("./pages/CreatePost"));
 const Bible = lazy(() => import("./pages/Bible"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Bookmark = lazy(() => import("./pages/Bookmarks"));
+const PostApproval = lazy(() => import("./pages/PostApproval"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -112,6 +112,7 @@ const AppContent = () => {
         <Route path="/bible/:passage/:day" element={<Bible />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/bookmarks" element={<Bookmark />} />
+        <Route path="/post-approval" element={<PostApproval />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

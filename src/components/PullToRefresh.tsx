@@ -1,102 +1,154 @@
+
 import { useEffect, useState, useRef } from "react";
-import { FiCheck } from "react-icons/fi";
-import { Loader2 } from "lucide-react";
+import { RefreshCw, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PullToRefreshProps {
   onRefresh?: () => Promise<void>;
   pullThreshold?: number;
   vibration?: boolean;
-  spinnerDuration?: number; // How long to spin loader
-  checkDuration?: number;   // How long to show check before fade + reload
+  spinnerDuration?: number;
+  checkDuration?: number;
+  disabled?: boolean;
 }
 
 export default function PullToRefresh({
   onRefresh,
   pullThreshold = 80,
   vibration = true,
-  spinnerDuration = 3000,
-  checkDuration = 500,
+  spinnerDuration = 1500,
+  checkDuration = 800,
+  disabled = false,
 }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showIndicator, setShowIndicator] = useState(false);
   const [showCheck, setShowCheck] = useState(false);
+  const [canPull, setCanPull] = useState(false);
 
   const startY = useRef(0);
   const isTouching = useRef(false);
+  const hasTriggeredHaptic = useRef(false);
 
   useEffect(() => {
+    if (disabled) return;
+
     const triggerHaptic = () => {
-      if (vibration && "vibrate" in navigator) navigator.vibrate(40);
+      if (vibration && "vibrate" in navigator && !hasTriggeredHaptic.current) {
+        navigator.vibrate(50);
+        hasTriggeredHaptic.current = true;
+      }
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0 && e.touches[0].clientY < 200 && !refreshing) {
+      // Only enable pull-to-refresh when at the top of the page
+      const isAtTop = window.scrollY === 0;
+      const isInTopArea = e.touches[0].clientY < 150;
+      
+      if (isAtTop && isInTopArea && !refreshing && !disabled) {
         isTouching.current = true;
         startY.current = e.touches[0].clientY;
+        setCanPull(true);
         setShowIndicator(true);
+        hasTriggeredHaptic.current = false;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isTouching.current || refreshing) return;
+      if (!isTouching.current || refreshing || disabled || !canPull) return;
+      
       const currentY = e.touches[0].clientY;
       const distance = currentY - startY.current;
 
+      // Only allow downward pulls
       if (distance > 10) {
-        setPullDistance(Math.min(distance * 0.5, pullThreshold + 20));
+        // Prevent default scroll behavior when pulling
         e.preventDefault();
+        
+        // Calculate pull distance with resistance
+        const resistance = 0.6;
+        const maxPull = pullThreshold + 40;
+        const calculatedDistance = Math.min(distance * resistance, maxPull);
+        
+        setPullDistance(calculatedDistance);
+
+        // Trigger haptic feedback when threshold is reached
+        if (calculatedDistance >= pullThreshold) {
+          triggerHaptic();
+        }
+      } else {
+        // Reset if user pulls up
+        setPullDistance(0);
+        setCanPull(false);
+        setShowIndicator(false);
       }
     };
 
     const handleTouchEnd = () => {
-      if (refreshing) return;
+      if (refreshing || disabled) return;
 
-      if (pullDistance > pullThreshold) {
-        triggerHaptic();
+      if (pullDistance >= pullThreshold && canPull) {
+        // Trigger refresh
         setRefreshing(true);
         setPullDistance(pullThreshold);
 
-        // Optional refresh logic before animation
-        (onRefresh?.() ?? Promise.resolve())
+        // Execute refresh function
+        const refreshPromise = onRefresh?.() ?? Promise.resolve();
+        
+        refreshPromise
           .then(() => {
-            setShowCheck(false); // Step 1: Loader spins
+            // Show spinner for minimum duration
             setTimeout(() => {
-              setShowCheck(true); // Step 2: Checkmark shows
+              setShowCheck(true);
+              
+              // Show check mark then hide
               setTimeout(() => {
-                // Step 3: Soft Fade → Reload
-                document.body.style.opacity = "0.8";
-                document.body.style.overflow = "hidden";
-                setTimeout(() => {
-                  //window.location.reload(); // Soft manual reload
-                  setPullDistance(0);
-                  setShowIndicator(false);
-                  setRefreshing(false);
-                  setShowCheck(false);
-                  document.body.style.opacity = "1";
-                  document.body.style.overflow = "unset";
-
-                }, 400);
+                setRefreshing(false);
+                setShowCheck(false);
+                setPullDistance(0);
+                setShowIndicator(false);
+                setCanPull(false);
               }, checkDuration);
             }, spinnerDuration);
+          })
+          .catch(() => {
+            // Handle error
+            setRefreshing(false);
+            setPullDistance(0);
+            setShowIndicator(false);
+            setCanPull(false);
           });
       } else {
+        // Reset if threshold not reached
         setPullDistance(0);
         setShowIndicator(false);
+        setCanPull(false);
       }
 
       isTouching.current = false;
+      hasTriggeredHaptic.current = false;
     };
 
+    const handleScroll = () => {
+      // Hide indicator if user scrolls down
+      if (window.scrollY > 50 && showIndicator && !refreshing) {
+        setShowIndicator(false);
+        setCanPull(false);
+        setPullDistance(0);
+      }
+    };
+
+    // Use passive: false to allow preventDefault
     document.addEventListener("touchstart", handleTouchStart, { passive: false });
     document.addEventListener("touchmove", handleTouchMove, { passive: false });
     document.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [
     pullDistance,
@@ -106,31 +158,75 @@ export default function PullToRefresh({
     vibration,
     spinnerDuration,
     checkDuration,
+    disabled,
+    canPull,
+    showIndicator,
   ]);
+
+  // Calculate progress for visual feedback
+  const progress = Math.min(pullDistance / pullThreshold, 1);
+  const isReady = progress >= 1;
 
   return (
     <AnimatePresence>
       {showIndicator && (
         <motion.div
-          initial={{ y: -60, opacity: 0 }}
-          animate={{ y: pullDistance, opacity: 1 }}
-          exit={{ y: -60, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          initial={{ y: -80, opacity: 0, scale: 0.8 }}
+          animate={{ 
+            y: Math.max(-40, pullDistance - 60), 
+            opacity: Math.min(progress * 2, 1),
+            scale: 0.8 + (progress * 0.2)
+          }}
+          exit={{ y: -80, opacity: 0, scale: 0.8 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 300, 
+            damping: 30,
+            duration: refreshing ? 0.3 : 0.1
+          }}
           className={`
-            fixed top-0 left-[45%] right-[50%] 
-            transform -translate-x-1/2 
+            fixed top-8 left-1/2 transform -translate-x-1/2
             flex items-center justify-center 
-            h-10 w-10 rounded-full 
-            bg-white dark:bg-gray-900 
-            text-purple-600 dark:text-purple-200 
-            shadow z-[9999]
+            h-12 w-12 rounded-full 
+            backdrop-blur-md shadow-lg z-[9999]
+            transition-colors duration-200
+            ${isReady 
+              ? 'bg-green-500/90 text-white border-2 border-green-400' 
+              : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-600'
+            }
           `}
         >
-          {showCheck ? (
-            <FiCheck size={24} />
-          ) : (
-            <Loader2 size={24} className="animate-spin" />
-          )}
+          <AnimatePresence mode="wait">
+            {showCheck ? (
+              <motion.div
+                key="check"
+                initial={{ scale: 0, rotate: -90 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 90 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Check size={20} className="text-white" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="refresh"
+                animate={{ 
+                  rotate: refreshing ? 360 : progress * 180,
+                  scale: isReady ? 1.1 : 1
+                }}
+                transition={{ 
+                  duration: refreshing ? 1 : 0.1,
+                  repeat: refreshing ? Infinity : 0,
+                  ease: refreshing ? "linear" : "easeOut"
+                }}
+              >
+                <RefreshCw 
+                  size={20} 
+                  className={isReady ? "text-white" : "text-current"}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

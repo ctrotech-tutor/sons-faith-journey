@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, arrayUnion, arrayRemove, where, deleteDoc, getDocs } from 'firebase/firestore';
@@ -45,48 +44,73 @@ const Community = () => {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Real-time posts listener
+  // Real-time posts listener with better error handling
   useEffect(() => {
-    const postsQuery = query(
-      collection(db, 'communityPosts'),
-      where('status', '==', 'approved'),
-      orderBy('timestamp', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
-      const newPosts = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const now = new Date();
-        const postTime = data.timestamp?.toDate() || now;
-        const hoursSincePost = (now.getTime() - postTime.getTime()) / (1000 * 60 * 60);
-        
-        // Calculate engagement score
-        const engagementScore = (data.likeCount || 0) + ((data.commentCount || 0) * 2) + ((data.shareCount || 0) * 3);
-        
-        // Calculate trending score (engagement divided by time decay)
-        const timeDecayFactor = Math.max(0.1, 1 / (1 + hoursSincePost / 24));
-        const trendingScore = engagementScore * timeDecayFactor;
-
-        return {
-          id: doc.id,
-          ...data,
-          likeCount: data.likes?.length || 0,
-          commentCount: data.commentCount || 0,
-          shareCount: data.shareCount || 0,
-          bookmarkCount: data.bookmarks?.length || 0,
-          views: data.views || 0,
-          engagementScore,
-          trendingScore
-        };
-      }) as CommunityPost[];
-      
-      setPosts(newPosts);
+    if (!user) {
       setLoading(false);
-    });
+      return;
+    }
 
-    return unsubscribe;
-  }, []);
+    try {
+      const postsQuery = query(
+        collection(db, 'communityPosts'),
+        where('status', '==', 'approved'),
+        orderBy('timestamp', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        postsQuery, 
+        (snapshot) => {
+          console.log('Posts snapshot received:', snapshot.docs.length, 'documents');
+          
+          const newPosts = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const now = new Date();
+            const postTime = data.timestamp?.toDate() || now;
+            const hoursSincePost = (now.getTime() - postTime.getTime()) / (1000 * 60 * 60);
+            
+            // Calculate engagement score
+            const engagementScore = (data.likeCount || 0) + ((data.commentCount || 0) * 2) + ((data.shareCount || 0) * 3);
+            
+            // Calculate trending score (engagement divided by time decay)
+            const timeDecayFactor = Math.max(0.1, 1 / (1 + hoursSincePost / 24));
+            const trendingScore = engagementScore * timeDecayFactor;
+
+            return {
+              id: doc.id,
+              ...data,
+              likes: data.likes || [],
+              bookmarks: data.bookmarks || [],
+              likeCount: data.likes?.length || 0,
+              commentCount: data.commentCount || 0,
+              shareCount: data.shareCount || 0,
+              bookmarkCount: data.bookmarks?.length || 0,
+              views: data.views || 0,
+              engagementScore,
+              trendingScore
+            };
+          }) as CommunityPost[];
+          
+          setPosts(newPosts);
+          setLoading(false);
+          setError(null);
+        },
+        (error) => {
+          console.error('Error fetching posts:', error);
+          setError('Failed to load posts. Please try again.');
+          setLoading(false);
+        }
+      );
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up posts listener:', error);
+      setError('Failed to connect to posts. Please refresh.');
+      setLoading(false);
+    }
+  }, [user]);
 
   // Filter posts based on selected filter
   useEffect(() => {
@@ -118,6 +142,15 @@ const Community = () => {
       const updatedLikes = isLiked
         ? post.likes.filter(id => id !== user.uid)
         : [...post.likes, user.uid];
+
+      // Update local state immediately for better UX
+      setPosts(prevPosts => 
+        prevPosts.map(p => 
+          p.id === postId 
+            ? { ...p, likes: updatedLikes, likeCount: updatedLikes.length }
+            : p
+        )
+      );
 
       await updateDoc(doc(db, 'communityPosts', postId), {
         likes: updatedLikes,
@@ -151,6 +184,15 @@ const Community = () => {
         // Remove bookmark
         const updatedBookmarks = post.bookmarks.filter(id => id !== user.uid);
         
+        // Update local state immediately
+        setPosts(prevPosts => 
+          prevPosts.map(p => 
+            p.id === postId 
+              ? { ...p, bookmarks: updatedBookmarks, bookmarkCount: updatedBookmarks.length }
+              : p
+          )
+        );
+
         await updateDoc(doc(db, 'communityPosts', postId), {
           bookmarks: updatedBookmarks,
           bookmarkCount: updatedBookmarks.length
@@ -176,6 +218,15 @@ const Community = () => {
         // Add bookmark
         const updatedBookmarks = [...(post.bookmarks || []), user.uid];
         
+        // Update local state immediately
+        setPosts(prevPosts => 
+          prevPosts.map(p => 
+            p.id === postId 
+              ? { ...p, bookmarks: updatedBookmarks, bookmarkCount: updatedBookmarks.length }
+              : p
+          )
+        );
+
         await updateDoc(doc(db, 'communityPosts', postId), {
           bookmarks: updatedBookmarks,
           bookmarkCount: updatedBookmarks.length
@@ -344,6 +395,18 @@ const Community = () => {
             {loading ? (
               <div className="flex justify-center py-20">
                 <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-20 px-4">
+                <div className="text-6xl mb-4">❌</div>
+                <h3 className="text-xl font-semibold text-red-600 mb-2">Error Loading Posts</h3>
+                <p className="text-gray-500 dark:text-gray-500 mb-6">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600"
+                >
+                  Retry
+                </Button>
               </div>
             ) : filteredPosts.length === 0 ? (
               <div className="text-center py-20 px-4">
