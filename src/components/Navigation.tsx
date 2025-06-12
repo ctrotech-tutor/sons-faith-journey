@@ -241,7 +241,7 @@ const Navigation = () => {
               size="icon"
               variant="ghost"
               //className=""
-              className={cn("ripple-effect rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors duration-200", isScrolled ? "text-gray-900" : "text-white" )}
+              className={cn("ripple-effect rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors duration-200", isScrolled ? "text-gray-900 dark:text-white" : "text-white" )}
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle navigation menu"
             >

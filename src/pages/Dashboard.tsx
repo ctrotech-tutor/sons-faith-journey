@@ -259,7 +259,7 @@ const Dashboard = () => {
             ))}
           </motion.div>
 
-          {/* Activity Dashboard with full functionality */}
+          {/* Activity Dashboard */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
