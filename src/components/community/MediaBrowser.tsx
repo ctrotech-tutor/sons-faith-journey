@@ -1,14 +1,25 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Download, Play, Image as ImageIcon, Video, Upload, FileImage, Smile, Hash } from 'lucide-react';
+import { Search, X, Download, Play, Image as ImageIcon, Video, Upload, FileImage, Smile, Hash, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { convertFileToBase64, getFileType, validateFileSize } from '@/lib/fileUtils';
+import { getFileType, validateFileSize } from '@/lib/fileUtils';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Keys } from '@/data/data';
+import { Keys, hashtags, emojis } from '@/data/data';
 import { Drawer } from '../ui/drawer';
+import LazyVideo from '../LazyVideo';
+import LazyImage from '../LazyImage';
+import { uploadToCloudinary } from '@/lib/cloudinary';
+import { UploadTab } from './UploadTab';
+import ImageTab from './ImageTab';
+import VideoTab from './VideoTab';
+import HashtagTab from './HashtagTab';
+import EmojiTab from './EmojiTab';
+import { cn } from '@/lib/utils';
+import { set } from 'date-fns';
+
 interface MediaBrowserProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,18 +59,8 @@ interface YouTubeVideo {
 const UNSPLASH_ACCESS_KEY = Keys.UNSPLASH_ACCESS_KEY;
 const YOUTUBE_API_KEY = Keys.YOUTUBE_API_KEY;
 
-const popularEmojis = [
-  '😀', '😂', '🥰', '😍', '🤗', '🙏', '❤️', '💕', '👏', '🎉',
-  '🔥', '💯', '✨', '🌟', '💪', '👍', '🙌', '💖', '🎊', '🎈',
-  '🌈', '☀️', '🌸', '🦋', '🕊️', '🎵', '🎶', '📖', '✝️', '⛪'
-];
-
-const commonHashtags = [
-  '#faith', '#blessed', '#prayer', '#testimony', '#worship', '#praise',
-  '#bible', '#jesus', '#god', '#love', '#hope', '#peace', '#joy',
-  '#inspiration', '#motivation', '#community', '#church', '#fellowship',
-  '#grace', '#mercy', '#strength', '#healing', '#grateful', '#thankful'
-];
+const popularEmojis = emojis;
+const commonHashtags = hashtags;
 
 const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelectEmoji }: MediaBrowserProps) => {
   const { toast } = useToast();
@@ -68,6 +69,9 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   const [images, setImages] = useState<UnsplashImage[]>([]);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<"image" | "video" | null>(null);
+
 
   const searchImages = async (query: string) => {
     if (!query.trim()) return;
@@ -170,34 +174,43 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
 
     if (!validateFileSize(file, 10)) {
       toast({
-        title: 'File too large',
-        description: 'Please select a file smaller than 10MB.',
-        variant: 'destructive'
+        title: "File too large",
+        description: "Please select a file smaller than 10MB.",
+        variant: "destructive"
       });
       return;
     }
 
+    const fileType = getFileType(file);
+    const previewUrl = URL.createObjectURL(file);
+    setSelectedPreview(previewUrl);
+    if (fileType === "image" || fileType === "video") {
+      setSelectedType(fileType);
+    } else {
+      setSelectedType(null);
+    }
+
     try {
       setLoading(true);
-      const base64 = await convertFileToBase64(file);
-      const fileType = getFileType(file);
-      onSelectMedia(base64, fileType === 'video' ? 'video' : 'image');
+      const url = await uploadToCloudinary(file);
+      onSelectMedia(url, fileType === "video" ? "video" : "image");
       onClose();
       toast({
-        title: 'File uploaded',
-        description: 'Your media has been added to the post.'
+        title: "File uploaded",
+        description: "Your media has been added to the post."
       });
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error("Error uploading file:", error);
       toast({
-        title: 'Upload failed',
-        description: 'Failed to process the file. Please try again.',
-        variant: 'destructive'
+        title: "Upload failed",
+        description: "Failed to process the file. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleImageSelect = (image: UnsplashImage) => {
     onSelectMedia(image.urls.regular, 'image');
@@ -245,6 +258,19 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
       searchVideos('christian worship');
     }
   }, [isOpen, activeTab]);
+  // Scrolls to the emoji category in the emoji grid (simple implementation: scrolls to a chunk of emojis)
+  function scrollToCategory(i: number): void {
+    // Each category is mapped to a chunk of emojis (e.g., 12 per category)
+    const grid = document.querySelector('.grid.grid-cols-8');
+    if (grid) {
+      const emojisPerCategory = 12;
+      const targetIndex = i * emojisPerCategory;
+      const emojiButtons = grid.querySelectorAll('button');
+      if (emojiButtons[targetIndex]) {
+        (emojiButtons[targetIndex] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -283,7 +309,7 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
             {/* Content */}
             <div className="px-4 pb-4 overflow-y-auto max-h-[calc(85vh-100px)]">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="w-full overflow-x-auto no-scrollbar">
                   <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
                     <Upload className="h-3 w-3" />
                     Upload
@@ -305,163 +331,37 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
                     Tags
                   </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="upload" className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                    <FileImage className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Select an image or video from your device
-                    </p>
-                    <label className="cursor-pointer">
-                      <Button variant="outline" disabled={loading}>
-                        {loading ? 'Processing...' : 'Choose File'}
-                      </Button>
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        disabled={loading}
-                      />
-                    </label>
-                    {loading && (
-                      <div className="flex justify-center mt-4">
-                        <div className="animate-spin h-6 w-6 border-2 border-purple-600 border-t-transparent rounded-full" />
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="images" className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Search for images..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <Button onClick={handleSearch} disabled={loading}>
-                      {loading ? (
-                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                      ) : (
-                        <Search className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-
-                  {loading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full" />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {images.map((image) => (
-                        <motion.div
-                          key={image.id}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="relative aspect-square cursor-pointer group"
-                          onClick={() => handleImageSelect(image)}
-                        >
-                          <img
-                            src={image.urls.small}
-                            alt={image.alt_description}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                            <Download className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            {image.user.name}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="videos" className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Search for videos..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <Button onClick={handleSearch} disabled={loading}>
-                      {loading ? (
-                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                      ) : (
-                        <Search className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-
-                  {loading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full" />
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {videos.map((video) => (
-                        <motion.div
-                          key={video.id.videoId}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="flex gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                          onClick={() => handleVideoSelect(video)}
-                        >
-                          <div className="relative">
-                            <img
-                              src={video.snippet.thumbnails.medium.url}
-                              alt={video.snippet.title}
-                              className="w-24 h-16 object-cover rounded"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <Play className="h-6 w-6 text-white drop-shadow-lg" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm line-clamp-2 dark:text-white">{video.snippet.title}</h4>
-                            <p className="text-xs text-gray-500 mt-1">{video.snippet.channelTitle}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="emoji" className="space-y-4">
-                  <div className="grid grid-cols-8 gap-3">
-                    {popularEmojis.map((emoji, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="text-2xl p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                        onClick={() => handleEmojiSelect(emoji)}
-                      >
-                        {emoji}
-                      </motion.button>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="hashtags" className="space-y-4">
-                  <div className="space-y-2">
-                    {commonHashtags.map((hashtag, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="block w-full text-left p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-purple-600 dark:text-purple-400 font-medium"
-                        onClick={() => handleHashtagSelect(hashtag)}
-                      >
-                        {hashtag}
-                      </motion.button>
-                    ))}
-                  </div>
-                </TabsContent>
+                <UploadTab
+                  loading={loading}
+                  handleFileUpload={handleFileUpload}
+                  selectedPreview={selectedPreview}
+                  selectedType={selectedType}
+                />
+                <ImageTab
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  handleSearch={handleSearch}
+                  loading={loading}
+                  images={images}
+                  handleImageSelect={handleImageSelect}
+                />
+                <VideoTab
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  handleSearch={handleSearch}
+                  loading={loading}
+                  videos={videos}
+                  handleVideoSelect={handleVideoSelect}
+                />
+                <EmojiTab
+                  popularEmojis={popularEmojis}
+                  scrollToCategory={scrollToCategory}
+                  handleEmojiSelect={handleEmojiSelect}
+                />
+                <HashtagTab
+                  commonHashtags={commonHashtags}
+                  handleHashtagSelect={handleHashtagSelect}
+                />
               </Tabs>
             </div>
           </motion.div>

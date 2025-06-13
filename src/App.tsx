@@ -36,7 +36,12 @@ const Bible = lazy(() => import("./pages/Bible"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Bookmark = lazy(() => import("./pages/Bookmarks"));
 const PostApproval = lazy(() => import("./pages/PostApproval"));
-const PostManager = lazy(() => import("./pages/PostManager"))
+const PostManager = lazy(() => import("./pages/PostManager"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Signup = lazy(() => import("./pages/auth/Signup"));
+const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -93,7 +98,7 @@ const AppContent = () => {
   );
 
   return (
-    
+
     <Suspense fallback={<LoadingFallback />}>
       {/* <PullToRefresh /> */}
       <ScrollToTop />
@@ -117,6 +122,11 @@ const AppContent = () => {
         <Route path="/bookmarks" element={<Bookmark />} />
         <Route path="/post-approval" element={<PostApproval />} />
         <Route path="/post-manager" element={<PostManager />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/email-verification" element={<EmailVerification />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
@@ -132,7 +142,7 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner position="top-right" closeButton={true} />
+        <Sonner position="top-right" className="z-[999999]" closeButton={true} />
         <AuthProvider>
           <BrowserRouter>
             <AppContent />
