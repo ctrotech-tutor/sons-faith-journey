@@ -38,7 +38,7 @@ const Bookmark = lazy(() => import("./pages/Bookmarks"));
 const PostApproval = lazy(() => import("./pages/PostApproval"));
 const PostManager = lazy(() => import("./pages/PostManager"));
 const Login = lazy(() => import("./pages/auth/Login"));
-const Signup = lazy(() => import("./pages/auth/Signup"));
+const Signup = lazy(() => import("./pages/auth/signup"));
 const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
