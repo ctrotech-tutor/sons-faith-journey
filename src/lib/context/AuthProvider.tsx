@@ -16,7 +16,8 @@ import {
   signOut,
   linkWithPopup,
   unlink,
-  fetchSignInMethodsForEmail
+  fetchSignInMethodsForEmail,
+  sendEmailVerification
 } from 'firebase/auth';
 import {
   doc,
@@ -245,7 +246,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signOut(auth);
   };
 
+  const verifyEmail = async () => {
+    if (!auth.currentUser) throw new Error('No user logged in');
+    await sendEmailVerification(auth.currentUser);
+    alert('Verification email sent!');
+  };
+
   return (
+
     <AuthContext.Provider
       value={{
         user,
@@ -256,7 +264,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loginWithGoogle,
         logout,
         linkGoogleAccount,
-        unlinkGoogleAccount
+        unlinkGoogleAccount,
+        verifyEmail
       }}
     >
       {children}
