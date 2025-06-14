@@ -1,41 +1,40 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/lib/hooks/useAuth';
 import AuthLayout from './AuthLayout';
 
 const ForgotPassword = () => {
+  const { sendPasswordReset, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // Clear errors when component mounts or email changes
+  useEffect(() => {
+    clearError();
+  }, [email, clearError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordReset(email);
       setEmailSent(true);
       toast({
         title: 'Reset Email Sent!',
         description: 'Check your email for password reset instructions.',
       });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to send reset email. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Error is already handled by AuthProvider
+      console.log('Password reset failed:', error);
     }
   };
 
@@ -65,7 +64,10 @@ const ForgotPassword = () => {
             </p>
             
             <Button
-              onClick={() => setEmailSent(false)}
+              onClick={() => {
+                setEmailSent(false);
+                clearError();
+              }}
               variant="outline"
               className="w-full"
             >
@@ -89,6 +91,14 @@ const ForgotPassword = () => {
       subtitle="Enter your email to reset your password"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">
             Email Address

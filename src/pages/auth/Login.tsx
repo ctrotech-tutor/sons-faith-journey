@@ -1,17 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import AuthLayout from './AuthLayout';
 
 const Login = () => {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -20,7 +21,11 @@ const Login = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  // Clear errors when component mounts or form data changes
+  useEffect(() => {
+    clearError();
+  }, [formData, clearError]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -31,7 +36,6 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
       await login(formData.email, formData.password);
@@ -40,19 +44,13 @@ const Login = () => {
         description: 'Successfully signed in to your account.',
       });
       navigate('/dashboard');
-    } catch (error: any) {
-      toast({
-        title: 'Login Failed',
-        description: error.message || 'Invalid email or password. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Error is already handled by AuthProvider
+      console.log('Login failed:', error);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
     try {
       await loginWithGoogle();
       toast({
@@ -60,14 +58,9 @@ const Login = () => {
         description: 'Successfully signed in with Google.',
       });
       navigate('/dashboard');
-    } catch (error: any) {
-      toast({
-        title: 'Google Sign-in Failed',
-        description: 'Failed to sign in with Google. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Error is already handled by AuthProvider
+      console.log('Google login failed:', error);
     }
   };
 
@@ -77,6 +70,14 @@ const Login = () => {
       subtitle="Sign in to continue your faith journey"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Email Input */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">
