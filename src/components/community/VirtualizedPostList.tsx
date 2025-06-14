@@ -1,6 +1,6 @@
+
 import React, { memo, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
 import { motion } from 'framer-motion';
 import PostCard from './PostCard';
 import PostSkeleton from './PostSkeleton';
@@ -42,7 +42,6 @@ const VirtualizedPostList = memo(({
   onPostInteraction 
 }: VirtualizedPostListProps) => {
   const itemCount = hasNextPage ? posts.length + 1 : posts.length;
-  const isItemLoaded = React.useCallback((index: number) => !!posts[index], [posts]);
 
   const PostItem = memo(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const post = posts[index];
@@ -73,27 +72,23 @@ const VirtualizedPostList = memo(({
   });
 
   const memoizedList = useMemo(() => (
-    <InfiniteLoader
-      isItemLoaded={isItemLoaded}
+    <List
+      height={CONTAINER_HEIGHT}
+      width={'100%'}
       itemCount={itemCount}
-      loadMoreItems={loadNextPage}
+      itemSize={ITEM_HEIGHT}
+      overscanCount={2}
+      className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
+      onItemsRendered={({ visibleStopIndex }) => {
+        // Load more when near the end
+        if (hasNextPage && !isNextPageLoading && visibleStopIndex >= posts.length - 5) {
+          loadNextPage();
+        }
+      }}
     >
-      {({ onItemsRendered, ref }) => (
-        <List
-          ref={ref}
-          height={CONTAINER_HEIGHT}
-          width={'100%'}
-          itemCount={itemCount}
-          itemSize={ITEM_HEIGHT}
-          onItemsRendered={onItemsRendered}
-          overscanCount={2}
-          className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
-        >
-          {PostItem}
-        </List>
-      )}
-    </InfiniteLoader>
-  ), [itemCount, isItemLoaded, loadNextPage, PostItem]);
+      {PostItem}
+    </List>
+  ), [itemCount, posts, hasNextPage, isNextPageLoading, loadNextPage, PostItem]);
 
   return (
     <div className="w-full max-w-md mx-auto">
