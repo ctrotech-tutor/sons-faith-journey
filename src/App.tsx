@@ -1,4 +1,3 @@
-
 import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,7 +16,6 @@ import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { useShield } from './lib/hooks/useShield';
 import { useMobileGuard } from './lib/hooks/useMobileGuard';
 import ScrollToTop from "@/components/ScrollToTop";
-//import PullToRefresh from "@/components/PullToRefresh";
 
 const Index = lazy(() => import("./pages/Index"));
 const Register = lazy(() => import("./pages/Register"));
@@ -122,11 +120,14 @@ const AppContent = () => {
         <Route path="/bookmarks" element={<Bookmark />} />
         <Route path="/post-approval" element={<PostApproval />} />
         <Route path="/post-manager" element={<PostManager />} />
+        
+        {/* Enhanced Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/email-verification" element={<EmailVerification />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
 
