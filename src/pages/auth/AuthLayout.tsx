@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { assets } from '@/assets/assets';
+import { Assets } from '@/assets/assets';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -46,7 +46,7 @@ const AuthLayout = ({ children, title, subtitle, showBackButton = true }: AuthLa
             <div className="text-center mb-8">
               <div className="mx-auto w-20 h-20 mb-4 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
                 <img 
-                  src={assets.logo} 
+                  src={Assets.Logo} 
                   alt="THE SONS" 
                   className="w-12 h-12 rounded-full object-cover"
                 />
