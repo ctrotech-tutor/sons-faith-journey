@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +31,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
+const EditPost = lazy(() => import("./pages/EditPost"));
 const Bible = lazy(() => import("./pages/Bible"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Bookmark = lazy(() => import("./pages/Bookmarks"));
@@ -116,6 +118,7 @@ const AppContent = () => {
         <Route path="/admin-inbox" element={<AdminInbox />} />
         <Route path="/reading" element={<Reading />} />
         <Route path="/create-post" element={<CreatePost />} />
+        <Route path="/edit-post/:postId" element={<EditPost />} />
         <Route path="/bible/:passage/:day" element={<Bible />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/bookmarks" element={<Bookmark />} />
