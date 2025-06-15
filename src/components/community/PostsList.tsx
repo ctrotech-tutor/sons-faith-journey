@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -69,6 +68,15 @@ const PostsList = ({
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
 
+  const handlePostClick = (postId: string, event: React.MouseEvent) => {
+    // Prevent navigation if clicking on interactive elements
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+      return;
+    }
+    navigate(`/community/post/${postId}`);
+  };
+
   if (loading) {
     return (
       <div className="space-y-0">
@@ -115,8 +123,10 @@ const PostsList = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
+          onClick={(e) => handlePostClick(post.id, e)}
+          className="cursor-pointer"
         >
-          <Card className="rounded-none border-x-0 border-t-0 last:border-b-0 shadow-none dark:bg-gray-900/60 dark:border-gray-700 transition-colors">
+          <Card className="rounded-none border-x-0 border-t-0 last:border-b-0 shadow-none dark:bg-gray-900/60 dark:border-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/80">
             {/* Post Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
               <div className="flex items-center space-x-3">
@@ -145,7 +155,12 @@ const PostsList = ({
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </div>
@@ -173,7 +188,10 @@ const PostsList = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <motion.button
-                    onClick={() => onHandleLike(post.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onHandleLike(post.id);
+                    }}
                     className="h-8 w-8 p-0"
                     animate={{
                       scale: likeAnimations[post.id] ? 1.2 : 1,
@@ -197,7 +215,10 @@ const PostsList = ({
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
-                    onClick={() => onOpenCommentsModal(post.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenCommentsModal(post.id);
+                    }}
                   >
                     <MessageCircle className="h-6 w-6" />
                   </Button>
@@ -206,14 +227,20 @@ const PostsList = ({
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
-                    onClick={() => onSharePost(post.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSharePost(post.id);
+                    }}
                   >
                     <Share2 className="h-6 w-6" />
                   </Button>
                 </div>
 
                 <motion.button
-                  onClick={() => onToggleBookmark(post.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleBookmark(post.id);
+                  }}
                   className="h-8 w-8 p-0"
                   animate={{
                     scale: bookmarkAnimations[post.id] ? 1.2 : 1,
@@ -270,7 +297,10 @@ const PostsList = ({
                     <>
                       <span>{formatPostContent(post.content.slice(0, 150), onHashtagClick)}...</span>
                       <button
-                        onClick={() => onToggleExpanded(post.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleExpanded(post.id);
+                        }}
                         className="text-blue-500 font-medium ml-1 hover:underline dark:text-blue-400"
                       >
                         Read more
@@ -279,7 +309,10 @@ const PostsList = ({
                   )}
                   {post.content.length > 150 && expandedPosts[post.id] && (
                     <button
-                      onClick={() => onToggleExpanded(post.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleExpanded(post.id);
+                      }}
                       className="text-blue-500 font-medium ml-1 hover:underline dark:text-blue-400"
                     >
                       Show less
@@ -294,7 +327,10 @@ const PostsList = ({
                   variant="ghost"
                   size="sm"
                   className="text-gray-500 dark:text-gray-400 p-0 h-auto text-sm"
-                  onClick={() => onOpenCommentsModal(post.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCommentsModal(post.id);
+                  }}
                 >
                   View all {post.commentCount} comments
                 </Button>

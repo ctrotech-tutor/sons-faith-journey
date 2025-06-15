@@ -23,6 +23,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Community = lazy(() => import("./pages/Community"));
+const PostDetail = lazy(() => import("./pages/PostDetail"));
 const ChurchRoom = lazy(() => import("./pages/ChurchRoom"));
 const ChatWithSupervisor = lazy(() => import("./pages/ChatWithSupervisor"));
 const AdminInbox = lazy(() => import("./pages/AdminInbox"));
@@ -99,9 +100,7 @@ const AppContent = () => {
   );
 
   return (
-
     <Suspense fallback={<LoadingFallback />}>
-      {/* <PullToRefresh /> */}
       <ScrollToTop />
       {/* Main Routes */}
       <Routes>
@@ -112,6 +111,7 @@ const AppContent = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/community/post/:postId" element={<PostDetail />} />
         <Route path="/church-room" element={<ChurchRoom />} />
         <Route path="/chat/:chatId" element={<ChurchRoom />} />
         <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />
