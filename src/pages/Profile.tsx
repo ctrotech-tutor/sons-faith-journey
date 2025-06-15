@@ -36,7 +36,7 @@ const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
 );
 
 const Profile = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { userId } = useParams();
@@ -112,8 +112,10 @@ const Profile = () => {
       }
     };
 
-    fetchProfile();
-  }, [user, userId, userProfile]);
+    if (!authLoading) {
+      fetchProfile();
+    }
+  }, [user, userId, userProfile, authLoading]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -239,7 +241,7 @@ const Profile = () => {
   const profile = isOwnProfile ? userProfile : viewingUserProfile;
   const currentEmail = isOwnProfile ? user?.email : profile?.email || '';
 
-  if (loading || !profile) {
+  if (loading || !profile || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="h-10 w-10" border="border-4" />
@@ -276,7 +278,7 @@ const Profile = () => {
                   </h1>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  Hello
+                  {user?.emailVerified ? 'Verified' : 'Unverified'}
                 </Badge>
               </div>
 
@@ -291,16 +293,6 @@ const Profile = () => {
               </Tabs>
             </div>
           </motion.div>
-
-          {/* Header */}
-          {/* <div className="fixed top-0 z-50 w-full left-0 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md py-3 flex items-center shadow-sm px-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="ml-4 text-lg font-semibold">
-              {isOwnProfile ? 'My Profile' : `${profile.displayName || 'User'}'s Profile`}
-            </h1>
-          </div> */}
 
           {/* Profile Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 pt-[4.5rem]">

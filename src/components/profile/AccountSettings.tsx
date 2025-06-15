@@ -19,91 +19,78 @@ import {
   Check, 
   AlertTriangle,
   Moon,
-  Sun
+  Sun,
+  Loader2
 } from 'lucide-react';
-import { 
-  updateEmail, 
-  updatePassword, 
-  sendPasswordResetEmail,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  sendEmailVerification
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 
 const AccountSettings = () => {
-  const { user, userProfile } = useAuth();
+  const { 
+    user, 
+    userProfile, 
+    sendEmailVerification, 
+    updatePassword,
+    sendPasswordReset,
+    loading,
+    error,
+    clearError
+  } = useAuth();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
   
-  const [emailForm, setEmailForm] = useState({
-    newEmail: '',
-    currentPassword: '',
-    loading: false,
-    showPassword: false
-  });
-
+  const [emailVerificationLoading, setEmailVerificationLoading] = useState(false);
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    loading: false,
     showCurrent: false,
     showNew: false,
     showConfirm: false
   });
 
-  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
-
-  const handleEmailUpdate = async () => {
-    if (!user || !emailForm.newEmail || !emailForm.currentPassword) {
+  const handleEmailVerification = async () => {
+    if (!user) {
       toast({
-        title: 'Missing Information',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive'
+        title: "No User",
+        description: "You must be logged in to verify your account.",
+        variant: "destructive"
       });
       return;
     }
 
-    setEmailForm(prev => ({ ...prev, loading: true }));
-
-    try {
-      // Re-authenticate user first
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        emailForm.currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
-
-      // Update email
-      await updateEmail(user, emailForm.newEmail);
-
+    if (user.emailVerified) {
       toast({
-        title: 'Email Updated',
-        description: 'Your email address has been successfully updated.'
+        title: "Already Verified",
+        description: "Your email is already verified.",
+        variant: "default"
       });
+      return;
+    }
 
-      setEmailForm({
-        newEmail: '',
-        currentPassword: '',
-        loading: false,
-        showPassword: false
+    setEmailVerificationLoading(true);
+    try {
+      await sendEmailVerification();
+      toast({
+        title: "Verification Sent",
+        description: "A verification link has been sent to your email. Please check your inbox and follow the link to verify your account.",
+        variant: "default"
       });
     } catch (error: any) {
-      console.error('Error updating email:', error);
+      console.error("Error sending verification email:", error);
       toast({
-        title: 'Update Failed',
-        description: error.message || 'Failed to update email. Please try again.',
-        variant: 'destructive'
+        title: "Verification Failed",
+        description: error.message || "Failed to send verification email. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setEmailForm(prev => ({ ...prev, loading: false }));
+      setEmailVerificationLoading(false);
     }
   };
 
   const handlePasswordUpdate = async () => {
-    if (!user || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
       toast({
         title: 'Missing Information',
         description: 'Please fill in all password fields.',
@@ -130,19 +117,8 @@ const AccountSettings = () => {
       return;
     }
 
-    setPasswordForm(prev => ({ ...prev, loading: true }));
-
     try {
-      // Re-authenticate user first
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        passwordForm.currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
-
-      // Update password
-      await updatePassword(user, passwordForm.newPassword);
-
+      await updatePassword(passwordForm.currentPassword, passwordForm.newPassword);
       toast({
         title: 'Password Updated',
         description: 'Your password has been successfully updated.'
@@ -152,91 +128,33 @@ const AccountSettings = () => {
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
-        loading: false,
         showCurrent: false,
         showNew: false,
         showConfirm: false
       });
     } catch (error: any) {
       console.error('Error updating password:', error);
-      toast({
-        title: 'Update Failed',
-        description: error.message || 'Failed to update password. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setPasswordForm(prev => ({ ...prev, loading: false }));
+      // Error is already handled by AuthProvider
     }
   };
 
   const handlePasswordReset = async () => {
     if (!user?.email) return;
 
-    setResetPasswordLoading(true);
+    setPasswordResetLoading(true);
     try {
-      await sendPasswordResetEmail(auth, user.email);
+      await sendPasswordReset(user.email);
       toast({
         title: 'Reset Email Sent',
         description: 'Password reset instructions have been sent to your email.'
       });
     } catch (error: any) {
       console.error('Error sending reset email:', error);
-      toast({
-        title: 'Reset Failed',
-        description: 'Failed to send reset email. Please try again.',
-        variant: 'destructive'
-      });
+      // Error is already handled by AuthProvider
     } finally {
-      setResetPasswordLoading(false);
+      setPasswordResetLoading(false);
     }
   };
-
-//function for user to verify their account
-const verifyAccount = () => {
-  if (!user) {
-    toast({
-      title: "No User",
-      description: "You must be logged in to verify your account.",
-      variant: "destructive"
-    });
-    return;
-  }
-
-  if (user.emailVerified) {
-    toast({
-      title: "Already Verified",
-      description: "Your email is already verified.",
-      variant: "default"
-    });
-    return;
-  }
-
-  toast({
-    title: "Sending Verification...",
-    description: "Please wait while we send a verification email."
-  });
-
-  sendEmailVerification(user, {
-    url: "http://192.168.128.191:8081/",
-    handleCodeInApp: true
-  })
-    .then(() => {
-      toast({
-        title: "Verification Sent",
-        description: "A verification link has been sent to your email. Please check your inbox and follow the link to verify your account.",
-        variant: "default"
-      });
-    })
-    .catch((error: any) => {
-      console.error("Error sending verification email:", error);
-      toast({
-        title: "Verification Failed",
-        description: error.message || "Failed to send verification email. Please try again.",
-        variant: "destructive"
-      });
-    });
-}
-
 
   return (
     <div className="space-y-6">
@@ -280,17 +198,22 @@ const verifyAccount = () => {
                     {user?.email}
                   </p>
                 </div>
-                <Badge variant={user?.emailVerified ? 'success' : 'destructive'}>
+                <Badge variant={user?.emailVerified ? 'default' : 'destructive'}>
                   {user?.emailVerified ? 'Verified' : 'Unverified'}
                 </Badge>
               </div>
               <Button
                 variant={user?.emailVerified ? "outline" : "default"}
-                disabled={user?.emailVerified}
-                onClick={verifyAccount}
+                disabled={user?.emailVerified || emailVerificationLoading}
+                onClick={handleEmailVerification}
                 className="mt-2"
               >
-                {user?.emailVerified ? (
+                {emailVerificationLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : user?.emailVerified ? (
                   <>
                     <Check className="h-4 w-4 mr-2" /> Verified
                   </>
@@ -299,55 +222,6 @@ const verifyAccount = () => {
                     <AlertTriangle className="h-4 w-4 mr-2" /> Verify Account
                   </>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Update Email */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mail className="h-5 w-5" />
-                <span>Update Email Address</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">New Email Address</label>
-                <Input
-                  type="email"
-                  value={emailForm.newEmail}
-                  onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
-                  placeholder="Enter new email address"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Current Password</label>
-                <div className="relative">
-                  <Input
-                    type={emailForm.showPassword ? 'text' : 'password'}
-                    value={emailForm.currentPassword}
-                    onChange={(e) => setEmailForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    placeholder="Enter current password"
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setEmailForm(prev => ({ ...prev, showPassword: !prev.showPassword }))}
-                  >
-                    {emailForm.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-              <Button 
-                onClick={handleEmailUpdate} 
-                disabled={emailForm.loading || !emailForm.newEmail || !emailForm.currentPassword}
-                className="w-full dark:text-white "
-              >
-                {emailForm.loading ? 'Updating...' : 'Update Email'}
               </Button>
             </CardContent>
           </Card>
@@ -430,17 +304,31 @@ const verifyAccount = () => {
               <div className="flex space-x-2">
                 <Button 
                   onClick={handlePasswordUpdate} 
-                  disabled={passwordForm.loading}
+                  disabled={loading}
                   className="flex-1"
                 >
-                  {passwordForm.loading ? 'Updating...' : 'Update Password'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handlePasswordReset}
-                  disabled={resetPasswordLoading}
+                  disabled={passwordResetLoading}
                 >
-                  {resetPasswordLoading ? 'Sending...' : 'Reset via Email'}
+                  {passwordResetLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Reset via Email'
+                  )}
                 </Button>
               </div>
             </CardContent>
