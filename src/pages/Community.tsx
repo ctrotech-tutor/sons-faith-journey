@@ -1,21 +1,21 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, getDocs, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, getDocs, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Send, Plus, Check, X, BookmarkCheck, Flame, TrendingUp, Clock, ArrowLeft } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Plus, Check, X, BookmarkCheck, Flame, TrendingUp, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import CommentsSlideUp from '@/components/community/CommentsSlideUp';
-import { formatPostContent, extractHashtags, isYouTubeUrl, getYouTubeEmbedUrl } from '@/lib/postUtils';
+import { formatPostContent, extractHashtags } from '@/lib/postUtils';
 import LazyImage from '@/components/LazyImage';
 import LazyVideo from '@/components/LazyVideo';
 import PostSkeleton from '@/components/community/PostSkeleton';
-
 
 interface CommunityPost {
   id: string;
@@ -53,7 +53,6 @@ const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [filter, setFilter] = useState<'recent' | 'trending' | 'popular' | 'admin'>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
-  const [quickComment, setQuickComment] = useState<{ [key: string]: string }>({});
   const [expandedPosts, setExpandedPosts] = useState<{ [postId: string]: boolean }>({});
   const [likeAnimations, setLikeAnimations] = useState<{ [postId: string]: boolean }>({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<string>>(new Set());
@@ -276,109 +275,66 @@ const Community = () => {
     if (!post) return;
 
     try {
-      const shareUrl = `${window.location.origin}/community?post=${postId}`;
-      const shareData = {
-        title: 'Community Post - THE SONS',
-        text: `Check out this post from ${post.authorName}: ${post.content.slice(0, 100)}${post.content.length > 100 ? '...' : ''}`,
-        url: shareUrl
-      };
-
-      // Update share count first
+      // First, update share count
       await updateDoc(doc(db, 'communityPosts', postId), {
         shareCount: (post.shareCount || 0) + 1
       });
 
-      // Try native share API first
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
+      const shareUrl = `${window.location.origin}/community?post=${postId}`;
+      const shareText = `Check out this post from ${post.authorName}: ${post.content.slice(0, 100)}${post.content.length > 100 ? '...' : ''}`;
+
+      // Try Web Share API first (mobile friendly)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Community Post - THE SONS',
+            text: shareText,
+            url: shareUrl
+          });
+          
+          toast({
+            title: 'Shared Successfully',
+            description: 'Post has been shared!'
+          });
+          return;
+        } catch (shareError) {
+          // User canceled share or share failed, fall back to clipboard
+          console.log('Web Share API failed or canceled:', shareError);
+        }
+      }
+
+      // Fallback: Copy to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: 'Link Copied',
+          description: 'Post link has been copied to clipboard.'
+        });
       } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(shareUrl);
+        // Final fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
         toast({
           title: 'Link Copied',
           description: 'Post link has been copied to clipboard.'
         });
       }
-    } catch (error) {
-      console.error('Share failed:', error);
 
-      // Final fallback - try to copy to clipboard
-      try {
-        const shareUrl = `${window.location.origin}/community?post=${postId}`;
-        await navigator.clipboard.writeText(shareUrl);
-        toast({
-          title: 'Link Copied',
-          description: 'Post link has been copied to clipboard.'
-        });
-      } catch (clipboardError) {
-        toast({
-          title: 'Share Failed',
-          description: 'Unable to share post. Please try again.',
-          variant: 'destructive'
-        });
-      }
-    }
-  };
-
-  const addQuickComment = async (postId: string) => {
-    const comment = quickComment[postId];
-    if (!comment?.trim() || !user || !userProfile) return;
-
-    try {
-      console.log('Adding quick comment for postId:', postId);
-      
-      // Add comment to comments collection with proper postId
-      const commentData = {
-        postId: postId, // Ensure this is set correctly
-        authorId: user.uid,
-        authorName: userProfile.displayName || user.email || 'Anonymous',
-        content: comment.trim(),
-        likes: [],
-        likeCount: 0,
-        replies: [],
-        replyCount: 0,
-        timestamp: new Date()
-      };
-
-      console.log('Quick comment data:', commentData);
-
-      await addDoc(collection(db, 'comments'), commentData);
-
-      // Update post comment count
-      const post = posts.find(p => p.id === postId);
-      if (post) {
-        const newCommentCount = (post.commentCount || 0) + 1;
-        await updateDoc(doc(db, 'communityPosts', postId), {
-          commentCount: newCommentCount
-        });
-
-        // Update local state immediately for better UX
-        setPosts(prevPosts => 
-          prevPosts.map(p => 
-            p.id === postId 
-              ? { ...p, commentCount: newCommentCount }
-              : p
-          )
-        );
-      }
-
-      // Clear the specific post's comment input
-      setQuickComment(prev => ({ ...prev, [postId]: '' }));
-      
       // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate(50);
       }
 
-      toast({
-        title: 'Comment Added',
-        description: 'Your comment has been posted.'
-      });
     } catch (error) {
-      console.error('Error adding quick comment:', error);
+      console.error('Share failed:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to add comment. Please try again.',
+        title: 'Share Failed',
+        description: 'Unable to share post. Please try again.',
         variant: 'destructive'
       });
     }
@@ -465,7 +421,6 @@ const Community = () => {
         <div className="max-w-md mx-auto px-4 py-3">
           {/* Logo + Action Buttons */}
           <div className="flex items-center justify-between">
-
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -575,17 +530,13 @@ const Community = () => {
                       {/* Post Header */}
                       <div className="flex items-center justify-between px-4 pt-4 pb-2">
                         <div className="flex items-center space-x-3">
-
                           <Avatar className="h-8 w-8 ring-1 ring-gray-300 dark:ring-gray-600">
-                            <AvatarImage
-                              src={post.authorAvatar}
-                            />
+                            <AvatarImage src={post.authorAvatar} />
                             <AvatarFallback className="text-xs dark:text-gray-300">
                               {post.authorName.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-
                             <div className="flex items-center space-x-2">
                               <p className="font-semibold text-sm dark:text-white">{post.authorName}</p>
                               {post.isAdmin && (
@@ -763,40 +714,6 @@ const Community = () => {
                             View all {post.commentCount} comments
                           </Button>
                         )}
-
-                        {/* Add Comment - FIXED: Properly handle post-specific comments */}
-                        <div className="flex items-center space-x-2 pt-1">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-xs dark:text-gray-300">
-                              {userProfile?.displayName?.charAt(0) || user?.email?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 flex items-center border-b border-gray-200 dark:border-neutral-700">
-                            <input
-                              value={quickComment[post.id] || ''}
-                              onChange={(e) =>
-                                setQuickComment((prev) => ({ ...prev, [post.id]: e.target.value }))
-                              }
-                              placeholder="Add a comment..."
-                              className="flex-1 text-sm border-none outline-none bg-transparent placeholder-gray-500 dark:placeholder-gray-400 dark:text-white"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  addQuickComment(post.id);
-                                }
-                              }}
-                            />
-                            {quickComment[post.id]?.trim() && (
-                              <Button
-                                onClick={() => addQuickComment(post.id)}
-                                variant="ghost"
-                                size="sm"
-                                className="text-blue-500 hover:text-blue-600 p-0 h-auto text-sm font-semibold"
-                              >
-                                Post
-                              </Button>
-                            )}
-                          </div>
-                        </div>
                       </div>
                     </Card>
                   </motion.div>
@@ -833,7 +750,7 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Enhanced Comments Slide Up - FIXED: Pass correct postId */}
+      {/* Comments Slide Up Modal */}
       <CommentsSlideUp
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}
