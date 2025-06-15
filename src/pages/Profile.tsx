@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -10,7 +11,7 @@ import {
   Camera, Save, ArrowLeft, MapPin, Phone, Calendar, Mail,
   Edit, Settings, Activity, BarChart3, Shield, UserCog,
   Download, Trash2, Moon, Sun, Bell, Lock, Globe,
-  Smartphone, Palette, Volume2, VolumeX
+  Smartphone, Palette, Volume2, VolumeX, Check, AlertTriangle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
