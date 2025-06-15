@@ -277,7 +277,7 @@ const CommentsSlideUp = ({ postId, isOpen, onClose }: CommentsSlideUpProps) => {
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="rounded-t-3xl max-h-[85vh] overflow-hidden">
+      <DrawerContent className="rounded-t-3xl max-h-[90vh] overflow-hidden">
         <DrawerHeader className="px-4 pt-4 pb-2">
           <div className="flex items-center justify-between">
             <DrawerTitle className="text-lg font-semibold">
