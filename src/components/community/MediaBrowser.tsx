@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Download, Play, Image as ImageIcon, Video, Upload, FileImage, Smile, Hash, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from '@/components/ui/drawer';
 import { getFileType, validateFileSize } from '@/lib/fileUtils';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Keys, hashtags, emojis } from '@/data/data';
-import { Drawer } from '../ui/drawer';
 import LazyVideo from '../LazyVideo';
 import LazyImage from '../LazyImage';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -18,7 +16,6 @@ import VideoTab from './VideoTab';
 import HashtagTab from './HashtagTab';
 import EmojiTab from './EmojiTab';
 import { cn } from '@/lib/utils';
-import { set } from 'date-fns';
 
 interface MediaBrowserProps {
   isOpen: boolean;
@@ -72,7 +69,6 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"image" | "video" | null>(null);
 
-
   const searchImages = async (query: string) => {
     if (!query.trim()) return;
 
@@ -125,7 +121,6 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
       setLoading(false);
     }
   };
-
 
   const searchVideos = async (query: string) => {
     if (!query.trim()) return;
@@ -211,7 +206,6 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
     }
   };
 
-
   const handleImageSelect = (image: UnsplashImage) => {
     onSelectMedia(image.urls.regular, 'image');
     onClose();
@@ -258,9 +252,8 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
       searchVideos('christian worship');
     }
   }, [isOpen, activeTab]);
-  // Scrolls to the emoji category in the emoji grid (simple implementation: scrolls to a chunk of emojis)
+
   function scrollToCategory(i: number): void {
-    // Each category is mapped to a chunk of emojis (e.g., 12 per category)
     const grid = document.querySelector('.grid.grid-cols-8');
     if (grid) {
       const emojisPerCategory = 12;
@@ -273,101 +266,79 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   }
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={onClose}
-          />
-
-          {/* Slide up panel */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl z-50 max-h-[85vh] overflow-hidden"
-          >
-            {/* Handle */}
-            <div className="flex justify-center py-3">
-              <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-4">
-              <h3 className="text-lg font-semibold dark:text-white">Add Media & More</h3>
-              <Button variant="ghost" size="icon" onClick={onClose}>
+    <Drawer open={isOpen} onOpenChange={onClose}>
+      <DrawerContent className="rounded-t-3xl max-h-[85vh] overflow-hidden">
+        <DrawerHeader className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between">
+            <DrawerTitle className="text-lg font-semibold">Add Media & More</DrawerTitle>
+            <DrawerClose asChild>
+              <Button variant="ghost" size="icon">
                 <X className="h-5 w-5" />
               </Button>
-            </div>
+            </DrawerClose>
+          </div>
+        </DrawerHeader>
 
-            {/* Content */}
-            <div className="px-4 pb-4 overflow-y-auto max-h-[calc(85vh-100px)]">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full overflow-x-auto no-scrollbar">
-                  <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
-                    <Upload className="h-3 w-3" />
-                    Upload
-                  </TabsTrigger>
-                  <TabsTrigger value="images" className="flex items-center gap-1 text-xs">
-                    <ImageIcon className="h-3 w-3" />
-                    Images
-                  </TabsTrigger>
-                  <TabsTrigger value="videos" className="flex items-center gap-1 text-xs">
-                    <Video className="h-3 w-3" />
-                    Videos
-                  </TabsTrigger>
-                  <TabsTrigger value="emoji" className="flex items-center gap-1 text-xs">
-                    <Smile className="h-3 w-3" />
-                    Emoji
-                  </TabsTrigger>
-                  <TabsTrigger value="hashtags" className="flex items-center gap-1 text-xs">
-                    <Hash className="h-3 w-3" />
-                    Tags
-                  </TabsTrigger>
-                </TabsList>
-                <UploadTab
-                  loading={loading}
-                  handleFileUpload={handleFileUpload}
-                  selectedPreview={selectedPreview}
-                  selectedType={selectedType}
-                />
-                <ImageTab
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  handleSearch={handleSearch}
-                  loading={loading}
-                  images={images}
-                  handleImageSelect={handleImageSelect}
-                />
-                <VideoTab
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  handleSearch={handleSearch}
-                  loading={loading}
-                  videos={videos}
-                  handleVideoSelect={handleVideoSelect}
-                />
-                <EmojiTab
-                  popularEmojis={popularEmojis}
-                  scrollToCategory={scrollToCategory}
-                  handleEmojiSelect={handleEmojiSelect}
-                />
-                <HashtagTab
-                  commonHashtags={commonHashtags}
-                  handleHashtagSelect={handleHashtagSelect}
-                />
-              </Tabs>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        <div className="px-4 pb-4 overflow-y-auto max-h-[calc(85vh-100px)]">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full overflow-x-auto no-scrollbar">
+              <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
+                <Upload className="h-3 w-3" />
+                Upload
+              </TabsTrigger>
+              <TabsTrigger value="images" className="flex items-center gap-1 text-xs">
+                <ImageIcon className="h-3 w-3" />
+                Images
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="flex items-center gap-1 text-xs">
+                <Video className="h-3 w-3" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="emoji" className="flex items-center gap-1 text-xs">
+                <Smile className="h-3 w-3" />
+                Emoji
+              </TabsTrigger>
+              <TabsTrigger value="hashtags" className="flex items-center gap-1 text-xs">
+                <Hash className="h-3 w-3" />
+                Tags
+              </TabsTrigger>
+            </TabsList>
+            
+            <UploadTab
+              loading={loading}
+              handleFileUpload={handleFileUpload}
+              selectedPreview={selectedPreview}
+              selectedType={selectedType}
+            />
+            <ImageTab
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              handleSearch={handleSearch}
+              loading={loading}
+              images={images}
+              handleImageSelect={handleImageSelect}
+            />
+            <VideoTab
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              handleSearch={handleSearch}
+              loading={loading}
+              videos={videos}
+              handleVideoSelect={handleVideoSelect}
+            />
+            <EmojiTab
+              popularEmojis={popularEmojis}
+              scrollToCategory={scrollToCategory}
+              handleEmojiSelect={handleEmojiSelect}
+            />
+            <HashtagTab
+              commonHashtags={commonHashtags}
+              handleHashtagSelect={handleHashtagSelect}
+            />
+          </Tabs>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
