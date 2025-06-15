@@ -104,9 +104,7 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
           />
         ) : (
           <CustomVideoPlayer
-            ref={(el) => {
-              videoRef.current = el?.querySelector('video') || null;
-            }}
+            ref={videoRef}
             src={src}
             className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
             onLoadedData={handleLoad}

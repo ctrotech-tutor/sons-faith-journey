@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -13,7 +13,7 @@ interface CustomVideoPlayerProps {
   onError?: () => void;
 }
 
-const CustomVideoPlayer = ({ 
+const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(({ 
   src, 
   className = '', 
   autoPlay = false, 
@@ -21,8 +21,7 @@ const CustomVideoPlayer = ({
   loop = false,
   onLoadedData,
   onError 
-}: CustomVideoPlayerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+}, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(muted);
   const [currentTime, setCurrentTime] = useState(0);
@@ -31,7 +30,7 @@ const CustomVideoPlayer = ({
   const [isBuffering, setIsBuffering] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video) return;
 
     const handleLoadedData = () => {
@@ -66,10 +65,10 @@ const CustomVideoPlayer = ({
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('error', handleError);
     };
-  }, [onLoadedData, onError]);
+  }, [onLoadedData, onError, ref]);
 
   const togglePlay = () => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video) return;
 
     if (isPlaying) {
@@ -80,7 +79,7 @@ const CustomVideoPlayer = ({
   };
 
   const toggleMute = () => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video) return;
 
     video.muted = !video.muted;
@@ -88,7 +87,7 @@ const CustomVideoPlayer = ({
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video || !duration) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -100,7 +99,7 @@ const CustomVideoPlayer = ({
   };
 
   const handleRestart = () => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video) return;
 
     video.currentTime = 0;
@@ -108,7 +107,7 @@ const CustomVideoPlayer = ({
   };
 
   const handleFullscreen = () => {
-    const video = videoRef.current;
+    const video = ref && 'current' in ref ? ref.current : null;
     if (!video) return;
 
     if (video.requestFullscreen) {
@@ -131,7 +130,7 @@ const CustomVideoPlayer = ({
       onMouseLeave={() => setShowControls(false)}
     >
       <video
-        ref={videoRef}
+        ref={ref}
         src={src}
         className="w-full h-full object-cover"
         autoPlay={autoPlay}
@@ -230,6 +229,8 @@ const CustomVideoPlayer = ({
       </div>
     </div>
   );
-};
+});
+
+CustomVideoPlayer.displayName = 'CustomVideoPlayer';
 
 export default CustomVideoPlayer;
