@@ -5,17 +5,23 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
-import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/lib/hooks/useAuth';
 import AuthLayout from './AuthLayout';
 
 const ResetPassword = () => {
+  const { 
+    verifyPasswordResetCode, 
+    confirmPasswordReset, 
+    loading, 
+    error, 
+    clearError 
+  } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validCode, setValidCode] = useState(false);
   const [email, setEmail] = useState('');
@@ -27,6 +33,11 @@ const ResetPassword = () => {
   });
 
   const actionCode = searchParams.get('oobCode');
+
+  // Clear errors when component mounts or form data changes
+  useEffect(() => {
+    clearError();
+  }, [formData, clearError]);
 
   useEffect(() => {
     const verifyCode = async () => {
@@ -41,21 +52,18 @@ const ResetPassword = () => {
       }
 
       try {
-        const email = await verifyPasswordResetCode(auth, actionCode);
-        setEmail(email);
+        const verifiedEmail = await verifyPasswordResetCode(actionCode);
+        setEmail(verifiedEmail);
         setValidCode(true);
-      } catch (error: any) {
-        toast({
-          title: 'Invalid Link',
-          description: 'This password reset link is invalid or has expired.',
-          variant: 'destructive'
-        });
+      } catch (error) {
+        // Error is already handled by AuthProvider
+        console.log('Failed to verify password reset code:', error);
         navigate('/forgot-password');
       }
     };
 
     verifyCode();
-  }, [actionCode, navigate, toast]);
+  }, [actionCode, navigate, toast, verifyPasswordResetCode]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -64,16 +72,14 @@ const ResetPassword = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: 'Password Mismatch',
         description: 'Passwords do not match. Please try again.',
         variant: 'destructive'
       });
-      return;
+      return false;
     }
 
     if (formData.password.length < 6) {
@@ -82,28 +88,27 @@ const ResetPassword = () => {
         description: 'Password must be at least 6 characters long.',
         variant: 'destructive'
       });
-      return;
+      return false;
     }
 
-    if (!actionCode) return;
+    return true;
+  };
 
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm() || !actionCode) return;
 
     try {
-      await confirmPasswordReset(auth, actionCode, formData.password);
+      await confirmPasswordReset(actionCode, formData.password);
       setSuccess(true);
       toast({
         title: 'Password Reset Successful!',
         description: 'Your password has been successfully reset.',
       });
-    } catch (error: any) {
-      toast({
-        title: 'Reset Failed',
-        description: error.message || 'Failed to reset password. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Error is already handled by AuthProvider
+      console.log('Password reset failed:', error);
     }
   };
 
@@ -166,6 +171,14 @@ const ResetPassword = () => {
       subtitle={`Enter a new password for ${email}`}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-medium">
             New Password
