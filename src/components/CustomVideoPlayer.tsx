@@ -16,8 +16,12 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(muted);
     const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
     const [showControls, setShowControls] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const controlsTimeoutRef = useRef<NodeJS.Timeout>();
 
     // Forward ref
     useEffect(() => {
@@ -28,14 +32,27 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
       }
     }, [ref]);
 
-    const togglePlay = () => {
+    const showControlsTemporarily = () => {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    };
+
+    const togglePlay = async () => {
       if (videoRef.current) {
-        if (isPlaying) {
-          videoRef.current.pause();
-        } else {
-          videoRef.current.play();
+        try {
+          if (isPlaying) {
+            videoRef.current.pause();
+          } else {
+            await videoRef.current.play();
+          }
+        } catch (error) {
+          console.log('Video play/pause error:', error);
         }
-        setIsPlaying(!isPlaying);
       }
     };
 
@@ -58,8 +75,18 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
 
     const handleTimeUpdate = () => {
       if (videoRef.current) {
-        const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-        setProgress(progress);
+        const current = videoRef.current.currentTime;
+        const total = videoRef.current.duration;
+        setCurrentTime(current);
+        if (total) {
+          setProgress((current / total) * 100);
+        }
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (videoRef.current) {
+        setDuration(videoRef.current.duration);
       }
     };
 
@@ -73,29 +100,66 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
       }
     };
 
+    const formatTime = (time: number) => {
+      const minutes = Math.floor(time / 60);
+      const seconds = Math.floor(time % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handleWaiting = () => setIsBuffering(true);
+      const handleCanPlay = () => setIsBuffering(false);
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
+
+      video.addEventListener('waiting', handleWaiting);
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+
+      return () => {
+        video.removeEventListener('waiting', handleWaiting);
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+      };
+    }, []);
+
     return (
       <div 
         className={`relative group ${className}`}
-        onMouseEnter={() => setShowControls(true)}
+        onMouseEnter={showControlsTemporarily}
+        onMouseMove={showControlsTemporarily}
         onMouseLeave={() => setShowControls(false)}
+        onClick={showControlsTemporarily}
       >
         <video
           ref={videoRef}
           src={src}
           className="w-full h-full object-cover"
           onLoadedData={onLoadedData}
+          onLoadedMetadata={handleLoadedMetadata}
           onError={onError}
           onTimeUpdate={handleTimeUpdate}
           autoPlay={autoPlay}
           muted={muted}
           playsInline
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          preload="metadata"
         />
 
+        {/* Buffering indicator */}
+        {isBuffering && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          </div>
+        )}
+
         {/* Custom Controls Overlay */}
-        <div className={`absolute inset-0 bg-black/20 transition-opacity duration-200 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-          {/* Play/Pause Button */}
+        <div className={`absolute inset-0 transition-opacity duration-200 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Center Play/Pause Button */}
           <button
             onClick={togglePlay}
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
@@ -104,21 +168,23 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
           </button>
 
           {/* Bottom Controls */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
             {/* Progress Bar */}
             <div 
-              className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3"
+              className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3 group"
               onClick={handleProgressClick}
             >
               <div 
-                className="h-full bg-purple-500 rounded-full transition-all duration-100"
+                className="h-full bg-purple-500 rounded-full transition-all duration-100 relative"
                 style={{ width: `${progress}%` }}
-              />
+              >
+                <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
             </div>
 
             {/* Control Buttons */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <button
                   onClick={togglePlay}
                   className="text-white hover:text-purple-400 transition-colors"
@@ -132,6 +198,10 @@ const CustomVideoPlayer = forwardRef<HTMLVideoElement, CustomVideoPlayerProps>(
                 >
                   {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
+
+                <div className="text-white text-sm">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </div>
               </div>
 
               <button

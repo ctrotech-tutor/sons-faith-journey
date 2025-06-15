@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -162,9 +161,9 @@ const PostDetail = () => {
         </div>
 
         {/* Post Content */}
-        <div className="p-4 space-y-4">
+        <div className="space-y-4">
           {/* Author Info */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 p-4 pb-2">
             <Avatar className="h-12 w-12 ring-2 ring-gray-200 dark:ring-gray-600">
               <AvatarImage src={post.authorAvatar} />
               <AvatarFallback className="text-lg dark:text-gray-300">
@@ -192,43 +191,46 @@ const PostDetail = () => {
             </div>
           </div>
 
-          {/* Post Text */}
-          <div className="text-gray-900 dark:text-gray-100">
-            <p className="text-base leading-relaxed whitespace-pre-wrap">
-              {formatPostContent(post.content, handleHashtagClick)}
-            </p>
-          </div>
-
-          {/* Media */}
+          {/* Media - Full width for single media */}
           {post.mediaUrl && (
-            <div className="rounded-lg overflow-hidden bg-black/5 dark:bg-white/5">
+            <div className="w-full bg-black/5 dark:bg-white/5">
               {post.mediaType === 'image' ? (
                 <LazyImage
                   src={post.mediaUrl}
                   alt="Post media"
-                  className="w-full h-auto max-h-96 object-cover"
+                  className="w-full h-auto max-h-[70vh] object-cover"
                 />
               ) : (
                 <LazyVideo
                   src={post.mediaUrl}
-                  className="w-full h-auto max-h-96 object-cover"
+                  className="w-full h-auto max-h-[70vh] object-cover"
                 />
               )}
             </div>
           )}
 
-          {/* Engagement Stats */}
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 py-2">
-            <div className="flex items-center space-x-4">
-              {post.likeCount > 0 && (
-                <span>{post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span>
-              )}
-              {post.commentCount > 0 && (
-                <span>{post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}</span>
-              )}
-              {post.shareCount > 0 && (
-                <span>{post.shareCount} {post.shareCount === 1 ? 'share' : 'shares'}</span>
-              )}
+          {/* Post Text and Interactions */}
+          <div className="px-4 space-y-4">
+            {/* Post Text */}
+            <div className="text-gray-900 dark:text-gray-100">
+              <p className="text-base leading-relaxed whitespace-pre-wrap">
+                {formatPostContent(post.content, handleHashtagClick)}
+              </p>
+            </div>
+
+            {/* Engagement Stats */}
+            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 py-2">
+              <div className="flex items-center space-x-4">
+                {post.likeCount > 0 && (
+                  <span>{post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span>
+                )}
+                {post.commentCount > 0 && (
+                  <span>{post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}</span>
+                )}
+                {post.shareCount > 0 && (
+                  <span>{post.shareCount} {post.shareCount === 1 ? 'share' : 'shares'}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

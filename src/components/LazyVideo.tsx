@@ -4,6 +4,7 @@ import { useInView } from 'react-intersection-observer';
 import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeId } from '@/lib/postUtils';
 import { useYouTubeThumbnail } from '@/lib/hooks/useYoutubeThumbnail';
 import { Keys } from '@/data/data';
+import { videoManager } from '@/lib/videoCache';
 import CustomVideoPlayer from './CustomVideoPlayer';
 
 interface LazyVideoProps {
@@ -15,7 +16,7 @@ interface LazyVideoProps {
 let currentPlayingVideo: HTMLVideoElement | null = null;
 
 const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => videoManager.isVideoLoaded(src));
   const [error, setError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -28,15 +29,33 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
     threshold: 0.5,
   });
 
-  const handleLoad = () => setLoaded(true);
+  const handleLoad = () => {
+    setLoaded(true);
+    if (videoRef.current) {
+      videoManager.markVideoAsLoaded(src, videoRef.current);
+    }
+  };
+
   const handleError = () => {
     setError(true);
     setLoaded(true);
   };
 
+  // Check if video was already loaded when component mounts
+  useEffect(() => {
+    if (videoManager.isVideoLoaded(src)) {
+      setLoaded(true);
+      const cachedElement = videoManager.getVideoElement(src);
+      if (cachedElement && videoRef.current) {
+        // Restore video state if needed
+        videoRef.current.currentTime = cachedElement.currentTime || 0;
+      }
+    }
+  }, [src]);
+
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!videoEl || !inView) return;
+    if (!videoEl || !inView || !loaded) return;
 
     // Pause any currently playing video
     if (currentPlayingVideo && currentPlayingVideo !== videoEl) {
@@ -57,11 +76,14 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
         setIsPlaying(false);
       }
     };
-  }, [inView]);
+  }, [inView, loaded]);
+
+  // Don't show placeholder if video is already loaded
+  const shouldShowPlaceholder = placeholder && !loaded && !videoManager.isVideoLoaded(src);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
-      {placeholder && !loaded && (
+      {shouldShowPlaceholder && (
         <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-800 overflow-hidden z-0">
           {thumbnail ? (
             <img src={thumbnail} alt="Video thumbnail" className="w-full h-full object-cover" />
@@ -87,7 +109,8 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
         </div>
       )}
 
-      {inView && !error && (
+      {/* Always render video if loaded or if it should load */}
+      {(loaded || videoManager.isVideoLoaded(src) || inView) && !error && (
         isYouTubeUrl(src) ? (
           <iframe
             src={getYouTubeEmbedUrl(src)}
@@ -106,7 +129,7 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
             className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
             onLoadedData={handleLoad}
             onError={handleError}
-            autoPlay={true}
+            autoPlay={inView}
             muted={true}
           />
         )
