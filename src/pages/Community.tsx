@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
-import VirtualizedPostList from '@/components/community/VirtualizedPostList';
+import PostsList from '@/components/community/PostsList';
 import CommentsSlideUp from '@/components/community/CommentsSlideUp';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
@@ -17,15 +18,7 @@ const Community = () => {
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
 
-  const { 
-    posts, 
-    loading, 
-    bookmarkedPosts, 
-    hasNextPage, 
-    isNextPageLoading, 
-    loadNextPage, 
-    getFilteredPosts 
-  } = useCommunityData(user, userProfile);
+  const { posts, loading, bookmarkedPosts, getFilteredPosts } = useCommunityData(user, userProfile);
   
   const {
     expandedPosts,
@@ -71,24 +64,6 @@ const Community = () => {
 
   const filteredPosts = getFilteredPosts(filter, hashtagFilter);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <CommunityHeader 
-          hashtagFilter={hashtagFilter}
-          clearHashtagFilter={clearHashtagFilter}
-        />
-        <CommunityFilters filter={filter} setFilter={setFilter} />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading community posts...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <CommunityHeader 
@@ -98,25 +73,25 @@ const Community = () => {
       
       <CommunityFilters filter={filter} setFilter={setFilter} />
 
-      <div className="flex-1 pb-20">
-        <VirtualizedPostList
-          posts={filteredPosts}
-          hasNextPage={hasNextPage}
-          isNextPageLoading={isNextPageLoading}
-          loadNextPage={loadNextPage}
-          expandedPosts={expandedPosts}
-          likeAnimations={likeAnimations}
-          bookmarkedPosts={bookmarkedPosts}
-          bookmarkAnimations={bookmarkAnimations}
-          onToggleExpanded={toggleExpanded}
-          onHandleLike={handleLike}
-          onToggleBookmark={toggleBookmark}
-          onSharePost={sharePost}
-          onOpenCommentsModal={handleOpenCommentsModal}
-          onHashtagClick={handleHashtagClick}
-          filter={filter}
-          userIsAdmin={userProfile?.isAdmin}
-        />
+      <div className="pb-20">
+        <div className="max-w-md mx-auto">
+          <PostsList
+            posts={filteredPosts}
+            loading={loading}
+            filter={filter}
+            hashtagFilter={hashtagFilter}
+            expandedPosts={expandedPosts}
+            likeAnimations={likeAnimations}
+            bookmarkedPosts={bookmarkedPosts}
+            bookmarkAnimations={bookmarkAnimations}
+            onToggleExpanded={toggleExpanded}
+            onHandleLike={handleLike}
+            onToggleBookmark={toggleBookmark}
+            onSharePost={sharePost}
+            onOpenCommentsModal={handleOpenCommentsModal}
+            onHashtagClick={handleHashtagClick}
+          />
+        </div>
       </div>
 
       <CommentsSlideUp

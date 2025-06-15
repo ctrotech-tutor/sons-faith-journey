@@ -1,10 +1,8 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeId } from '@/lib/postUtils';
 import { useYouTubeThumbnail } from '@/lib/hooks/useYoutubeThumbnail';
 import { Keys } from '@/data/data';
-import CustomVideoPlayer from './CustomVideoPlayer';
 
 interface LazyVideoProps {
   src: string;
@@ -35,9 +33,6 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
   };
 
   useEffect(() => {
-    // For YouTube videos, we don't need the auto-play logic
-    if (isYouTubeUrl(src)) return;
-
     const videoEl = videoRef.current;
     if (!videoEl || !inView) return;
 
@@ -60,7 +55,7 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
         setIsPlaying(false);
       }
     };
-  }, [inView, src]);
+  }, [inView]);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -103,14 +98,16 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
             loading="lazy"
           />
         ) : (
-          <CustomVideoPlayer
+          <video
             ref={videoRef}
             src={src}
+            muted
+            controls={false}
+            preload="metadata"
             className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
             onLoadedData={handleLoad}
             onError={handleError}
-            autoPlay={inView}
-            muted={true}
+            playsInline
           />
         )
       )}

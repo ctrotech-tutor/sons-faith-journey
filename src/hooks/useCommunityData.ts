@@ -1,6 +1,6 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, where, getDocs, limit, startAfter, DocumentSnapshot } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { extractHashtags } from '@/lib/postUtils';
 
@@ -23,8 +23,6 @@ interface CommunityPost {
   engagementScore?: number;
   trendingScore?: number;
 }
-
-const POSTS_PER_PAGE = 10;
 
 const calculateEngagementScore = (post: CommunityPost) => {
   const hoursSincePost = (Date.now() - post.timestamp?.toDate()?.getTime()) / (1000 * 60 * 60);
@@ -65,88 +63,43 @@ export const useCommunityData = (user: any, userProfile: any) => {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<string>>(new Set());
-  const [hasNextPage, setHasNextPage] = useState(true);
-  const [isNextPageLoading, setIsNextPageLoading] = useState(false);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
-
-  const loadInitialPosts = useCallback(async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const postsQuery = query(
-        collection(db, 'communityPosts'),
-        where('status', '==', 'approved'),
-        orderBy('timestamp', 'desc'),
-        limit(POSTS_PER_PAGE)
-      );
-
-      const snapshot = await getDocs(postsQuery);
-      const newPosts = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const post = {
-          id: doc.id,
-          ...data,
-          shareCount: data.shareCount || 0
-        } as CommunityPost;
-
-        post.engagementScore = calculateEngagementScore(post);
-        post.trendingScore = calculateTrendingScore(post);
-
-        return post;
-      });
-
-      setPosts(newPosts);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasNextPage(snapshot.docs.length === POSTS_PER_PAGE);
-    } catch (error) {
-      console.error('Error loading initial posts:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const loadNextPage = useCallback(async () => {
-    if (!user || !hasNextPage || isNextPageLoading || !lastDoc) return;
-
-    setIsNextPageLoading(true);
-    try {
-      const postsQuery = query(
-        collection(db, 'communityPosts'),
-        where('status', '==', 'approved'),
-        orderBy('timestamp', 'desc'),
-        startAfter(lastDoc),
-        limit(POSTS_PER_PAGE)
-      );
-
-      const snapshot = await getDocs(postsQuery);
-      const newPosts = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const post = {
-          id: doc.id,
-          ...data,
-          shareCount: data.shareCount || 0
-        } as CommunityPost;
-
-        post.engagementScore = calculateEngagementScore(post);
-        post.trendingScore = calculateTrendingScore(post);
-
-        return post;
-      });
-
-      setPosts(prev => [...prev, ...newPosts]);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasNextPage(snapshot.docs.length === POSTS_PER_PAGE);
-    } catch (error) {
-      console.error('Error loading next page:', error);
-    } finally {
-      setIsNextPageLoading(false);
-    }
-  }, [user, hasNextPage, isNextPageLoading, lastDoc]);
 
   useEffect(() => {
-    loadInitialPosts();
-  }, [loadInitialPosts]);
+    if (!user) return;
+
+    const postsQuery = query(
+      collection(db, 'communityPosts'),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      const newPosts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const post = {
+          id: doc.id,
+          ...data,
+          shareCount: data.shareCount || 0
+        } as CommunityPost;
+
+        post.engagementScore = calculateEngagementScore(post);
+        post.trendingScore = calculateTrendingScore(post);
+
+        return post;
+      });
+
+      const filteredPosts = newPosts.filter(post => post.status === 'approved');
+      setPosts(filteredPosts);
+      setLoading(false);
+
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentPosts = filteredPosts.filter(post =>
+        post.timestamp?.toDate() > oneDayAgo && post.authorId !== user.uid
+      );
+      setUnreadCount(recentPosts.length);
+    });
+
+    return unsubscribe;
+  }, [user, userProfile]);
 
   useEffect(() => {
     if (!user) return;
@@ -198,9 +151,6 @@ export const useCommunityData = (user: any, userProfile: any) => {
     loading,
     unreadCount,
     bookmarkedPosts,
-    hasNextPage,
-    isNextPageLoading,
-    loadNextPage,
     getFilteredPosts
   };
 };
