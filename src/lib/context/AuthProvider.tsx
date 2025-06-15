@@ -1,4 +1,3 @@
-
 import {
   useState,
   useEffect,
@@ -110,6 +109,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
+
+  // Get the current domain for action URLs
+  const getActionCodeSettings = () => {
+    const currentDomain = window.location.origin;
+    return {
+      url: currentDomain,
+      handleCodeInApp: true
+    };
+  };
 
   // Error handling utility
   const handleAuthError = (error: any): AuthError => {
@@ -392,13 +400,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Email verification methods
+  // Email verification methods with custom URL
   const sendEmailVerificationMethod = async () => {
     if (!auth.currentUser) throw new Error('No user logged in');
     
     try {
       clearError();
-      await sendEmailVerification(auth.currentUser);
+      const actionCodeSettings = getActionCodeSettings();
+      await sendEmailVerification(auth.currentUser, actionCodeSettings);
     } catch (err) {
       const authError = handleAuthError(err);
       setError(authError);
@@ -418,11 +427,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Password reset methods
+  // Password reset methods with custom URL
   const sendPasswordReset = async (email: string) => {
     try {
       clearError();
-      await sendPasswordResetEmail(auth, email);
+      const actionCodeSettings = getActionCodeSettings();
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
     } catch (err) {
       const authError = handleAuthError(err);
       setError(authError);
