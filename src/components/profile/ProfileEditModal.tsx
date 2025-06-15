@@ -1,16 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Save, Camera } from 'lucide-react';
+import { X, Save, Camera, Mail, AlertTriangle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -18,7 +20,7 @@ interface ProfileEditModalProps {
 }
 
 const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, sendEmailVerification, refreshUserProfile } = useAuth();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -31,6 +33,19 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
   
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+
+  useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        displayName: userProfile.displayName || '',
+        bio: userProfile.bio || '',
+        phone: userProfile.phone || '',
+        location: userProfile.location || '',
+        profilePhoto: userProfile.profilePhoto || ''
+      });
+    }
+  }, [userProfile]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,6 +63,23 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
     }
   };
 
+  const handleSendVerification = async () => {
+    if (!user || user.emailVerified) return;
+
+    setSendingVerification(true);
+    try {
+      await sendEmailVerification();
+      toast({
+        title: 'Verification Email Sent',
+        description: 'Please check your inbox and click the verification link.'
+      });
+    } catch (error) {
+      // Error already handled by AuthProvider
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
 
@@ -58,6 +90,9 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
         updatedAt: new Date(),
         lastProfileUpdate: new Date()
       });
+      
+      // Refresh the user profile to get updated data
+      await refreshUserProfile();
       
       toast({ title: 'Profile updated successfully' });
       onClose();
@@ -75,7 +110,7 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Edit Profile</h2>
@@ -85,6 +120,46 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
         </div>
 
         <div className="space-y-4">
+          {/* Email Status */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium">Email Status</span>
+              </div>
+              <Badge variant={user?.emailVerified ? 'default' : 'destructive'}>
+                {user?.emailVerified ? 'Verified' : 'Unverified'}
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{user?.email}</p>
+            
+            {!user?.emailVerified && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSendVerification}
+                disabled={sendingVerification}
+                className="w-full"
+              >
+                {sendingVerification ? (
+                  'Sending...'
+                ) : (
+                  <>
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Send Verification Email
+                  </>
+                )}
+              </Button>
+            )}
+
+            {user?.emailVerified && (
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <Check className="h-3 w-3" />
+                <span className="text-sm">Email verified</span>
+              </div>
+            )}
+          </div>
+
           {/* Profile Photo */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
@@ -94,7 +169,10 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
                   {formData.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700">
+              <label className={cn(
+                "absolute bottom-0 right-0 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors",
+                uploading && "opacity-50 cursor-not-allowed"
+              )}>
                 <Camera className="h-3 w-3" />
                 <input
                   type="file"
@@ -150,7 +228,7 @@ const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="flex-1">
+            <Button onClick={handleSave} disabled={saving || uploading} className="flex-1">
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

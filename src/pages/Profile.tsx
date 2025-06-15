@@ -36,7 +36,7 @@ const Spinner = ({ size = 'h-6 w-6', border = 'border-2' }) => (
 );
 
 const Profile = () => {
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, sendEmailVerification, refreshUserProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { userId } = useParams();
@@ -47,6 +47,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
 
   // Set the active tab based on URL param or default to 'overview'
   const [activeTab, setActiveTab] = useState(tabFromURL || 'overview');
@@ -226,6 +227,27 @@ const Profile = () => {
     }
   };
 
+  const handleSendVerification = async () => {
+    if (!user || user.emailVerified) return;
+
+    setSendingVerification(true);
+    try {
+      await sendEmailVerification();
+      toast({
+        title: 'Verification Email Sent',
+        description: 'Please check your inbox and click the verification link.'
+      });
+      // Refresh profile to potentially update verification status
+      setTimeout(() => {
+        refreshUserProfile();
+      }, 1000);
+    } catch (error) {
+      // Error already handled by AuthProvider
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
@@ -256,6 +278,7 @@ const Profile = () => {
         theme === 'dark' ? 'bg-gray-900/60' : 'bg-white'
       )}>
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header */}
           <motion.div
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -277,12 +300,27 @@ const Profile = () => {
                     Profile
                   </h1>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {user?.emailVerified ? 'Verified' : 'Unverified'}
-                </Badge>
+                {isOwnProfile && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant={user?.emailVerified ? 'default' : 'destructive'} className="text-xs">
+                      {user?.emailVerified ? 'Verified' : 'Unverified'}
+                    </Badge>
+                    {!user?.emailVerified && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSendVerification}
+                        disabled={sendingVerification}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {sendingVerification ? 'Sending...' : 'Verify'}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Filter Tabs */}
+              {/* Tab Navigation */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mt-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm p-1 rounded-xl flex justify-between shadow-inner border border-white/20 dark:border-white/10">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -335,14 +373,30 @@ const Profile = () => {
                     )}
                   </div>
 
-                  {/* Name and Bio */}
-                  <div className="text-center space-y-1">
+                  {/* Name, Bio and Email Status */}
+                  <div className="text-center space-y-2">
                     <h3 className="text-xl font-bold text-foreground leading-tight">
                       {displayName || currentEmail || 'User'}
                     </h3>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                       {bio || 'No bio added yet'}
                     </p>
+                    
+                    {isOwnProfile && (
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          <span className="text-xs text-muted-foreground">{currentEmail}</span>
+                        </div>
+                        <Badge variant={user?.emailVerified ? 'default' : 'destructive'} className="text-xs">
+                          {user?.emailVerified ? (
+                            <><Check className="h-3 w-3 mr-1" />Verified</>
+                          ) : (
+                            <><AlertTriangle className="h-3 w-3 mr-1" />Unverified</>
+                          )}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -390,19 +444,6 @@ const Profile = () => {
                         month: 'short',
                         day: 'numeric',
                       }) || 'Unknown'}
-                    </span>
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex justify-between items-center gap-3">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <div className="bg-blue-100 dark:bg-blue-900/20 p-1.5 rounded-md">
-                        <Mail className="h-4 w-4 text-blue-500" />
-                      </div>
-                      <span className="text-sm font-medium">Email</span>
-                    </div>
-                    <span className="truncate max-w-[60%] text-right text-sm font-semibold text-foreground">
-                      {currentEmail || 'Unknown'}
                     </span>
                   </div>
                 </div>
