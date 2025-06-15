@@ -40,6 +40,7 @@ const Signup = lazy(() => import("./pages/auth/signup"));
 const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const AuthAction = lazy(() => import("./pages/auth/AuthAction"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -127,6 +128,7 @@ const AppContent = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/email-verification" element={<EmailVerification />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/action" element={<AuthAction />} />
         
         <Route path="*" element={<NotFound />} />
       </Routes>
