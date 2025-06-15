@@ -325,11 +325,11 @@ const Community = () => {
     if (!comment?.trim() || !user || !userProfile) return;
 
     try {
+      // Add comment to comments collection
       await addDoc(collection(db, 'comments'), {
         postId,
         authorId: user.uid,
         authorName: userProfile.displayName || user.email,
-        authorAvatar: userProfile.profilePhoto || user.photoURL,
         content: comment,
         likes: [],
         likeCount: 0,
@@ -338,15 +338,31 @@ const Community = () => {
         timestamp: new Date()
       });
 
-      // Update post comment count
+      // Update post comment count in real-time
       const post = posts.find(p => p.id === postId);
       if (post) {
+        const newCommentCount = (post.commentCount || 0) + 1;
         await updateDoc(doc(db, 'communityPosts', postId), {
-          commentCount: (post.commentCount || 0) + 1
+          commentCount: newCommentCount
         });
+
+        // Update local state immediately for better UX
+        setPosts(prevPosts => 
+          prevPosts.map(p => 
+            p.id === postId 
+              ? { ...p, commentCount: newCommentCount }
+              : p
+          )
+        );
       }
 
       setQuickComment(prev => ({ ...prev, [postId]: '' }));
+      
+      // Haptic feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+
       toast({
         title: 'Comment Added',
         description: 'Your comment has been posted.'
@@ -358,6 +374,18 @@ const Community = () => {
         description: 'Failed to add comment. Please try again.',
         variant: 'destructive'
       });
+    }
+  };
+
+  const openCommentsModal = (postId: string) => {
+    setSelectedPostForComments(postId);
+    
+    // Mark post as viewed for engagement tracking
+    if (user) {
+      const postRef = doc(db, 'communityPosts', postId);
+      updateDoc(postRef, {
+        [`views.${user.uid}`]: new Date()
+      }).catch(console.error);
     }
   };
 
@@ -622,7 +650,7 @@ const Community = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-gray-700 dark:text-gray-300"
-                              onClick={() => setSelectedPostForComments(post.id)}
+                              onClick={() => openCommentsModal(post.id)}
                             >
                               <MessageCircle className="h-6 w-6" />
                             </Button>
@@ -722,7 +750,7 @@ const Community = () => {
                             variant="ghost"
                             size="sm"
                             className="text-gray-500 dark:text-gray-400 p-0 h-auto text-sm"
-                            onClick={() => setSelectedPostForComments(post.id)}
+                            onClick={() => openCommentsModal(post.id)}
                           >
                             View all {post.commentCount} comments
                           </Button>
