@@ -325,20 +325,26 @@ const Community = () => {
     if (!comment?.trim() || !user || !userProfile) return;
 
     try {
-      // Add comment to comments collection
-      await addDoc(collection(db, 'comments'), {
-        postId,
+      console.log('Adding quick comment for postId:', postId);
+      
+      // Add comment to comments collection with proper postId
+      const commentData = {
+        postId: postId, // Ensure this is set correctly
         authorId: user.uid,
-        authorName: userProfile.displayName || user.email,
-        content: comment,
+        authorName: userProfile.displayName || user.email || 'Anonymous',
+        content: comment.trim(),
         likes: [],
         likeCount: 0,
         replies: [],
         replyCount: 0,
         timestamp: new Date()
-      });
+      };
 
-      // Update post comment count in real-time
+      console.log('Quick comment data:', commentData);
+
+      await addDoc(collection(db, 'comments'), commentData);
+
+      // Update post comment count
       const post = posts.find(p => p.id === postId);
       if (post) {
         const newCommentCount = (post.commentCount || 0) + 1;
@@ -356,6 +362,7 @@ const Community = () => {
         );
       }
 
+      // Clear the specific post's comment input
       setQuickComment(prev => ({ ...prev, [postId]: '' }));
       
       // Haptic feedback
@@ -368,7 +375,7 @@ const Community = () => {
         description: 'Your comment has been posted.'
       });
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('Error adding quick comment:', error);
       toast({
         title: 'Error',
         description: 'Failed to add comment. Please try again.',
@@ -378,6 +385,7 @@ const Community = () => {
   };
 
   const openCommentsModal = (postId: string) => {
+    console.log('Opening comments modal for postId:', postId);
     setSelectedPostForComments(postId);
     
     // Mark post as viewed for engagement tracking
@@ -756,7 +764,7 @@ const Community = () => {
                           </Button>
                         )}
 
-                        {/* Add Comment */}
+                        {/* Add Comment - FIXED: Properly handle post-specific comments */}
                         <div className="flex items-center space-x-2 pt-1">
                           <Avatar className="h-6 w-6">
                             <AvatarFallback className="text-xs dark:text-gray-300">
@@ -825,7 +833,7 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Enhanced Comments Slide Up */}
+      {/* Enhanced Comments Slide Up - FIXED: Pass correct postId */}
       <CommentsSlideUp
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}

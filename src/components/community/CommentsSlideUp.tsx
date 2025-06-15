@@ -52,9 +52,14 @@ const CommentsSlideUp = ({ postId, isOpen, onClose }: CommentsSlideUpProps) => {
   const commentsListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Real-time comments listener
+  // Real-time comments listener - FIXED: Only listen for comments of this specific post
   useEffect(() => {
-    if (!postId || !isOpen) return;
+    if (!postId || !isOpen) {
+      setComments([]);
+      return;
+    }
+
+    console.log('Setting up comments listener for postId:', postId);
 
     const commentsQuery = query(
       collection(db, 'comments'),
@@ -63,19 +68,29 @@ const CommentsSlideUp = ({ postId, isOpen, onClose }: CommentsSlideUpProps) => {
     );
 
     const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
-      const newComments = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        replies: doc.data().replies || [],
-        replyCount: doc.data().replyCount || 0
-      })) as Comment[];
+      console.log('Comments snapshot received:', snapshot.size, 'comments');
+      const newComments = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          replies: data.replies || [],
+          replyCount: data.replyCount || 0,
+          likes: data.likes || [],
+          likeCount: data.likeCount || 0
+        };
+      }) as Comment[];
       
+      console.log('Processed comments:', newComments);
       setComments(newComments);
     }, (error) => {
       console.error('Error listening to comments:', error);
     });
 
-    return unsubscribe;
+    return () => {
+      console.log('Cleaning up comments listener');
+      unsubscribe();
+    };
   }, [postId, isOpen]);
 
   // Auto-focus input when replying
@@ -86,27 +101,33 @@ const CommentsSlideUp = ({ postId, isOpen, onClose }: CommentsSlideUpProps) => {
   }, [replyTo]);
 
   const submitComment = async () => {
-    if (!newComment.trim() || !user || !userProfile) return;
+    if (!newComment.trim() || !user || !userProfile || !postId) return;
 
     setLoading(true);
     try {
-      await addDoc(collection(db, 'comments'), {
-        postId,
+      console.log('Submitting comment for postId:', postId);
+      
+      const commentData = {
+        postId: postId,
         authorId: user.uid,
-        authorName: userProfile.displayName || user.email,
-        content: newComment,
+        authorName: userProfile.displayName || user.email || 'Anonymous',
+        content: newComment.trim(),
         likes: [],
         likeCount: 0,
         replies: [],
         replyCount: 0,
         timestamp: new Date()
-      });
+      };
+
+      console.log('Comment data:', commentData);
+
+      await addDoc(collection(db, 'comments'), commentData);
 
       // Update post comment count
       const postRef = doc(db, 'communityPosts', postId);
-      const currentComments = comments.length + 1;
+      const currentCommentCount = comments.length + 1;
       await updateDoc(postRef, {
-        commentCount: currentComments
+        commentCount: currentCommentCount
       });
 
       setNewComment('');
@@ -142,8 +163,8 @@ const CommentsSlideUp = ({ postId, isOpen, onClose }: CommentsSlideUpProps) => {
       const newReply = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         authorId: user.uid,
-        authorName: userProfile.displayName || user.email,
-        content: replyContent,
+        authorName: userProfile.displayName || user.email || 'Anonymous',
+        content: replyContent.trim(),
         likes: [],
         timestamp: new Date()
       };
