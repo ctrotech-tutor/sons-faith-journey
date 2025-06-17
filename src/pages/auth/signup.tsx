@@ -322,7 +322,7 @@ const Signup = () => {
         <Link to="/login" className="block">
           <p className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center underline hover:text-purple-600 transition-colors">Log In</p>
         </Link>
-        <div className="h-5 bg-[#f8f9fc] dark:bg-gray-900"></div>
+        <div className="h-5 bg-white dark:bg-gray-900 hidden"></div>
       </div>
     </div>
   );
