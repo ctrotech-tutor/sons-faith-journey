@@ -1,33 +1,44 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// dev-tools/gemini.cjs
 
-// Get API Key safely from .env (after dotenv config)
+require("dotenv").config(); // Load environment variables
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Securely retrieve API key
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-  throw new Error("GEMINI_API_KEY not found in environment variables.");
+  console.error("❌ GEMINI_API_KEY not found in your .env file.");
+  process.exit(1);
 }
 
+// Initialize Gemini client
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
+/**
+ * Generate a commit message based on a git diff summary.
+ * @param {string} diffSummary - The output of git diff --cached --shortstat
+ * @returns {Promise<string>} - Suggested commit message
+ */
 async function generateCommitMessage(diffSummary) {
   const prompt = `
-You are an assistant helping a developer generate a Git commit message.
+You are an AI assistant helping a developer write a Git commit message.
 
 The code changes are:
 ${diffSummary}
 
-Suggest a short, meaningful commit message. Do NOT include extra quotes or explanations.
-  `;
+Respond with a short, meaningful Git commit message.
+Do NOT include any quotes, explanations, or greetings.
+  `.trim();
 
   try {
     const result = await model.generateContent(prompt);
     const message = result.response.text().trim();
 
-    // Remove leading/trailing quotes if Gemini returns them
+    // Clean up any extra quotes from response
     return message.replace(/^["']|["']$/g, "");
   } catch (error) {
-    console.error("❌ Gemini error:", error.message);
+    console.error("❌ Gemini error:", error.message || error);
     return "Update project files";
   }
 }
