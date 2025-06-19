@@ -11,7 +11,7 @@
     "deploy": "vercel --prod",
     "preview": "vite preview",
     "dev:mobile": "vite --host",
-    "auto-push": "nodemon dev-tools/Tui.mjs"
+    "auto-push": "nodemon dev-tools/autoPush.cjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -79,7 +79,6 @@
     "recharts": "^2.12.7",
     "remark-gfm": "^4.0.1",
     "sonner": "^1.5.0",
-    "systeminformation": "^5.27.3",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",

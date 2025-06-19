@@ -128,4 +128,7 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
+	experimental: {
+    containerQueries: true,
+  },
 } satisfies Config;

@@ -2,4 +2,15 @@ import Logo from './images/logo.jpg';
 import Logo2 from './images/logo2.jpg';
 import Logo3 from './images/logo3.jpg';
 import Logo4 from './images/logo4.jpg';
-export const Assets = { Logo, Logo2, Logo3, Logo4 };
+import Pic1 from './images/pic1.png';
+import Pic2 from './images/pic2.png';
+import Pic3 from './images/pic3.png';
+import Pic4 from './images/pic4.png';
+import Pic5 from './images/pic5.png';
+import Pic6 from './images/pic6.png';
+import Pic7 from './images/pic7.png';
+import Pic8 from './images/pic8.png';
+import Pic9 from './images/pic9.png';
+import Pic10 from './images/pic10.png';
+
+export const Assets = { Logo, Logo2, Logo3, Logo4, Pic1, Pic2, Pic3, Pic4, Pic5, Pic6, Pic7, Pic8, Pic9, Pic10 };
