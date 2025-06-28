@@ -82,7 +82,7 @@ const LazyVideo = ({ src, className, placeholder = true }: LazyVideoProps) => {
   const shouldShowPlaceholder = placeholder && !loaded && !videoManager.isVideoLoaded(src);
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div ref={ref} className={`relative overflow-hidden ${className}`}>
       {shouldShowPlaceholder && (
         <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-800 overflow-hidden z-0">
           {thumbnail ? (

@@ -1,24 +1,23 @@
-
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/lib/hooks/use-toast';
-import { ArrowLeft, Send, Image, Video, X, Hash, Smile } from 'lucide-react';
-import MediaBrowser from '@/components/community/MediaBrowser';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/lib/hooks/use-toast";
+import { ArrowLeft, Send, Image, Video, X, Hash, Smile } from "lucide-react";
+import MediaBrowser from "@/components/community/MediaBrowser";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const CreatePost = () => {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [content, setContent] = useState('');
-  const [mediaUrl, setMediaUrl] = useState('');
-  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [content, setContent] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [loading, setLoading] = useState(false);
   const [showMediaBrowser, setShowMediaBrowser] = useState(false);
 
@@ -29,8 +28,9 @@ const CreatePost = () => {
     try {
       const postData = {
         authorId: user.uid,
-        authorName: userProfile.displayName || user.email?.split('@')[0] || 'Anonymous',
-        authorAvatar: userProfile.profilePhoto || './assets/default.png',
+        authorName:
+          userProfile.displayName || user.email?.split("@")[0] || "Anonymous",
+        authorAvatar: userProfile.profilePhoto || "./assets/default.png",
         content: content.trim(),
         mediaUrl: mediaUrl || null,
         mediaType: mediaUrl ? mediaType : null,
@@ -39,53 +39,56 @@ const CreatePost = () => {
         comments: [],
         commentCount: 0,
         shareCount: 0,
-        status: userProfile.isAdmin ? 'approved' : 'pending',
+        status: userProfile.isAdmin ? "approved" : "pending",
         timestamp: new Date(),
-        isAdmin: userProfile.isAdmin || false
+        isAdmin: userProfile.isAdmin || false,
       };
 
-      await addDoc(collection(db, 'communityPosts'), postData);
-      
+      await addDoc(collection(db, "communityPosts"), postData);
+
       toast({
-        title: userProfile.isAdmin ? 'Post Published' : 'Post Submitted',
-        description: userProfile.isAdmin 
-          ? 'Your post is now live in the community.'
-          : 'Your post has been submitted for admin approval.'
+        title: userProfile.isAdmin ? "Post Published" : "Post Submitted",
+        description: userProfile.isAdmin
+          ? "Your post is now live in the community."
+          : "Your post has been submitted for admin approval.",
       });
 
-      navigate('/community');
+      navigate("/community");
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error("Error creating post:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to create post. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMediaSelect = (url: string, type: 'image' | 'video') => {
+  const handleMediaSelect = (url: string, type: "image" | "video") => {
     setMediaUrl(url);
     setMediaType(type);
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setContent(prev => prev + emoji);
+    setContent((prev) => prev + emoji);
   };
 
   const handleHashtagSelect = (hashtag: string) => {
-    setContent(prev => prev + (prev.endsWith(' ') || prev === '' ? '' : ' ') + hashtag + ' ');
+    setContent(
+      (prev) =>
+        prev + (prev.endsWith(" ") || prev === "" ? "" : " ") + hashtag + " "
+    );
   };
 
   const removeMedia = () => {
-    setMediaUrl('');
-    setMediaType('image');
+    setMediaUrl("");
+    setMediaType("image");
   };
 
   if (!user) {
-    navigate('/');
+    navigate("/");
     return null;
   }
 
@@ -103,7 +106,13 @@ const CreatePost = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/community')}
+                onClick={() => {
+                  if (window.history.length > 2) {
+                    navigate(-1);
+                  } else {
+                    navigate("/community");
+                  }
+                }}
                 className="h-8 w-8 p-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -123,7 +132,7 @@ const CreatePost = () => {
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-1" />
-                  {userProfile?.isAdmin ? 'Publish' : 'Submit'}
+                  {userProfile?.isAdmin ? "Publish" : "Submit"}
                 </>
               )}
             </Button>
@@ -144,19 +153,23 @@ const CreatePost = () => {
               <Avatar className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 flex items-center justify-center text-white font-semibold">
                 {/* {(userProfile?.displayName || user.email || 'U').charAt(0).toUpperCase()} */}
                 <AvatarImage
-                    src={userProfile?.profilePhoto || '/default-avatar.png'}
-                    alt={userProfile?.displayName || 'User Avatar'}
-                  />
-                  <AvatarFallback>
-                    {userProfile?.displayName?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
+                  src={userProfile?.profilePhoto || "/default-avatar.png"}
+                  alt={userProfile?.displayName || "User Avatar"}
+                />
+                <AvatarFallback>
+                  {userProfile?.displayName?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-semibold text-sm dark:text-white">
-                  {userProfile?.displayName || user.email?.split('@')[0] || 'Anonymous'}
+                  {userProfile?.displayName ||
+                    user.email?.split("@")[0] ||
+                    "Anonymous"}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {userProfile?.isAdmin ? 'Admin • Will be published immediately' : 'Pending admin approval'}
+                  {userProfile?.isAdmin
+                    ? "Admin • Will be published immediately"
+                    : "Pending admin approval"}
                 </p>
               </div>
             </div>
@@ -171,7 +184,7 @@ const CreatePost = () => {
                 rows={6}
                 maxLength={2000}
               />
-              
+
               {/* Character count */}
               <div className="flex justify-end mt-2">
                 <span className="text-xs text-gray-400">
@@ -191,8 +204,8 @@ const CreatePost = () => {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                
-                {mediaType === 'image' ? (
+
+                {mediaType === "image" ? (
                   <img
                     src={mediaUrl}
                     alt="Selected media"
@@ -200,7 +213,8 @@ const CreatePost = () => {
                   />
                 ) : (
                   <div className="w-full aspect-video">
-                    {mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') ? (
+                    {mediaUrl.includes("youtube.com") ||
+                    mediaUrl.includes("youtu.be") ? (
                       <iframe
                         src={mediaUrl}
                         className="w-full h-full"
@@ -232,7 +246,7 @@ const CreatePost = () => {
                     <Image className="h-4 w-4" />
                     <span className="text-sm">Photo</span>
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -268,7 +282,9 @@ const CreatePost = () => {
 
             {/* Guidelines */}
             <div className="mx-4 mb-4 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1 text-sm">Community Guidelines</h4>
+              <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1 text-sm">
+                Community Guidelines
+              </h4>
               <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-0.5">
                 <li>• Share with kindness and respect</li>
                 <li>• Keep content family-friendly</li>

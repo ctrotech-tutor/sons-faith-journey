@@ -171,7 +171,13 @@ const EditPost = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/post-manager')}
+                onClick={() => {
+                if (window.history.length > 2) {
+                  navigate(-1);
+                } else {
+                  navigate("/post-manager");
+                }
+              }}
                 className="h-8 w-8 p-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -279,7 +285,7 @@ const EditPost = () => {
                     {mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') ? (
                       <iframe
                         src={mediaUrl}
-                        className="w-full h-full"
+                        className="w-full h-full aspect-video object-cover"
                         allowFullScreen
                         title="Selected video"
                       />
@@ -287,7 +293,7 @@ const EditPost = () => {
                       <video
                         src={mediaUrl}
                         controls
-                        className="w-full h-full object-cover"
+                        className="w-full h-full aspect-video object-cover"
                       />
                     )}
                   </div>

@@ -114,7 +114,13 @@ const Signup = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate("/");
+              }
+            }}
             className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />

@@ -148,7 +148,13 @@ const PostDetail = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/community')}
+              onClick={() => {
+                if (window.history.length > 2) {
+                  navigate(-1);
+                } else {
+                  navigate("/community");
+                }
+              }}
               className="h-8 w-8 p-0"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -203,7 +209,7 @@ const PostDetail = () => {
               ) : (
                 <LazyVideo
                   src={post.mediaUrl}
-                  className="w-full h-auto max-h-[70vh] object-cover"
+                  className="w-full h-auto aspect-video max-h-[70vh] object-cover"
                 />
               )}
             </div>

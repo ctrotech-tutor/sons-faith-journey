@@ -27,7 +27,7 @@ const LazyImage = ({ src, alt, className, placeholder = true }: LazyImageProps) 
   };
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={`relative overflow-hidden ${className}`}>
       {placeholder && !loaded && (
         <Skeleton className="w-full h-full absolute inset-0" />
       )}

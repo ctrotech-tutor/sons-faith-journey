@@ -85,7 +85,7 @@ const Index = () => {
                 Rooted in Faith. Built for Purpose. Growing Together.
               </p>
               <p className="text-lg text-purple-200 max-w-2xl mx-auto mt-4">
-                Join a brotherhood of men committed to spiritual growth, authentic relationships, and purposeful living through God's Word.
+                Join a community committed to spiritual growth, authentic relationships, and purposeful living through God's Word.
               </p>
             </motion.div>
 

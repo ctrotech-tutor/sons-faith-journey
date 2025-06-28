@@ -1,16 +1,38 @@
-
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, where, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { Check, X, Eye, Clock, User, Calendar, Image, Video, ArrowLeft, MessageCircle, Heart, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/lib/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  updateDoc,
+  doc,
+  deleteDoc,
+  where,
+  addDoc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  Check,
+  X,
+  Eye,
+  Clock,
+  User,
+  Calendar,
+  Image,
+  Video,
+  ArrowLeft,
+  MessageCircle,
+  Heart,
+  Share2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/lib/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface PendingPost {
   id: string;
@@ -18,9 +40,9 @@ interface PendingPost {
   authorName: string;
   content: string;
   mediaUrl?: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: "image" | "video";
   timestamp: any;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   isAdmin: boolean;
   likes: string[];
   likeCount: number;
@@ -39,11 +61,11 @@ const PostApproval = () => {
   // Check if user is admin
   useEffect(() => {
     if (user && userProfile && !userProfile.isAdmin) {
-      navigate('/community');
+      navigate("/community");
       toast({
-        title: 'Access Denied',
-        description: 'Only admins can access post approval.',
-        variant: 'destructive'
+        title: "Access Denied",
+        description: "Only admins can access post approval.",
+        variant: "destructive",
       });
     }
   }, [user, userProfile, navigate, toast]);
@@ -53,22 +75,22 @@ const PostApproval = () => {
     if (!user || !userProfile?.isAdmin) return;
 
     const postsQuery = query(
-      collection(db, 'communityPosts'),
-      where('status', '==', 'pending'),
-      orderBy('timestamp', 'desc')
+      collection(db, "communityPosts"),
+      where("status", "==", "pending"),
+      orderBy("timestamp", "desc")
     );
 
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
-      const newPosts = snapshot.docs.map(doc => ({
+      const newPosts = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         likes: doc.data().likes || [],
         likeCount: doc.data().likeCount || 0,
         comments: doc.data().comments || [],
         commentCount: doc.data().commentCount || 0,
-        shareCount: doc.data().shareCount || 0
+        shareCount: doc.data().shareCount || 0,
       })) as PendingPost[];
-      
+
       setPendingPosts(newPosts);
       setLoading(false);
     });
@@ -78,91 +100,94 @@ const PostApproval = () => {
 
   const approvePost = async (postId: string) => {
     try {
-      await updateDoc(doc(db, 'communityPosts', postId), {
-        status: 'approved',
+      await updateDoc(doc(db, "communityPosts", postId), {
+        status: "approved",
         approvedBy: user?.uid,
-        approvedAt: new Date()
+        approvedAt: new Date(),
       });
 
       // Send notification to post author
-      const post = pendingPosts.find(p => p.id === postId);
+      const post = pendingPosts.find((p) => p.id === postId);
       if (post) {
-        await addDoc(collection(db, 'notifications'), {
+        await addDoc(collection(db, "notifications"), {
           userId: post.authorId,
-          type: 'post_approved',
-          title: 'Post Approved',
-          message: 'Your post has been approved and is now visible to the community.',
+          type: "post_approved",
+          title: "Post Approved",
+          message:
+            "Your post has been approved and is now visible to the community.",
           postId: postId,
           timestamp: new Date(),
-          read: false
+          read: false,
         });
       }
 
       toast({
-        title: 'Post Approved',
-        description: 'The post has been approved and is now visible to the community.'
+        title: "Post Approved",
+        description:
+          "The post has been approved and is now visible to the community.",
       });
     } catch (error) {
-      console.error('Error approving post:', error);
+      console.error("Error approving post:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to approve post. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to approve post. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
   const rejectPost = async (postId: string) => {
     try {
-      await updateDoc(doc(db, 'communityPosts', postId), {
-        status: 'rejected',
+      await updateDoc(doc(db, "communityPosts", postId), {
+        status: "rejected",
         rejectedBy: user?.uid,
-        rejectedAt: new Date()
+        rejectedAt: new Date(),
       });
 
       // Send notification to post author
-      const post = pendingPosts.find(p => p.id === postId);
+      const post = pendingPosts.find((p) => p.id === postId);
       if (post) {
-        await addDoc(collection(db, 'notifications'), {
+        await addDoc(collection(db, "notifications"), {
           userId: post.authorId,
-          type: 'post_rejected',
-          title: 'Post Rejected',
-          message: 'Your post did not meet our community guidelines and has been rejected.',
+          type: "post_rejected",
+          title: "Post Rejected",
+          message:
+            "Your post did not meet our community guidelines and has been rejected.",
           postId: postId,
           timestamp: new Date(),
-          read: false
+          read: false,
         });
       }
 
       toast({
-        title: 'Post Rejected',
-        description: 'The post has been rejected and author has been notified.',
-        variant: 'destructive'
+        title: "Post Rejected",
+        description: "The post has been rejected and author has been notified.",
+        variant: "destructive",
       });
     } catch (error) {
-      console.error('Error rejecting post:', error);
+      console.error("Error rejecting post:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to reject post. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to reject post. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
   const deletePost = async (postId: string) => {
     try {
-      await deleteDoc(doc(db, 'communityPosts', postId));
+      await deleteDoc(doc(db, "communityPosts", postId));
 
       toast({
-        title: 'Post Deleted',
-        description: 'The post has been permanently deleted.'
+        title: "Post Deleted",
+        description: "The post has been permanently deleted.",
       });
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error("Error deleting post:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete post. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -185,7 +210,13 @@ const PostApproval = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/community')}
+                onClick={() => {
+                  if (window.history.length > 2) {
+                    navigate(-1);
+                  } else {
+                    navigate("/dashboard");
+                  }
+                }}
                 className="h-8 w-8 p-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -194,7 +225,10 @@ const PostApproval = () => {
                 Post Approval
               </h1>
             </div>
-            <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+            <Badge
+              variant="secondary"
+              className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+            >
               {pendingPosts.length} Pending
             </Badge>
           </div>
@@ -211,8 +245,12 @@ const PostApproval = () => {
           ) : pendingPosts.length === 0 ? (
             <div className="text-center py-20 px-4">
               <div className="text-6xl mb-4">✅</div>
-              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">All Caught Up!</h3>
-              <p className="text-gray-500 dark:text-gray-500">No posts pending approval at the moment.</p>
+              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                All Caught Up!
+              </h3>
+              <p className="text-gray-500 dark:text-gray-500">
+                No posts pending approval at the moment.
+              </p>
             </div>
           ) : (
             <div className="space-y-0">
@@ -234,7 +272,9 @@ const PostApproval = () => {
                         </Avatar>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <p className="font-semibold text-sm dark:text-white">{post.authorName}</p>
+                            <p className="font-semibold text-sm dark:text-white">
+                              {post.authorName}
+                            </p>
                             <Badge className="bg-orange-200 text-orange-900 dark:bg-orange-400/20 dark:text-orange-300 text-xs px-2 py-0">
                               <Clock className="h-3 w-3 mr-1" />
                               Pending
@@ -250,7 +290,7 @@ const PostApproval = () => {
                     {/* Media */}
                     {post.mediaUrl && (
                       <div className="w-full bg-black/5 dark:bg-white/5">
-                        {post.mediaType === 'image' ? (
+                        {post.mediaType === "image" ? (
                           <img
                             src={post.mediaUrl}
                             alt="Post"
