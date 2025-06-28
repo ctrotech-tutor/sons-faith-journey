@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/lib/hooks/use-toast";
 import {
   User,
@@ -20,7 +18,7 @@ import {
 } from "lucide-react";
 
 const Signup = () => {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle, error, clearError } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -48,6 +46,11 @@ const Signup = () => {
     });
   };
 
+  // Clear errors when component mounts or form data changes
+  useEffect(() => {
+    clearError();
+  }, [formData, clearError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -60,7 +63,7 @@ const Signup = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password.length < 6 && typeof formData.password === "string") {
       toast({
         title: "Weak Password",
         description: "Password must be at least 6 characters long.",
@@ -78,13 +81,8 @@ const Signup = () => {
         description: "Welcome to THE SONS community! Please verify your email.",
       });
       navigate("/email-verification");
-    } catch (error: any) {
-      toast({
-        title: "Registration Failed",
-        description:
-          error.message || "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.log("Signup failed:", error);
     } finally {
       setLoading(false);
     }
@@ -99,12 +97,8 @@ const Signup = () => {
         description: "Successfully signed up with Google.",
       });
       navigate("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Google Sign-up Failed",
-        description: "Failed to sign up with Google. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.log("Google Authentication failed:", error);
     } finally {
       setLoading(false);
     }

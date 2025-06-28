@@ -55,7 +55,7 @@ const ResetPassword = () => {
           variant: "destructive",
         });
         setTimeout(() => {
-          navigate("/forgot-password");
+          // navigate("/forgot-password");
         }, 5000);
         return;
       }
@@ -68,7 +68,7 @@ const ResetPassword = () => {
         // Error is already handled by AuthProvider
         console.log("Failed to verify password reset code:", error);
         setTimeout(() => {
-          navigate("/forgot-password");
+          // navigate("/forgot-password");
         }, 5000);
       }
     };
@@ -193,7 +193,7 @@ const ResetPassword = () => {
     <div
       className="relative flex min-h-screen flex-col bg-white dark:bg-gray-900 justify-between group/design-root overflow-x-hidden"
       style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
-    ></div>
+    >
       {/* Header */}
       <div className="flex items-center bg-white dark:bg-gray-900 p-4 pb-2 justify-between">
         <Button

@@ -77,7 +77,7 @@ const Login = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-700 transition"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -87,8 +87,8 @@ const Login = () => {
         </h2>
       </div>
 
-      <div className="flex w-full grow bg-white @container p-4">
-        <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
+      <div className="flex w-full grow bg-white dark:bg-gray-900 @container p-4">
+        <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] dark:bg-gray-900 @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
           <div
             className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
             style={{

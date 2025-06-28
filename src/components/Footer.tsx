@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
         <div className="text-xs text-gray-500 mt-4">
           Powered by{" "}
           <a
-            href="https://ctrotech.com"
+            href="https://ctrotech.dev"
             target="_blank"
             rel="noopener noreferrer"
             className="text-purple-400 hover:text-purple-300 font-semibold"
