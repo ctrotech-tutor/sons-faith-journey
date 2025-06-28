@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,12 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/hooks/useAuth";
-import {Assets} from '@/assets/assets';
+import { Assets } from "@/assets/assets";
 
 const ResetPassword = () => {
   const {
@@ -55,8 +55,8 @@ const ResetPassword = () => {
           variant: "destructive",
         });
         setTimeout(() => {
-          // navigate("/forgot-password");
-        }, 5000);
+          navigate("/forgot-password");
+        }, 3000);
         return;
       }
 
@@ -68,7 +68,7 @@ const ResetPassword = () => {
         // Error is already handled by AuthProvider
         console.log("Failed to verify password reset code:", error);
         setTimeout(() => {
-          // navigate("/forgot-password");
+          navigate("/forgot-password");
         }, 5000);
       }
     };
@@ -93,7 +93,7 @@ const ResetPassword = () => {
       return false;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password.length < 6 && typeof formData.password === "string") {
       toast({
         title: "Weak Password",
         description: "Password must be at least 6 characters long.",
@@ -129,7 +129,7 @@ const ResetPassword = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="flex flex-col items-center justify-center min-h-[200px] text-center space-y-4"
+        className="w-full px-4 py-10 max-w-md mx-auto text-center space-y-6 min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center"
       >
         <motion.div
           animate={{ rotate: 360 }}
@@ -137,7 +137,7 @@ const ResetPassword = () => {
           className="w-10 h-10 rounded-full border-4 border-purple-600 border-t-transparent"
         />
 
-        <p className="text-sm text-gray-500 dark:text-gray-300 font-medium">
+        <p className="text-sm text-gray-900 dark:text-gray-300 font-medium">
           Validating reset link...
         </p>
       </motion.div>
@@ -150,7 +150,7 @@ const ResetPassword = () => {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full px-4 py-10 max-w-md mx-auto text-center space-y-6"
+        className="w-full px-4 py-10 max-w-md mx-auto text-center space-y-6 min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900"
       >
         {/* Animated Icon */}
         <motion.div
@@ -199,28 +199,31 @@ const ResetPassword = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-700 transition"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h2 className="text-[#0d0f1c] dark:text-white text-lg font-bold tracking-tight flex-1 text-center pr-12">
-          Sign In
+          Reset Password
         </h2>
       </div>
 
-      <div className="flex w-full grow bg-white @container p-4">
-              <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
-                <div
-                  className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
-                  style={{
-                    backgroundImage: `url('${Assets.Pic3}')`,
-                  }}
-                ></div>
-              </div>
-            </div>
+      <div className="flex w-full grow bg-white dark:bg-gray-900 @container p-4">
+        <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] dark:bg-gray-900 @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
+          <div
+            className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
+            style={{
+              backgroundImage: `url('${Assets.Pic3}')`,
+            }}
+          ></div>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col items-center gap-3 px-4"
+      >
         {/* Error Alert */}
         {error && (
           <Alert variant="destructive">
@@ -229,26 +232,25 @@ const ResetPassword = () => {
           </Alert>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">
+        {/* Password Input */}
+        <div className="w-full max-w-md">
+          <label className="block text-sm font-medium text-[#47569e] dark:text-purple-200 mb-1">
             New Password
-          </Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="password"
-              name="password"
+          </label>
+          <div className="flex items-center bg-[#e6e9f4] dark:bg-gray-800 rounded-xl overflow-hidden relative">
+            <input
               type={showPassword ? "text" : "password"}
+              name="password"
               value={formData.password}
               onChange={handleInputChange}
-              placeholder="Enter new password"
-              className="pl-10 pr-10 h-12"
+              placeholder="Enter your password"
+              className="flex-1 h-14 px-4 bg-transparent text-[#0d0f1c] dark:text-white placeholder:text-[#47569e] dark:placeholder:text-purple-200 focus:outline-none"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              className="absolute right-12 top-1/2 transform -translate-y-1/2 text-[#47569e] dark:text-purple-200"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -256,29 +258,30 @@ const ResetPassword = () => {
                 <Eye className="h-4 w-4" />
               )}
             </button>
+            <Lock className="h-5 w-5 mx-4 text-[#47569e] dark:text-purple-200" />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-sm font-medium">
-            Confirm New Password
-          </Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
+        {/* Confirm Password Input */}
+
+        <div className="w-full max-w-md">
+          <label className="block text-sm font-medium text-[#47569e] dark:text-purple-200 mb-1">
+            Confirm Password
+          </label>
+          <div className="flex items-center bg-[#e6e9f4] dark:bg-gray-800 rounded-xl overflow-hidden relative">
+            <input
               type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
-              placeholder="Confirm new password"
-              className="pl-10 pr-10 h-12"
+              placeholder="Confirm your password"
+              className="flex-1 h-14 px-4 bg-transparent text-[#0d0f1c] dark:text-white placeholder:text-[#47569e] dark:placeholder:text-purple-200 focus:outline-none"
               required
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              className="absolute right-12 top-1/2 transform -translate-y-1/2 text-[#47569e] dark:text-purple-200"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -286,35 +289,38 @@ const ResetPassword = () => {
                 <Eye className="h-4 w-4" />
               )}
             </button>
+            <Lock className="h-5 w-5 mx-4 text-[#47569e] dark:text-purple-200" />
           </div>
         </div>
 
-        <Button
+        {/* Reset Password Button */}
+        <button
           type="submit"
           disabled={loading}
-          className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+          className="mt-4 w-full max-w-md h-12 bg-purple-700 text-white font-bold rounded-full hover:bg-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
               Resetting Password...
-            </>
+            </div>
           ) : (
             "Reset Password"
           )}
-        </Button>
+        </button>
       </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
+      {/* Back to Login */}
+      <div className="flex flex-col">
+        <p className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center">
           Remember your password?{" "}
-          <button
-            onClick={() => navigate("/login")}
-            className="text-purple-600 hover:text-purple-700 font-medium hover:underline"
-          >
-            Sign in
-          </button>
         </p>
+        <Link
+          to="/login"
+          className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center underline hover:text-purple-600 transition-colors"
+        >
+          Sign In
+        </Link>
+        <div className="h-5 bg-white dark:bg-gray-900"></div>
       </div>
     </div>
   );

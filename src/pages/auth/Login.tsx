@@ -92,7 +92,7 @@ const Login = () => {
           <div
             className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
             style={{
-              backgroundImage: `url('${Assets.Pic3}')`,
+              backgroundImage: `url('${Assets.Pic11}')`,
             }}
           ></div>
         </div>

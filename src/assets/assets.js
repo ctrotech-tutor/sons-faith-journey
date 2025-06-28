@@ -12,5 +12,6 @@ import Pic7 from './images/pic7.png';
 import Pic8 from './images/pic8.png';
 import Pic9 from './images/pic9.png';
 import Pic10 from './images/pic10.png';
-
-export const Assets = { Logo, Logo2, Logo3, Logo4, Pic1, Pic2, Pic3, Pic4, Pic5, Pic6, Pic7, Pic8, Pic9, Pic10 };
+import Pic11 from './images/pic11.png';
+import Pic12 from './images/pic12.png';
+export const Assets = { Logo, Logo2, Logo3, Logo4, Pic1, Pic2, Pic3, Pic4, Pic5, Pic6, Pic7, Pic8, Pic9, Pic10, Pic11, Pic12 };

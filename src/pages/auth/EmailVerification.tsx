@@ -101,11 +101,7 @@ const EmailVerification = () => {
 
   if (isVerified) {
     return (
-      <AuthLayout
-        title="Email Verified!"
-        subtitle="Welcome to THE SONS community"
-        showBackButton={false}
-      >
+      <>
         <div className="text-center space-y-6">
           <motion.div
             initial={{ scale: 0 }}
@@ -129,7 +125,7 @@ const EmailVerification = () => {
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-purple-600 border-t-transparent"></div>
           </div>
         </div>
-      </AuthLayout>
+      </>
     );
   }
 

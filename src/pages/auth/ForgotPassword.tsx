@@ -45,57 +45,55 @@ const ForgotPassword = () => {
   if (emailSent) {
     return (
       <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="w-full px-4 py-8 max-w-md mx-auto text-center"
-    >
-      {/* Success Icon */}
-      <motion.div
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-        className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full px-4 py-10 max-w-md mx-auto text-center space-y-6 min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900"
       >
-        <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-      </motion.div>
-
-      {/* Message */}
-      <div className="mt-6 space-y-2">
-        <p className="text-gray-600 dark:text-gray-300 text-sm">
-          We've sent a password reset link to:
-        </p>
-        <p className="font-semibold text-lg text-gray-900 dark:text-white tracking-tight">
-          {email}
-        </p>
-      </div>
-
-      {/* Additional Info + Actions */}
-      <div className="mt-8 space-y-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Didn't receive the email? Check your spam folder or try again.
-        </p>
-
-        <Button
-          variant="outline"
-          onClick={() => {
-            setEmailSent(false);
-            clearError();
-          }}
-          className="w-full transition-all duration-300 hover:shadow-md"
+        {/* Success Icon */}
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+          className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto"
         >
-          Try Different Email
-        </Button>
+          <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+        </motion.div>
 
-        <Link to="/login" className="block">
+        {/* Message */}
+        <div className="mt-6 space-y-2">
+          <p className="text-gray-600 dark:text-gray-300 text-sm">
+            We've sent a password reset link to:
+          </p>
+          <p className="font-semibold text-lg text-gray-900 dark:text-white tracking-tight">
+            {email}
+          </p>
+        </div>
+
+        {/* Additional Info + Actions */}
+        <div className="mt-8 space-y-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Didn't receive the email? Check your spam folder or try again.
+          </p>
+
           <Button
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 shadow-md"
+            variant="outline"
+            onClick={() => {
+              setEmailSent(false);
+              clearError();
+            }}
+            className="w-full max-w-md h-12 text-white font-bold rounded-full transition disabled:cursor-not-allowed"
           >
-            Back to Sign In
+            Try Different Email
           </Button>
-        </Link>
-      </div>
-    </motion.div>
+
+          <Link to="/login" className="block">
+            <Button className="w-full max-w-md h-12 bg-purple-700 text-white font-bold rounded-full hover:bg-purple-800 transition disabled:cursor-not-allowed">
+              Back to Sign In
+            </Button>
+          </Link>
+        </div>
+      </motion.div>
     );
   }
 
@@ -124,7 +122,7 @@ const ForgotPassword = () => {
           <div
             className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
             style={{
-              backgroundImage: `url('${Assets.Pic10}')`,
+              backgroundImage: `url('${Assets.Pic12}')`,
             }}
           ></div>
         </div>
