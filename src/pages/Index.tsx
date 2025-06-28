@@ -191,7 +191,7 @@ const Index = () => {
             <div className="space-y-6 bg-white/70 dark:bg-gray-800/50 backdrop-blur-md border border-purple-300/30 dark:border-gray-600/20 shadow-md hover:shadow-xl rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ease-in-out">
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
                 <Button
-                  onClick={() => navigate('/auth/login')}
+                  onClick={() => navigate('/login')}
                   size="lg"
                   className="bg-white text-purple-700 hover:bg-purple-50 text-lg py-4 px-8 gap-2"
                 >
@@ -199,7 +199,7 @@ const Index = () => {
                   Continue Your Journey
                 </Button>
                 <Button
-                  onClick={() => navigate('/auth/register')}
+                  onClick={() => navigate('/signup')}
                   size="lg"
                   variant="outline"
                   className="border-white text-purple-700 hover:bg-white hover:text-purple-700 text-lg py-4 px-8"

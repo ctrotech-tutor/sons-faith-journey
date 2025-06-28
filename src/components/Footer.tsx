@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
             WhatsApp
           </a>
           <a
-            href="mailto:theson@gmail.com"
+            href="mailto:thesonhub@gmail.com"
             className="flex items-center gap-1 hover:text-blue-400 transition"
           >
             <Mail className="h-4 w-4" />
@@ -96,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
             rel="noopener noreferrer"
             className="text-purple-400 hover:text-purple-300 font-semibold"
           >
-            Ctrotech
+            <span>CTROTECH</span>
           </a>
         </div>
 

@@ -11,11 +11,12 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/hooks/useAuth";
-import AuthLayout from "./AuthLayout";
+import {Assets} from '@/assets/assets';
 
 const ResetPassword = () => {
   const {
@@ -189,7 +190,36 @@ const ResetPassword = () => {
   }
 
   return (
-    <>
+    <div
+      className="relative flex min-h-screen flex-col bg-white dark:bg-gray-900 justify-between group/design-root overflow-x-hidden"
+      style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
+    ></div>
+      {/* Header */}
+      <div className="flex items-center bg-white dark:bg-gray-900 p-4 pb-2 justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-700 transition"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h2 className="text-[#0d0f1c] dark:text-white text-lg font-bold tracking-tight flex-1 text-center pr-12">
+          Sign In
+        </h2>
+      </div>
+
+      <div className="flex w-full grow bg-white @container p-4">
+              <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
+                <div
+                  className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
+                  style={{
+                    backgroundImage: `url('${Assets.Pic3}')`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Error Alert */}
         {error && (
@@ -286,7 +316,7 @@ const ResetPassword = () => {
           </button>
         </p>
       </div>
-    </>
+    </div>
   );
 };
 

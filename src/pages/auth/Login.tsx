@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {Assets} from '@/assets/assets'
+import {Assets} from '@/assets/assets';
 const Login = () => {
   const { login, loginWithGoogle, loading, error, clearError } = useAuth();
   const { toast } = useToast();
