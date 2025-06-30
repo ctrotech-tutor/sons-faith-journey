@@ -19,15 +19,15 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className={cn("bg-gray-950 text-white py-12", className)}
+      className={cn("bg-gray-950 text-white py-12 rounded-t-[1.5rem]", className)}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
         {/* Logo and Name */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex flex-col items-center justify-center gap-2">
           <div className="">
-            <img src={Assets.Logo4} alt="THE SONS Logo" className="h-10 w-10 rounded-lg object-cover" />
+            <img src={Assets.Logo4} alt="THE SONS Logo" className="h-8 w-8 rounded-lg object-cover" />
           </div>
-          <span className="text-2xl font-bold tracking-tight">THE SONS</span>
+          <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent">THE SONS</span>
         </div>
 
         {/* Slogan */}
@@ -94,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({ className, withLinks = false }) 
             href="https://ctrotech.dev"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 hover:text-purple-300 font-semibold"
+            className="bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent transition-colors duration-200 active:text-purple-300 font-semibold"
           >
             <span>CTROTECH</span>
           </a>

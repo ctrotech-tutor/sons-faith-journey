@@ -13,8 +13,8 @@ const JourneyPath = () => {
   const opacity = useTransform(scrollYProgress, [0, 1], [0.9, 1])
 
   return (
-    <section ref={sectionRef} className="relative mt-24">
-      <h3 className="text-3xl md:text-4xl font-bold text-center mb-14 text-gray-900 dark:text-white">
+    <section ref={sectionRef} className="relative mt-[4rem]">
+      <h3 className="text-3xl md:text-4xl font-bold text-center mb-14 bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent">
         Your 90-Day Path
       </h3>
 

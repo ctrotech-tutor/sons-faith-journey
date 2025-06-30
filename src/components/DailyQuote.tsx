@@ -118,7 +118,7 @@ const QuoteCard = () => {
           disabled={loading}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="mt-8 mx-auto flex items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 transition-colors text-white font-semibold py-2.5 px-6 rounded-full shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+          className="hidden mt-8 mx-auto items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 transition-colors text-white font-semibold py-2.5 px-6 rounded-full shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <motion.div
             animate={loading ? { rotate: 360 } : { rotate: 0 }}
@@ -131,7 +131,7 @@ const QuoteCard = () => {
         </motion.button>
 
         {error && (
-          <p className="mt-4 text-center text-red-600 font-medium text-sm">
+          <p className="mt-4 text-center text-red-600 font-medium text-sm hidden">
             Couldn’t fetch online. Showing offline quotes.
           </p>
         )}

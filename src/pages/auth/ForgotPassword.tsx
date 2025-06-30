@@ -102,97 +102,96 @@ const ForgotPassword = () => {
       className="relative flex min-h-screen flex-col bg-white dark:bg-gray-900 justify-between group/design-root overflow-x-hidden"
       style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
     >
-      {/* Header */}
-      <div className="flex items-center bg-white dark:bg-gray-900 p-4 pb-2 justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-700 transition"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h2 className="text-[#0d0f1c] dark:text-white text-lg font-bold tracking-tight flex-1 text-center pr-12">
-          Forgot Password
-        </h2>
-      </div>
-
-      <div className="flex w-full grow bg-white dark:bg-gray-900 @container p-4">
-        <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] dark:bg-gray-900 @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
-          <div
-            className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
-            style={{
-              backgroundImage: `url('${Assets.Pic12}')`,
+      <div>
+        <div className="flex items-center bg-white dark:bg-gray-900 p-4 pb-2 justify-between sticky top-0 z-20 w-full">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate("/login");
+              }
             }}
-          ></div>
-        </div>
-      </div>
-
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col items-center gap-6 px-4 w-full mt-6"
-      >
-        {/* Error */}
-        {error && (
-          <div className="w-full max-w-md rounded-lg border border-red-400 bg-red-50 p-3 text-red-800 dark:bg-red-900 dark:border-red-500 dark:text-red-100">
-            <AlertCircle className="inline-block w-5 h-5 mr-2" />
-            <span>{error.message}</span>
-          </div>
-        )}
-
-        {/* Email Field */}
-        <div className="w-full max-w-md">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-[#47569e] dark:text-purple-200 mb-1"
+            className="ripple-effect text-white rounded-full w-8 h-8 bg-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
           >
-            Email Address
-          </label>
-          <div className="flex items-center bg-[#e6e9f4] dark:bg-gray-800 rounded-xl overflow-hidden">
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="flex-1 h-14 px-4 bg-transparent text-[#0d0f1c] dark:text-white placeholder:text-[#47569e] dark:placeholder:text-purple-200 focus:outline-none"
-              required
-            />
-            <Mail className="h-5 w-5 mx-4 text-[#47569e] dark:text-purple-200" />
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-[#0d0f1c] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
+            Forgot Password
+          </h2>
+        </div>
+
+        <div className="flex w-full grow bg-white dark:bg-gray-900 @container p-4">
+          <div className="w-full gap-1 overflow-hidden bg-[#f8f9fc] dark:bg-gray-900 @[480px]:gap-2 aspect-[3/2] rounded-xl flex">
+            <div
+              className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
+              style={{
+                backgroundImage: `url('${Assets.Pic11}')`,
+              }}
+            ></div>
           </div>
         </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full max-w-md h-12 bg-purple-700 text-white font-bold rounded-full hover:bg-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Sending Reset Email...
-            </div>
-          ) : (
-            "Send Reset Email"
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="w-4 h-4" />
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
           )}
-        </button>
+          {/* Email */}
+          <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+            <label className="flex flex-col min-w-40 flex-1">
+              <div className="flex w-full flex-1 items-stretch rounded-xl">
+                <input
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  placeholder="Email"
+                  className="disabled:opacity-50 transition-opacity duration-300  form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0d0f1c] dark:bg-gray-800 dark:text-white focus:outline-0 focus:ring-0 border-none bg-[#e6e9f4] focus:border-none h-14 placeholder:text-[#47569e] dark:placeholder:text-purple-200 p-4 rounded-r-none border-r-0 pr-2 text-base font-normal leading-normal"
+                  required
+                />
+                <div className="text-[#47569e] flex border-none bg-[#e6e9f4] dark:bg-gray-800 dark:text-purple-200 items-center justify-center pr-4 rounded-r-xl border-l-0">
+                  <Mail className="h-6 w-6" />
+                </div>
+              </div>
+            </label>
+          </div>
 
-        {/* Back to Login */}
-        <div className="flex flex-col">
-          <p className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center">
-            Remember your password?{" "}
-          </p>
-          <Link
-            to="/login"
-            className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center underline hover:text-purple-600 transition-colors"
-          >
+          {/* Sign Up Button */}
+          <div className="flex px-4 py-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 flex-1 bg-purple-600 dark:bg-purple-600 text-[#f8f9fc] text-base font-bold leading-normal tracking-[0.015em] hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <span className="truncate">Sending Reset Email...</span>
+                </>
+              ) : (
+                <span className="truncate">Send Reset Email</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+      <div>
+        <p className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center">
+          Rememberd my password?
+        </p>
+        <Link to="/login" className="block">
+          <p className="text-[#47569e] dark:text-purple-200 text-sm font-normal leading-normal pb-3 pt-1 px-4 text-center underline hover:text-purple-600 transition-colors">
             Sign In
-          </Link>
-          <div className="h-5 bg-white dark:bg-gray-900"></div>
-        </div>
-      </form>
+          </p>
+        </Link>
+        <div className="h-5 bg-white dark:bg-gray-900"></div>
+      </div>
     </div>
   );
 };

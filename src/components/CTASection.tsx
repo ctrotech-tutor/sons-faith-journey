@@ -19,7 +19,7 @@ const CTASection: React.FC<CTAProps> = ({
   userButtonText = 'Continue Your Journey',
   userButtonLink = '/dashboard',
   guestButtonText = 'Register Now',
-  guestButtonLink = '/register',
+  guestButtonLink = '/signup',
   className = '',
 }) => {
   const { user } = useAuth();
@@ -35,13 +35,13 @@ const CTASection: React.FC<CTAProps> = ({
     style={{ position: 'relative', overflow: 'hidden' }}
 >
   {/* Optional sparkles or light rays */}
-  {/* <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" /> */}
+  <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
 
-  <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight leading-tight drop-shadow-md">
+  <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent mb-6 tracking-tight leading-tight drop-shadow-md">
     {headline}
   </h3>
 
-  <p className="text-md sm:text-lg md:text-xl text-purple-900  dark:text-purple-200 mb-10 leading-relaxed max-w-xl mx-auto">
+  <p className="text-md sm:text-lg md:text-xl text-purple-900  dark:text-purple-100 mb-10 leading-relaxed max-w-xl mx-auto">
     {description}
   </p>
 

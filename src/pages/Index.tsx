@@ -248,7 +248,7 @@ const Index = () => {
           className="text-center mb-16"
         >
           <Badge className="bg-purple-100 dark:bg-gray-800 text-purple-700 mb-4 hover:text-white">What We Offer</Badge>
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent mb-6">
             Your Journey Awaits
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
@@ -266,7 +266,7 @@ const Index = () => {
 
         <CTASection
           headline="Ready to Transform Your Life?"
-          description="Join hundreds of men who are discovering purpose, building character, and growing in faith. Your transformation starts with one decision."
+          description="Join hundreds of sons and daughters who are discovering purpose, building character, and growing in faith. Your transformation starts with one decision."
         />
       </section>
 
