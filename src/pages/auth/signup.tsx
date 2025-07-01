@@ -317,7 +317,7 @@ const Signup = () => {
               type="button"
               onClick={handleGoogleSignup}
               disabled={loading}
-              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 flex-1 bg-[#e6e9f4] text-[#0d0f1c] dark:shadow-lg dark:bg-gray-800 dark:text-purple-200 gap-2 pl-5 text-base font-bold leading-normal tracking-[0.015em] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 flex-1 bg-[#e6e9f4] text-[#0d0f1c] dark:shadow-lg dark:bg-gray-800 dark:text-purple-200 gap-2 pl-5 text-base font-bold leading-normal tracking-[0.015em] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="text-[#0d0f1c] dark:text-purple-200">
                 <svg
@@ -340,7 +340,7 @@ const Signup = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 flex-1 bg-purple-700 dark:bg-purple-700 text-[#f8f9fc] text-base font-bold leading-normal tracking-[0.015em] hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 flex-1 bg-purple-600 dark:bg-purple-600 text-[#f8f9fc] text-base font-bold leading-normal tracking-[0.015em] hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
