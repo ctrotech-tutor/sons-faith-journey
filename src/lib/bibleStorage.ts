@@ -8,6 +8,7 @@ export interface BibleBook {
   testament: 'old' | 'new';
   chapters: number;
   verses: { [chapter: number]: number };
+  aliases?: string[]; // Alternative names for the book
 }
 
 export interface BibleVerse {
@@ -41,9 +42,10 @@ export class BibleStorage {
     if (this.initialized) return;
     
     try {
-      // Load basic Bible structure
+      console.log('Initializing Bible storage...');
       this.books = await this.loadBibleStructure();
       this.initialized = true;
+      console.log('Bible storage initialized with', this.books.length, 'books');
     } catch (error) {
       console.error('Failed to initialize Bible storage:', error);
       throw error;
@@ -53,19 +55,107 @@ export class BibleStorage {
   private async loadBibleStructure(): Promise<BibleBook[]> {
     return [
       // Old Testament
-      { id: 'gen', name: 'Genesis', abbreviation: 'Gen', testament: 'old', chapters: 50, verses: { 1: 31, 2: 25, 3: 24 } },
-      { id: 'exo', name: 'Exodus', abbreviation: 'Exo', testament: 'old', chapters: 40, verses: { 1: 22, 2: 25, 3: 22 } },
-      { id: 'lev', name: 'Leviticus', abbreviation: 'Lev', testament: 'old', chapters: 27, verses: { 1: 17, 2: 16, 3: 17 } },
-      { id: 'num', name: 'Numbers', abbreviation: 'Num', testament: 'old', chapters: 36, verses: { 1: 54, 2: 34, 3: 51 } },
-      { id: 'deu', name: 'Deuteronomy', abbreviation: 'Deu', testament: 'old', chapters: 34, verses: { 1: 46, 2: 37, 3: 29 } },
-      { id: 'psa', name: 'Psalms', abbreviation: 'Psa', testament: 'old', chapters: 150, verses: { 1: 6, 8: 9, 19: 14, 23: 6, 46: 11, 91: 16 } },
+      { 
+        id: 'gen', 
+        name: 'Genesis', 
+        abbreviation: 'Gen', 
+        testament: 'old', 
+        chapters: 50, 
+        verses: { 1: 31, 2: 25, 3: 24 },
+        aliases: ['Genesis', 'Gen']
+      },
+      { 
+        id: 'exo', 
+        name: 'Exodus', 
+        abbreviation: 'Exo', 
+        testament: 'old', 
+        chapters: 40, 
+        verses: { 1: 22, 2: 25, 3: 22 },
+        aliases: ['Exodus', 'Exo', 'Ex']
+      },
+      { 
+        id: 'lev', 
+        name: 'Leviticus', 
+        abbreviation: 'Lev', 
+        testament: 'old', 
+        chapters: 27, 
+        verses: { 1: 17, 2: 16, 3: 17 },
+        aliases: ['Leviticus', 'Lev']
+      },
+      { 
+        id: 'num', 
+        name: 'Numbers', 
+        abbreviation: 'Num', 
+        testament: 'old', 
+        chapters: 36, 
+        verses: { 1: 54, 2: 34, 3: 51 },
+        aliases: ['Numbers', 'Num']
+      },
+      { 
+        id: 'deu', 
+        name: 'Deuteronomy', 
+        abbreviation: 'Deu', 
+        testament: 'old', 
+        chapters: 34, 
+        verses: { 1: 46, 2: 37, 3: 29 },
+        aliases: ['Deuteronomy', 'Deut', 'Deu']
+      },
+      { 
+        id: 'psa', 
+        name: 'Psalms', 
+        abbreviation: 'Psa', 
+        testament: 'old', 
+        chapters: 150, 
+        verses: { 1: 6, 8: 9, 19: 14, 23: 6, 46: 11, 91: 16 },
+        aliases: ['Psalms', 'Psalm', 'Psa', 'Ps']
+      },
       
       // New Testament
-      { id: 'mat', name: 'Matthew', abbreviation: 'Mat', testament: 'new', chapters: 28, verses: { 1: 25, 2: 23, 3: 17 } },
-      { id: 'mar', name: 'Mark', abbreviation: 'Mar', testament: 'new', chapters: 16, verses: { 1: 45, 2: 28, 3: 35 } },
-      { id: 'luk', name: 'Luke', abbreviation: 'Luk', testament: 'new', chapters: 24, verses: { 1: 80, 2: 52, 3: 38 } },
-      { id: 'joh', name: 'John', abbreviation: 'Joh', testament: 'new', chapters: 21, verses: { 1: 51, 2: 25, 3: 36 } },
-      { id: 'rom', name: 'Romans', abbreviation: 'Rom', testament: 'new', chapters: 16, verses: { 1: 32, 2: 29, 3: 31, 8: 39 } },
+      { 
+        id: 'mat', 
+        name: 'Matthew', 
+        abbreviation: 'Mat', 
+        testament: 'new', 
+        chapters: 28, 
+        verses: { 1: 25, 2: 23, 3: 17 },
+        aliases: ['Matthew', 'Matt', 'Mt']
+      },
+      { 
+        id: 'mar', 
+        name: 'Mark', 
+        abbreviation: 'Mar', 
+        testament: 'new', 
+        chapters: 16, 
+        verses: { 1: 45, 2: 28, 3: 35 },
+        aliases: ['Mark', 'Mar', 'Mk']
+      },
+      { 
+        id: 'luk', 
+        name: 'Luke', 
+        abbreviation: 'Luk', 
+        testament: 'new', 
+        chapters: 24, 
+        verses: { 1: 80, 2: 52, 3: 38 },
+        aliases: ['Luke', 'Luk', 'Lk']
+      },
+      { 
+        id: 'joh', 
+        name: 'John', 
+        abbreviation: 'Joh', 
+        testament: 'new', 
+        chapters: 21, 
+        verses: { 1: 51, 2: 25, 3: 36 },
+        aliases: ['John', 'Joh', 'Jn']
+      },
+      { 
+        id: 'rom', 
+        name: 'Romans', 
+        abbreviation: 'Rom', 
+        testament: 'new', 
+        chapters: 16, 
+        verses: { 1: 32, 2: 29, 3: 31, 8: 39 },
+        aliases: ['Romans', 'Rom', 'Ro']
+      },
     ];
   }
 
@@ -81,32 +171,60 @@ export class BibleStorage {
 
   async downloadChapter(book: string, chapter: number, version: string): Promise<BibleChapter> {
     try {
-      const response = await fetch(`https://bible-api.com/${book}+${chapter}?translation=${version}`);
+      console.log('Downloading chapter:', { book, chapter, version });
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${book} ${chapter}`);
+      // Try different API endpoints and formats
+      const endpoints = [
+        `https://bible-api.com/${book}+${chapter}?translation=${version}`,
+        `https://bible-api.com/${book}${chapter}?translation=${version}`,
+        `https://bible-api.com/${encodeURIComponent(book)}+${chapter}?translation=${version}`
+      ];
+      
+      let lastError: Error | null = null;
+      
+      for (const endpoint of endpoints) {
+        try {
+          console.log('Trying endpoint:', endpoint);
+          const response = await fetch(endpoint);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          console.log('API Response:', data);
+          
+          if (!data.verses || data.verses.length === 0) {
+            throw new Error('No verses found in response');
+          }
+          
+          const bibleChapter: BibleChapter = {
+            book,
+            chapter,
+            version,
+            verses: data.verses.map((verse: any) => ({
+              book,
+              chapter,
+              verse: verse.verse,
+              text: verse.text.trim(),
+              version
+            }))
+          };
+
+          await this.cacheChapter(bibleChapter);
+          console.log('Chapter downloaded and cached successfully');
+          return bibleChapter;
+        } catch (error) {
+          console.warn(`Endpoint ${endpoint} failed:`, error);
+          lastError = error as Error;
+          continue;
+        }
       }
       
-      const data = await response.json();
-      
-      const bibleChapter: BibleChapter = {
-        book,
-        chapter,
-        version,
-        verses: data.verses?.map((verse: any) => ({
-          book,
-          chapter,
-          verse: verse.verse,
-          text: verse.text.trim(),
-          version
-        })) || []
-      };
-
-      await this.cacheChapter(bibleChapter);
-      return bibleChapter;
+      throw lastError || new Error('All endpoints failed');
     } catch (error) {
       console.error(`Error downloading ${book} ${chapter}:`, error);
-      throw error;
+      throw new Error(`Failed to download ${book} ${chapter}. Please check your internet connection and try again.`);
     }
   }
 
@@ -115,17 +233,42 @@ export class BibleStorage {
   }
 
   getBook(bookId: string): BibleBook | undefined {
-    return this.books.find(book => book.id === bookId || book.name.toLowerCase() === bookId.toLowerCase());
+    const searchTerm = bookId.toLowerCase().trim();
+    
+    return this.books.find(book => 
+      book.id === searchTerm || 
+      book.name.toLowerCase() === searchTerm ||
+      book.abbreviation.toLowerCase() === searchTerm ||
+      (book.aliases && book.aliases.some(alias => alias.toLowerCase() === searchTerm))
+    );
   }
 
   async getChapter(book: string, chapter: number, version: string): Promise<BibleChapter> {
+    console.log('Getting chapter:', { book, chapter, version });
+    
+    // Find the book first to validate
+    const bookData = this.getBook(book);
+    if (!bookData) {
+      throw new Error(`Book "${book}" not found. Please check the spelling.`);
+    }
+    
+    // Validate chapter number
+    if (chapter < 1 || chapter > bookData.chapters) {
+      throw new Error(`Chapter ${chapter} does not exist in ${bookData.name}. ${bookData.name} has ${bookData.chapters} chapters.`);
+    }
+    
+    // Use the standardized book name for API calls
+    const standardBookName = bookData.name;
+    
     // Try cache first
-    const cached = await this.getCachedChapter(book, chapter, version);
+    const cached = await this.getCachedChapter(standardBookName, chapter, version);
     if (cached) {
+      console.log('Found cached chapter');
       return cached;
     }
 
     // Download if not cached
-    return await this.downloadChapter(book, chapter, version);
+    console.log('Chapter not cached, downloading...');
+    return await this.downloadChapter(standardBookName, chapter, version);
   }
 }

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,17 +46,20 @@ const Bible = () => {
   }, []);
 
   useEffect(() => {
+    console.log('Bible component mounted with params:', { passage, day });
     initializeBible();
   }, [passage, selectedVersion]);
 
   const initializeBible = async () => {
     try {
+      console.log('Initializing Bible storage...');
       await bibleStorage.initialize();
       
       if (passage) {
+        console.log('Loading passage from params:', passage);
         await loadPassageFromParams();
       } else {
-        // Default to Genesis 1
+        console.log('No passage provided, loading default Genesis 1');
         await loadChapter('Genesis', 1);
       }
     } catch (error) {
@@ -71,31 +73,56 @@ const Bible = () => {
     if (!passage) return;
     
     try {
+      console.log('Parsing passage:', passage);
       const { bookName, chapterNumber } = parsePassage(passage);
+      console.log('Parsed:', { bookName, chapterNumber });
+      
       await loadChapter(bookName, chapterNumber);
       await logBibleReading(bookName, chapterNumber);
     } catch (error) {
       console.error('Error loading passage:', error);
-      setError('Failed to load the requested passage. Please try again.');
+      setError(`Failed to load passage "${decodeURIComponent(passage)}". Please try again.`);
       setLoading(false);
     }
   };
 
   const parsePassage = (passage: string) => {
-    const decodedPassage = decodeURIComponent(passage);
-    const parts = decodedPassage.trim().split(' ');
+    console.log('Raw passage:', passage);
+    const decodedPassage = decodeURIComponent(passage).trim();
+    console.log('Decoded passage:', decodedPassage);
     
+    // Handle different passage formats
     let bookName = '';
     let chapterNumber = 1;
     
-    if (parts[0].match(/^\d/)) {
-      bookName = parts[0] + ' ' + parts[1];
-      chapterNumber = parseInt(parts[2]) || 1;
-    } else {
+    // Split by common separators and clean up
+    const cleanPassage = decodedPassage.replace(/[,\-–]/g, ' ').replace(/\s+/g, ' ').trim();
+    const parts = cleanPassage.split(' ');
+    console.log('Split parts:', parts);
+    
+    // Handle numbered books (e.g., "1 Kings", "2 Corinthians")
+    if (parts.length >= 2 && /^\d/.test(parts[0])) {
+      bookName = `${parts[0]} ${parts[1]}`;
+      // Look for chapter number
+      const chapterPart = parts.find(part => /^\d+$/.test(part));
+      if (chapterPart) {
+        chapterNumber = parseInt(chapterPart);
+      }
+    } else if (parts.length >= 1) {
       bookName = parts[0];
-      chapterNumber = parseInt(parts[1]) || 1;
+      // Look for chapter number
+      const chapterPart = parts.find(part => /^\d+$/.test(part));
+      if (chapterPart) {
+        chapterNumber = parseInt(chapterPart);
+      }
     }
     
+    // Fallback: if no chapter found, default to 1
+    if (isNaN(chapterNumber) || chapterNumber < 1) {
+      chapterNumber = 1;
+    }
+    
+    console.log('Final parsed result:', { bookName, chapterNumber });
     return { bookName, chapterNumber };
   };
 
@@ -104,7 +131,20 @@ const Bible = () => {
     setError('');
     
     try {
+      console.log('Loading chapter:', { bookName, chapterNumber, version: selectedVersion });
+      
+      // Validate inputs
+      if (!bookName || bookName.trim() === '') {
+        throw new Error('Invalid book name provided');
+      }
+      
+      if (chapterNumber < 1) {
+        throw new Error('Invalid chapter number provided');
+      }
+      
       const chapter = await bibleStorage.getChapter(bookName, chapterNumber, selectedVersion);
+      console.log('Chapter loaded successfully:', chapter);
+      
       setCurrentChapter(chapter);
       setCurrentBook(bookName);
       setCurrentChapterNumber(chapterNumber);
@@ -113,7 +153,7 @@ const Bible = () => {
       if (!isOnline) {
         setError('This chapter is not available offline. Please connect to the internet to download it.');
       } else {
-        setError('Failed to load the chapter. Please try again.');
+        setError(`Failed to load ${bookName} ${chapterNumber}. The book name might be incorrect or the chapter doesn't exist.`);
       }
     } finally {
       setLoading(false);
@@ -213,6 +253,11 @@ const Bible = () => {
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-600 dark:text-purple-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300">Loading Scripture...</p>
+          {passage && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Loading: {decodeURIComponent(passage)}
+            </p>
+          )}
           {!isOnline && (
             <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
               Offline mode - Loading cached content
@@ -233,7 +278,12 @@ const Bible = () => {
               <CardContent className="p-8 text-center">
                 <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Error Loading Scripture</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">{error}</p>
+                {passage && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    Attempted to load: {decodeURIComponent(passage)}
+                  </p>
+                )}
                 <div className="space-y-3">
                   <Button onClick={() => navigate('/reading')} className="w-full">
                     <ArrowLeft className="h-4 w-4 mr-2" />
