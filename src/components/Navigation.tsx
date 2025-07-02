@@ -84,6 +84,7 @@ const Navigation = () => {
     // { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
     // { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/reading', icon: BookOpen, label: 'Readings' },
+    { path: '/bible', icon: BookOpen, label: 'Bible' },
     { path: '/post-manager', icon: Pencil, label: 'Manage Post' },
     { path: '/create-post', icon: PencilLine, label: 'Create Post' },
   ];

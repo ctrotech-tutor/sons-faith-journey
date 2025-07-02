@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -8,7 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, BookOpen, Globe, AlertCircle, Loader2, Copy, Check } from 'lucide-react';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
 import { useToast } from '@/components/ui/use-toast';
-import PullToRefresh from '@/components/PullToRefresh'
+import PullToRefresh from '@/components/PullToRefresh';
+import BibleBookList from '@/components/bible/BibleBookList';
+import BibleChapterList from '@/components/bible/BibleChapterList';
+import BibleReader from '@/components/bible/BibleReader';
+import { BibleBook, getBookByName, bibleVersions } from '@/data/bibleBooks';
+
+type ViewMode = 'books' | 'chapters' | 'reader' | 'passage';
 
 interface BibleVerse {
   chapter: number;
@@ -17,32 +22,48 @@ interface BibleVerse {
 }
 
 const Bible = () => {
-  const { passage, day } = useParams();
+  const { passage, day, book: bookParam, chapter: chapterParam } = useParams();
   const navigate = useNavigate();
   const { logActivity } = useActivitySync();
   const { toast } = useToast();
+  
+  // State for standalone Bible app
+  const [viewMode, setViewMode] = useState<ViewMode>('books');
+  const [selectedBook, setSelectedBook] = useState<BibleBook | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<number>(1);
+  
+  // State for passage reading (from reading plan)
   const [selectedVersion, setSelectedVersion] = useState('kjv');
   const [chapterData, setChapterData] = useState<BibleVerse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [bookName, setBookName] = useState('');
   const [chapterRange, setChapterRange] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const bibleVersions = [
-    { value: 'kjv', label: 'King James Version (KJV)' },
-    { value: 'esv', label: 'English Standard Version (ESV)' },
-    { value: 'niv', label: 'New International Version (NIV)' },
-    { value: 'nlt', label: 'New Living Translation (NLT)' },
-    { value: 'nasb', label: 'New American Standard Bible (NASB)' }
-  ];
+  // Determine if this is a passage view (from reading plan) or standalone
+  const isPassageView = !!(passage && day);
+  const isDirectBookChapter = !!(bookParam && chapterParam);
 
   useEffect(() => {
-    if (passage) {
+    if (isPassageView) {
+      setViewMode('passage');
+      setLoading(true);
       loadBibleChapter();
       logBibleReading();
+    } else if (isDirectBookChapter && bookParam && chapterParam) {
+      const book = getBookByName(bookParam);
+      if (book) {
+        setSelectedBook(book);
+        setSelectedChapter(parseInt(chapterParam));
+        setViewMode('reader');
+      } else {
+        setError('Book not found');
+      }
+    } else {
+      setViewMode('books');
     }
-  }, [passage, selectedVersion]);
+  }, [passage, day, bookParam, chapterParam, selectedVersion]);
 
   const handleRefresh = async () => {
     if (passage) {
@@ -93,14 +114,12 @@ const Bible = () => {
       setBookName(parsedBookName);
       setChapterRange(parsedChapterRange);
 
-      // Handle chapter ranges (e.g., "3-4" or "3")
       const chapters = parsedChapterRange.includes('-') 
         ? parsedChapterRange.split('-').map(c => parseInt(c.trim()))
         : [parseInt(parsedChapterRange)];
 
       const allVerses: BibleVerse[] = [];
 
-      // Fetch all chapters in the range
       for (let i = chapters[0]; i <= (chapters[1] || chapters[0]); i++) {
         try {
           const response = await fetch(`https://bible-api.com/${parsedBookName}+${i}?translation=${selectedVersion}`);
@@ -164,9 +183,43 @@ const Bible = () => {
     }
   };
 
-  
+  const handleBack = () => {
+    if (isPassageView) {
+      navigate('/reading');
+    } else if (viewMode === 'reader') {
+      setViewMode('chapters');
+    } else if (viewMode === 'chapters') {
+      setViewMode('books');
+    } else {
+      navigate(-1);
+    }
+  };
 
-  if (loading) {
+  const handleSelectBook = (book: BibleBook) => {
+    setSelectedBook(book);
+    setViewMode('chapters');
+  };
+
+  const handleSelectChapter = (chapter: number) => {
+    setSelectedChapter(chapter);
+    setViewMode('reader');
+    // Update URL for standalone navigation
+    if (!isPassageView) {
+      navigate(`/bible/${selectedBook?.name}/${chapter}`, { replace: true });
+    }
+  };
+
+  const handleBackToChapters = () => {
+    setViewMode('chapters');
+  };
+
+  const handleBackToBooks = () => {
+    setViewMode('books');
+    setSelectedBook(null);
+  };
+
+  // Loading state for passage view
+  if (isPassageView && loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
         <div className="text-center">
@@ -177,16 +230,17 @@ const Bible = () => {
     );
   }
 
-  if (error) {
+  // Error state for passage view
+  if (isPassageView && error) {
     return (
       <>
-      <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
+        <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Error Loading Passage</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
-            <Button onClick={() => navigate('/reading')} className="mr-4">
+            <Button onClick={handleBack} className="mr-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Reading
             </Button>
@@ -195,31 +249,143 @@ const Bible = () => {
             </Button>
           </div>
         </div>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 p-4">
-        <div className="max-w-4xl mx-auto pt-20">
-          <Card className="shadow-xl dark:bg-gray-800 dark:border-gray-700">
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Error Loading Passage</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
-              <Button onClick={() => navigate('/reading')} className="mr-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Reading
-              </Button>
-              <Button onClick={() => window.location.reload()} variant="outline">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
       </>
     );
   }
 
+  // Passage view (from reading plan)
+  if (isPassageView) {
+    return (
+      <>
+        <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900">
+          {/* Fixed Navigation Bar */}
+          <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b dark:border-gray-700 shadow-sm">
+            <div className="max-w-4xl mx-auto p-4">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  className="flex items-center space-x-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back</span>
+                </Button>
+
+                <div className="flex items-center space-x-4">
+                  <Button
+                    onClick={copyToClipboard}
+                    variant="outline"
+                    className="flex items-center space-x-2"
+                    disabled={chapterData.length === 0}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span>Copy</span>
+                  </Button>
+
+                  <div className="flex items-center space-x-2">
+                    <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bibleVersions.map((version) => (
+                          <SelectItem key={version.value} value={version.value}>
+                            {version.value.toUpperCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto p-4 pt-24">
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 text-center"
+            >
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                {bookName} {chapterRange}
+              </h1>
+              <p className="text-lg text-purple-600 dark:text-purple-400">
+                Day {day} Reading • {bibleVersions.find(v => v.value === selectedVersion)?.label}
+              </p>
+            </motion.div>
+
+            {/* Bible Content */}
+            <Card className="shadow-xl dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <span className="dark:text-gray-100">{bookName} {chapterRange.includes('-') ? `Chapters ${chapterRange}` : `Chapter ${chapterRange}`}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                {chapterData.length > 0 ? (
+                  <div className="space-y-6">
+                    {chapterData.reduce((acc: { [key: number]: BibleVerse[] }, verse) => {
+                      if (!acc[verse.chapter]) acc[verse.chapter] = [];
+                      acc[verse.chapter].push(verse);
+                      return acc;
+                    }, {}) && Object.entries(
+                      chapterData.reduce((acc: { [key: number]: BibleVerse[] }, verse) => {
+                        if (!acc[verse.chapter]) acc[verse.chapter] = [];
+                        acc[verse.chapter].push(verse);
+                        return acc;
+                      }, {})
+                    ).map(([chapter, verses]) => (
+                      <div key={chapter} className="border-b dark:border-gray-700 pb-6 last:border-b-0">
+                        {chapterRange.includes('-') && (
+                          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+                            Chapter {chapter}
+                          </h3>
+                        )}
+                        <div className="space-y-4">
+                          {verses.map((verse, index) => (
+                            <motion.div
+                              key={`${verse.chapter}-${verse.verse}`}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.02 }}
+                              className="flex space-x-3"
+                            >
+                              <span className="text-purple-600 dark:text-purple-400 font-bold text-sm mt-1 min-w-[2rem] flex-shrink-0">
+                                {verse.verse}
+                              </span>
+                              <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">
+                                {verse.text}
+                              </p>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 dark:text-gray-400">No verses found for this passage.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Standalone Bible app
   return (
-    <>
-    <PullToRefresh onRefresh={handleRefresh} spinnerDuration={1500} checkDuration={400} />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900">
       {/* Fixed Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b dark:border-gray-700 shadow-sm">
@@ -227,123 +393,48 @@ const Bible = () => {
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
-              onClick={() => navigate('/reading')}
+              onClick={handleBack}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Back</span>
             </Button>
 
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={copyToClipboard}
-                variant="outline"
-                className="flex items-center space-x-2"
-                disabled={chapterData.length === 0}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                <span></span>
-              </Button>
-
-              <div className="flex items-center space-x-2">
-                <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bibleVersions.map((version) => (
-                      <SelectItem key={version.value} value={version.value}>
-                        {version.value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex items-center space-x-2">
+              <BookOpen className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                Bible
+              </h1>
             </div>
+
+            <div className="w-20" /> {/* Spacer for centering */}
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto p-4 pt-24">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 text-center"
-        >
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            {bookName} {chapterRange}
-          </h1>
-          <p className="text-lg text-purple-600 dark:text-purple-400">
-            Day {day} Reading • {bibleVersions.find(v => v.value === selectedVersion)?.label}
-          </p>
-        </motion.div>
+        {viewMode === 'books' && (
+          <BibleBookList onSelectBook={handleSelectBook} />
+        )}
 
-        {/* Bible Content */}
-        <Card className="shadow-xl dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <span className="dark:text-gray-100">{bookName} {chapterRange.includes('-') ? `Chapters ${chapterRange}` : `Chapter ${chapterRange}`}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8">
-            {chapterData.length > 0 ? (
-              <div className="space-y-6">
-                {/* Group verses by chapter */}
-                {chapterData.reduce((acc: { [key: number]: BibleVerse[] }, verse) => {
-                  if (!acc[verse.chapter]) acc[verse.chapter] = [];
-                  acc[verse.chapter].push(verse);
-                  return acc;
-                }, {}) && Object.entries(
-                  chapterData.reduce((acc: { [key: number]: BibleVerse[] }, verse) => {
-                    if (!acc[verse.chapter]) acc[verse.chapter] = [];
-                    acc[verse.chapter].push(verse);
-                    return acc;
-                  }, {})
-                ).map(([chapter, verses]) => (
-                  <div key={chapter} className="border-b dark:border-gray-700 pb-6 last:border-b-0">
-                    {chapterRange.includes('-') && (
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-                        Chapter {chapter}
-                      </h3>
-                    )}
-                    <div className="space-y-4">
-                      {verses.map((verse, index) => (
-                        <motion.div
-                          key={`${verse.chapter}-${verse.verse}`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="flex space-x-3"
-                        >
-                          <span className="text-purple-600 dark:text-purple-400 font-bold text-sm mt-1 min-w-[2rem] flex-shrink-0">
-                            {verse.verse}
-                          </span>
-                          <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">
-                            {verse.text}
-                          </p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">No verses found for this passage.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {viewMode === 'chapters' && selectedBook && (
+          <BibleChapterList
+            book={selectedBook}
+            onSelectChapter={handleSelectChapter}
+            onBack={handleBackToBooks}
+          />
+        )}
+
+        {viewMode === 'reader' && selectedBook && (
+          <BibleReader
+            book={selectedBook}
+            chapter={selectedChapter}
+            onBack={handleBackToChapters}
+            initialVersion={selectedVersion}
+          />
+        )}
       </div>
     </div>
-    </>
   );
 };
 
