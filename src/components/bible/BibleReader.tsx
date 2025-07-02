@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ interface BibleReaderProps {
   book: BibleBook;
   chapter: number;
   onBack: () => void;
+  onChapterChange: (newChapter: number) => void;
   initialVersion?: string;
 }
 
@@ -38,6 +40,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   book, 
   chapter, 
   onBack,
+  onChapterChange,
   initialVersion = 'kjv'
 }) => {
   const { toast } = useToast();
@@ -166,8 +169,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   const navigateChapter = (direction: 'prev' | 'next') => {
     const newChapter = direction === 'prev' ? chapter - 1 : chapter + 1;
     if (newChapter >= 1 && newChapter <= book.chapters) {
-      window.history.pushState(null, '', `/bible/${book.name}/${newChapter}`);
-      // This would need to be handled by parent component to update the chapter prop
+      onChapterChange(newChapter);
     }
   };
 

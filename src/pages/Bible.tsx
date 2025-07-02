@@ -188,34 +188,41 @@ const Bible = () => {
       navigate('/reading');
     } else if (viewMode === 'reader') {
       setViewMode('chapters');
+      navigate(`/bible/${selectedBook?.name}`, { replace: true });
     } else if (viewMode === 'chapters') {
       setViewMode('books');
+      navigate('/bible', { replace: true });
     } else {
-      navigate(-1);
+      navigate('/');
     }
   };
 
   const handleSelectBook = (book: BibleBook) => {
     setSelectedBook(book);
     setViewMode('chapters');
+    navigate(`/bible/${book.name}`, { replace: true });
   };
 
   const handleSelectChapter = (chapter: number) => {
     setSelectedChapter(chapter);
     setViewMode('reader');
-    // Update URL for standalone navigation
-    if (!isPassageView) {
-      navigate(`/bible/${selectedBook?.name}/${chapter}`, { replace: true });
-    }
+    navigate(`/bible/${selectedBook?.name}/${chapter}`, { replace: true });
+  };
+
+  const handleChapterChange = (newChapter: number) => {
+    setSelectedChapter(newChapter);
+    navigate(`/bible/${selectedBook?.name}/${newChapter}`, { replace: true });
   };
 
   const handleBackToChapters = () => {
     setViewMode('chapters');
+    navigate(`/bible/${selectedBook?.name}`, { replace: true });
   };
 
   const handleBackToBooks = () => {
     setViewMode('books');
     setSelectedBook(null);
+    navigate('/bible', { replace: true });
   };
 
   // Loading state for passage view
@@ -407,7 +414,7 @@ const Bible = () => {
               </h1>
             </div>
 
-            <div className="w-20" /> {/* Spacer for centering */}
+            <div className="w-20" />
           </div>
         </div>
       </div>
@@ -430,6 +437,7 @@ const Bible = () => {
             book={selectedBook}
             chapter={selectedChapter}
             onBack={handleBackToChapters}
+            onChapterChange={handleChapterChange}
             initialVersion={selectedVersion}
           />
         )}
