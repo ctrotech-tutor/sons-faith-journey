@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Lock, BookOpen, ChevronRight, Calendar, SquareCheck, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useActivitySync } from '@/lib/hooks/useActivitySync';
-import AdvancedReadingFeatures from './AdvancedReadingFeatures';
+import  AdvancedReadingFeatures  from './AdvancedReadingFeatures';
 
 interface ReadingDayCardProps {
   dayData: {
@@ -36,15 +36,6 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 }) => {
   const { loading } = useActivitySync();
 
-  // Create the bible passage URL - encode the passage for the URL
-  const getPassageUrl = () => {
-    if (dayData.passages && dayData.passages.length > 0) {
-      const passage = encodeURIComponent(dayData.passages[0]);
-      return `/bible/${passage}/${dayData.day}`;
-    }
-    return `/bible`;
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -54,13 +45,13 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
     >
       <Card
         className={`
-          relative h-full flex flex-col border border-gray-200 dark:border-gray-700
-          rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm shadow-lg
-          transition-all overflow-hidden
-          ${isToday ? 'ring-2 ring-purple-500 dark:ring-purple-400' : ''}
-          ${isLocked ? 'opacity-60' : ''}
-          ${isCompleted ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40' : ''}
-        `}
+    relative h-full flex flex-col border border-gray-200 dark:border-gray-700
+    rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm shadow-lg
+    transition-all overflow-hidden
+    ${isToday ? 'ring-2 ring-purple-500 dark:ring-purple-400' : ''}
+    ${isLocked ? 'opacity-60' : ''}
+    ${isCompleted ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40' : ''}
+  `}
       >
         <CardContent className="p-5 sm:p-6 flex-grow space-y-3">
           <div className="flex justify-between items-center">
@@ -68,10 +59,10 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
               <Badge
                 variant="outline"
                 className={`
-                  text-xs px-2 py-1 font-medium rounded-full
-                  ${isCompleted ? 'bg-green-500/90 text-white' : ''}
-                  ${isToday && !isCompleted ? 'bg-purple-500/90 text-white' : ''}
-                `}
+            text-xs px-2 py-1 font-medium rounded-full
+            ${isCompleted ? 'bg-green-500/90 text-white' : ''}
+            ${isToday && !isCompleted ? 'bg-purple-500/90 text-white' : ''}
+          `}
               >
                 Day {dayData.day}
               </Badge>
@@ -102,7 +93,7 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 
           <div className="pt-2">
             <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Today's Reading:
+              Today’s Reading:
             </div>
             <div className="flex flex-wrap gap-1">
               {dayData.passages.map((passage, i) => (
@@ -120,7 +111,7 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 
         <CardFooter className="px-5 sm:px-6 pb-4 pt-0 flex flex-wrap justify-between gap-2">
           <Link
-            to={getPassageUrl()}
+            to={`/bible/${dayData.passages[0]}/${dayData.day}`}
             className={isLocked ? 'pointer-events-none opacity-50' : ''}
           >
             <Button
@@ -140,9 +131,9 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
               variant={isCompleted ? 'ghost' : 'outline'}
               size="sm"
               className={`
-                text-xs px-3 py-1.5 rounded-full
-                ${isCompleted ? 'text-green-600 hover:text-green-700 dark:text-green-400' : ''}
-              `}
+          text-xs px-3 py-1.5 rounded-full
+          ${isCompleted ? 'text-green-600 hover:text-green-700 dark:text-green-400' : ''}
+        `}
               onClick={() => onToggleComplete(!isCompleted)}
               disabled={isProcessing || loading}
             >
