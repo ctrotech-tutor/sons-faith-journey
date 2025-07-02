@@ -36,11 +36,6 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 }) => {
   const { loading } = useActivitySync();
 
-  // Helper function to format passage for URL
-  const formatPassageForUrl = (passage: string) => {
-    return encodeURIComponent(passage.trim());
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -98,7 +93,7 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 
           <div className="pt-2">
             <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Today's Reading:
+              Today’s Reading:
             </div>
             <div className="flex flex-wrap gap-1">
               {dayData.passages.map((passage, i) => (
@@ -116,7 +111,7 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 
         <CardFooter className="px-5 sm:px-6 pb-4 pt-0 flex flex-wrap justify-between gap-2">
           <Link
-            to={`/bible/passage/${formatPassageForUrl(dayData.passages[0])}/${dayData.day}`}
+            to={`/bible/${dayData.passages[0]}/${dayData.day}`}
             className={isLocked ? 'pointer-events-none opacity-50' : ''}
           >
             <Button
