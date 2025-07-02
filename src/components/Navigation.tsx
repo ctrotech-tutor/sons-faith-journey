@@ -30,7 +30,8 @@ import {
   User,
   CheckCircle2,
   Pencil,
-  PencilLine
+  PencilLine,
+  Book
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,16 +75,8 @@ const Navigation = () => {
       label: 'Community',
       unreadCount: unreadCounts.community
     },
-    // { 
-    //   path: '/church-room', 
-    //   icon: MessageCircle, 
-    //   label: 'Church Room', 
-    //   badge: 'Chat',
-    //   unreadCount: unreadCounts.chat
-    // },
-    // { path: '/chat-supervisor', icon: Shield, label: 'Support Chat', badge: 'Private' },
-    // { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/reading', icon: BookOpen, label: 'Readings' },
+    { path: '/bible', icon: Book, label: 'Bible' },
     { path: '/post-manager', icon: Pencil, label: 'Manage Post' },
     { path: '/create-post', icon: PencilLine, label: 'Create Post' },
   ];

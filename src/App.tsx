@@ -119,7 +119,15 @@ const AppContent = () => {
         <Route path="/reading" element={<Reading />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/edit-post/:postId" element={<EditPost />} />
-        <Route path="/bible/:passage/:day" element={<Bible />} />
+        
+        {/* Bible Routes - Multiple access patterns */}
+        <Route path="/bible" element={<Bible />} />
+        <Route path="/bible/:book" element={<Bible />} />
+        <Route path="/bible/:book/:chapter" element={<Bible />} />
+        <Route path="/bible/:book/:chapter/:verse" element={<Bible />} />
+        <Route path="/bible/passage/:passage" element={<Bible />} />
+        <Route path="/bible/passage/:passage/:day" element={<Bible />} />
+        
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/bookmarks" element={<Bookmark />} />
         <Route path="/post-approval" element={<PostApproval />} />
