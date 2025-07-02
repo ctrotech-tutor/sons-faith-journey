@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,11 +48,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   const [copiedVerse, setCopiedVerse] = useState<number | null>(null);
   const [favoriteVerses, setFavoriteVerses] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    loadChapter();
-  }, [book, chapter, selectedVersion]);
-
-  const loadChapter = async () => {
+  const loadChapter = useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -68,7 +64,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({
       const data = await response.json();
       
       if (data.verses && data.verses.length > 0) {
-        const versesArray: BibleVerse[] = data.verses.map((verse: any) => ({
+        const versesArray: BibleVerse[] = data.verses.map((verse: { verse: number; text: string }) => ({
           chapter,
           verse: verse.verse,
           text: verse.text.trim()
@@ -83,7 +79,12 @@ const BibleReader: React.FC<BibleReaderProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  },[chapter, selectedVersion, book.name]);
+
+   useEffect(() => {
+    loadChapter();
+  }, [book, chapter, selectedVersion, loadChapter]);
+
 
   const copyVerse = async (verse: BibleVerse) => {
     const text = `${book.name} ${verse.chapter}:${verse.verse}\n"${verse.text}"`;

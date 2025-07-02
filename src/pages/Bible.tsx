@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,36 +45,7 @@ const Bible = () => {
   const isPassageView = !!(passage && day);
   const isDirectBookChapter = !!(bookParam && chapterParam);
 
-  useEffect(() => {
-    if (isPassageView) {
-      setViewMode('passage');
-      setLoading(true);
-      loadBibleChapter();
-      logBibleReading();
-    } else if (isDirectBookChapter && bookParam && chapterParam) {
-      const book = getBookByName(bookParam);
-      if (book) {
-        setSelectedBook(book);
-        setSelectedChapter(parseInt(chapterParam));
-        setViewMode('reader');
-      } else {
-        setError('Book not found');
-      }
-    } else {
-      setViewMode('books');
-    }
-  }, [passage, day, bookParam, chapterParam, selectedVersion]);
-
-  const handleRefresh = async () => {
-    if (passage) {
-      setTimeout(async () => {
-        await loadBibleChapter();
-        await logBibleReading();
-      }, 2000);
-    }
-  };
-
-  const logBibleReading = async () => {
+  const logBibleReading = useCallback(async () => {
     if (!passage || !day) return;
     
     await logActivity({
@@ -82,27 +53,9 @@ const Bible = () => {
       timestamp: new Date(),
       data: { passage, day, version: selectedVersion }
     });
-  };
+  }, [passage, day, selectedVersion, logActivity]);
 
-  const parsePassage = (passage: string) => {
-    const decodedPassage = decodeURIComponent(passage);
-    const parts = decodedPassage.trim().split(' ');
-    
-    let bookName = '';
-    let chapterRange = '';
-    
-    if (parts[0].match(/^\d/)) {
-      bookName = parts[0] + ' ' + parts[1];
-      chapterRange = parts[2] || '1';
-    } else {
-      bookName = parts[0];
-      chapterRange = parts[1] || '1';
-    }
-    
-    return { bookName, chapterRange };
-  };
-
-  const loadBibleChapter = async () => {
+  const loadBibleChapter = useCallback(async () => {
     if (!passage) return;
     
     setLoading(true);
@@ -132,7 +85,7 @@ const Bible = () => {
           const data = await response.json();
           
           if (data.verses && data.verses.length > 0) {
-            const versesArray: BibleVerse[] = data.verses.map((verse: any) => ({
+            const versesArray: BibleVerse[] = data.verses.map((verse: { verse: number; text: string }) => ({
               chapter: i,
               verse: verse.verse,
               text: verse.text.trim()
@@ -157,6 +110,53 @@ const Bible = () => {
     } finally {
       setLoading(false);
     }
+  },[passage, selectedVersion]);
+
+  useEffect(() => {
+    if (isPassageView) {
+      setViewMode('passage');
+      setLoading(true);
+      loadBibleChapter();
+      logBibleReading();
+    } else if (isDirectBookChapter && bookParam && chapterParam) {
+      const book = getBookByName(bookParam);
+      if (book) {
+        setSelectedBook(book);
+        setSelectedChapter(parseInt(chapterParam));
+        setViewMode('reader');
+      } else {
+        setError('Book not found');
+      }
+    } else {
+      setViewMode('books');
+    }
+  }, [passage, day, bookParam, chapterParam, selectedVersion, loadBibleChapter, logBibleReading, isDirectBookChapter, isPassageView]);
+
+  const handleRefresh = async () => {
+    if (passage) {
+      setTimeout(async () => {
+        await loadBibleChapter();
+        await logBibleReading();
+      }, 2000);
+    }
+  };
+
+  const parsePassage = (passage: string) => {
+    const decodedPassage = decodeURIComponent(passage);
+    const parts = decodedPassage.trim().split(' ');
+    
+    let bookName = '';
+    let chapterRange = '';
+    
+    if (parts[0].match(/^\d/)) {
+      bookName = parts[0] + ' ' + parts[1];
+      chapterRange = parts[2] || '1';
+    } else {
+      bookName = parts[0];
+      chapterRange = parts[1] || '1';
+    }
+    
+    return { bookName, chapterRange };
   };
 
   const copyToClipboard = async () => {
