@@ -70,6 +70,14 @@ const Bible = () => {
     });
   };
 
+  const handleBack = () => {
+    if (day) {
+      navigate('/reading');
+    } else {
+      navigate(-1);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center">
@@ -108,7 +116,7 @@ const Bible = () => {
                   </p>
                 )}
                 <div className="space-y-3">
-                  <Button onClick={() => navigate('/reading')} className="w-full">
+                  <Button onClick={handleBack} className="w-full">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Reading Plan
                   </Button>
@@ -133,7 +141,7 @@ const Bible = () => {
           onVersionChange={setSelectedVersion}
           isOnline={isOnline}
           currentChapter={currentChapter}
-          onBack={() => navigate(day ? '/reading' : -1)}
+          onBack={handleBack}
         />
 
         <div className="pt-40 max-w-7xl mx-auto">
