@@ -22,6 +22,8 @@ export interface UserStats {
   timeSpentReading: number;
   currentPage?: string;
   sessionStart?: any;
+  totalEngagementScore?: number;
+  [key: string]: any;
 }
 
 export interface ActivityFilter {
@@ -435,6 +437,51 @@ export const useActivitySync = () => {
     }
   }, [user, userDocRef, toast]);
 
+  // Enhanced activity tracking with real-time updates
+  const trackEngagement = useCallback(async (engagementType: 'post_like' | 'post_comment' | 'post_share' | 'page_view' | 'feature_use', details: any) => {
+    if (!user || !userDocRef) return null;
+
+    try {
+      const timestamp = serverTimestamp();
+      const engagementActivity = {
+        type: engagementType,
+        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp,
+        data: {
+          ...details,
+          sessionId: `session-${Date.now()}`,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }
+      };
+
+      await updateDoc(userDocRef, {
+        recentActivities: arrayUnion(engagementActivity),
+        lastActiveDate: new Date().toISOString(),
+        [`${engagementType}_count`]: (userStats[`${engagementType}_count` as keyof UserStats] as number || 0) + 1,
+        totalEngagementScore: (userStats.totalEngagementScore || 0) + getEngagementWeight(engagementType)
+      });
+
+      return engagementActivity.id;
+    } catch (error) {
+      console.error('Error tracking engagement:', error);
+      return null;
+    }
+  }, [user, userDocRef, userStats]);
+
+  const getEngagementWeight = (type: string): number => {
+    const weights = {
+      'post_like': 1,
+      'post_comment': 3,
+      'post_share': 5,
+      'page_view': 0.5,
+      'feature_use': 2,
+      'reading_completed': 10,
+      'bible_reading': 8
+    };
+    return weights[type as keyof typeof weights] || 1;
+  };
+
   const calculateStreak = (progressArray: number[]) => {
     if (progressArray.length === 0) return 0;
     
@@ -531,14 +578,9 @@ export const useActivitySync = () => {
     getTodayDayNumber,
     trackActivity,
     trackBibleReading,
-    clearActivity: async (activityId: string) => {
-      // ... keep existing code (clearActivity implementation)
-      return true;
-    },
-    clearAllActivities: async () => {
-      // ... keep existing code (clearAllActivities implementation) 
-      return true;
-    },
+    trackEngagement,
+    clearActivity,
+    clearAllActivities,
     filterActivities,
     loading,
     error,
