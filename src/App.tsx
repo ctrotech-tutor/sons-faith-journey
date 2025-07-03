@@ -69,7 +69,7 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
-  //useShield();
+  // useShield();
   //useDisablePullToRefresh();
   const location = useLocation();
   const navigate = useNavigate();
