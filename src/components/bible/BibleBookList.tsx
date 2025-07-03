@@ -53,7 +53,7 @@ const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-xl font-bold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent">
-              Study Scripture
+               Scripture Study
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -76,7 +76,7 @@ const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
                 onClick={() => navigate("/profile")}
               />
               <AvatarFallback>
-                <div className="size-10 rounded-full bg-cover bg-center bg-gray-300">
+                <div className="size-10 rounded-full bg-cover bg-center bg-gray-300 flex items-center justify-center">
                   <User className="h-6 w-6 text-gray-500" />
                 </div>
               </AvatarFallback>
@@ -200,7 +200,7 @@ const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
 
       <footer className="bg-bible-border/30 mt-16">
         <div className="container mx-auto px-6 py-8 text-center text-bible-muted">
-          <p>© 2024 Scripture Study. All Rights Reserved.</p>
+          <p>© 2025 Scripture Study. All Rights Reserved.</p>
         </div>
       </footer>
     </div>
