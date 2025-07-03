@@ -386,33 +386,8 @@ const Bible = () => {
 
   // Standalone Bible app
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900">
-      {/* Fixed Navigation Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b dark:border-gray-700 shadow-sm">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
-            </Button>
-
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                Bible
-              </h1>
-            </div>
-
-            <div className="w-20" /> {/* Spacer for centering */}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto p-4 pt-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto">
         {viewMode === 'books' && (
           <BibleBookList onSelectBook={handleSelectBook} />
         )}

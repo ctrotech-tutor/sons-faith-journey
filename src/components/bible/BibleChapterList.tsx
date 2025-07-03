@@ -41,11 +41,12 @@ const BibleChapterList: React.FC<BibleChapterListProps> = ({
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h2 className="text-4xl font-bold tracking-tight">{book.name}</h2>
+            <span className="text-lg text-bible-muted">({book.shortName})</span>
           </div>
 
           <div className="rounded-lg bg-white p-4 shadow-sm sm:p-6">
             <h3 className="mb-6 text-2xl font-semibold tracking-tight">Chapters</h3>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-5 gap-4 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-5">
               {chapters.map((chapter, index) => (
                 <motion.div
                   key={chapter}

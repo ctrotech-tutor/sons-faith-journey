@@ -8,8 +8,7 @@ const ScrollToTop = () => {
     // Smooth scroll to top when route changes
     window.scrollTo({ 
       top: 0, 
-      left: 0, 
-      behavior: 'smooth' 
+      left: 0,
     });
   }, [location]);
 

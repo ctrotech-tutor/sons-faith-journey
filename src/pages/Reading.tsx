@@ -161,7 +161,7 @@ export default function ReadingPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(-1)}
-                  className="ripple-effect text-white rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors"
+                  className="text-black dark:text-white ripple-effect rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -186,7 +186,7 @@ export default function ReadingPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="ripple-effect text-white rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors"
+                      className="text-black dark:text-white ripple-effect rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors"
                     >
                       <BarChart2 className="h-4 w-4" />
                     </Button>

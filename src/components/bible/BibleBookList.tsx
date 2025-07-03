@@ -1,38 +1,60 @@
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { BookOpen, Search, Bookmark } from 'lucide-react';
-import { useState } from 'react';
-import { bibleBooks, getBooksByTestament, BibleBook } from '@/data/bibleBooks';
-
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Bookmark, ArrowLeft, User } from "lucide-react";
+import { useState } from "react";
+import { bibleBooks, getBooksByTestament, BibleBook } from "@/data/bibleBooks";
+import { useNavigate } from "react-router-dom";
+import { useUserProfile } from "@/lib/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 interface BibleBookListProps {
   onSelectBook: (book: BibleBook) => void;
 }
 
 const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTestament, setSelectedTestament] = useState<'Old' | 'New' | 'All'>('All');
+  const [searchTerm, setSearchTerm] = useState("");
+  const profile = useUserProfile();
+  const [selectedTestament, setSelectedTestament] = useState<
+    "OT" | "NT" | "All"
+  >("All");
 
-  const filteredBooks = bibleBooks.filter(book => {
-    const matchesSearch = book.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.shortName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTestament = selectedTestament === 'All' || book.testament === selectedTestament;
+  const filteredBooks = bibleBooks.filter((book) => {
+    const matchesSearch =
+      book.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.shortName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTestament =
+      selectedTestament === "All" || book.testament === selectedTestament;
     return matchesSearch && matchesTestament;
   });
 
-  const oldTestamentBooks = getBooksByTestament('Old');
-  const newTestamentBooks = getBooksByTestament('New');
+  const oldTestamentBooks = getBooksByTestament("OT");
+  const newTestamentBooks = getBooksByTestament("NT");
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-bible-bg font-newsreader text-bible-text">
+    <div className="min-h-screen bg-white dark:bg-gray-900 font-newseader text-bible-text">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-bible-bg/80 backdrop-blur-sm border-b border-bible-border">
-        <div className="container mx-auto flex items-center justify-between px-6 py-4">
+      <motion.div
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 left-0 w-full z-40 backdrop-blur-md bg-white/70 dark:bg-gray-900/60 border-b border-white/20 dark:border-white/10 shadow-sm"
+      >
+        <div className="container mx-auto flex items-center justify-between px-2 py-3">
+          {/* Back button and title */}
           <div className="flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight text-bible-text">Scripture Study</h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="text-black dark:text-white ripple-effect rounded-full w-8 h-8 bg-transparent active:bg-purple-600 active:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-500 via-purple-700 to-fuchsia-600 bg-clip-text text-transparent">
+              Study Scripture
+            </h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative hidden md:block">
@@ -44,20 +66,35 @@ const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
                 className="pl-10 border-bible-border bg-white focus:border-primary focus:ring-primary"
               />
             </div>
-            <button className="rounded-md p-2 hover:bg-gray-100">
+            <button className="rounded-md p-2 hover:bg-gray-100 hidden">
               <Bookmark className="h-6 w-6 text-gray-500" />
             </button>
-            <div className="size-10 rounded-full bg-cover bg-center bg-gray-300"></div>
+            <Avatar className="size-10">
+              <AvatarImage
+                src={profile?.profilePhoto || ""}
+                alt={profile?.displayName || "User Avatar"}
+                onClick={() => navigate("/profile")}
+              />
+              <AvatarFallback>
+                <div className="size-10 rounded-full bg-cover bg-center bg-gray-300">
+                  <User className="h-6 w-6 text-gray-500" />
+                </div>
+              </AvatarFallback>
+            </Avatar>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <main className="container mx-auto flex-1 px-6 py-12">
+      <main className="container mx-auto flex-1 px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-5xl font-bold tracking-tight text-bible-text">The Holy Bible</h2>
+            <h2 className="text-5xl font-bold tracking-tight text-bible-text">
+              The Holy Bible
+            </h2>
             <p className="mt-4 text-lg text-bible-muted max-w-2xl mx-auto">
-              Explore the collected sacred texts of the Old and New Testaments, offering guidance, wisdom, and the story of God's relationship with humanity.
+              Explore the collected sacred texts of the Old and New Testaments,
+              offering guidance, wisdom, and the story of God's relationship
+              with humanity.
             </p>
           </div>
 
@@ -69,86 +106,95 @@ const BibleBookList: React.FC<BibleBookListProps> = ({ onSelectBook }) => {
                 placeholder="Search books..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-bible-border bg-white focus:border-primary focus:ring-primary"
+                className="pl-10 outline-none bg-white"
               />
             </div>
           </div>
 
           {/* Testament Filter */}
           <div className="flex gap-2 mb-8 justify-center">
-            {['All', 'Old', 'New'].map((testament) => (
+            {["All", "OT", "NT"].map((testament) => (
               <Button
                 key={testament}
-                variant={selectedTestament === testament ? "default" : "outline"}
+                variant={
+                  selectedTestament === testament ? "default" : "outline"
+                }
                 size="sm"
-                onClick={() => setSelectedTestament(testament as 'Old' | 'New' | 'All')}
+                onClick={() =>
+                  setSelectedTestament(testament as "OT" | "NT" | "All")
+                }
                 className="px-6"
               >
-                {testament === 'All' ? 'All Books' : `${testament} Testament`}
+                {testament === "All" ? "All" : `${testament}`}
               </Button>
             ))}
           </div>
 
           <div className="space-y-16">
             {/* Old Testament */}
-            {(selectedTestament === 'All' || selectedTestament === 'Old') && (
+            {(selectedTestament === "All" || selectedTestament === "OT") && (
               <section id="old-testament">
                 <h3 className="text-3xl font-bold tracking-tight text-bible-text border-b-2 border-primary pb-3 mb-8">
                   Old Testament
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                   {filteredBooks
-                    .filter(book => book.testament === 'Old')
+                    .filter((book) => book.testament === "OT")
                     .map((book, index) => (
                       <motion.div
                         key={book.name}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="book-item cursor-pointer transition-all duration-200 hover:bg-[#fdfaf7] hover:-translate-y-0.5"
+                        className="book-item"
                         onClick={() => onSelectBook(book)}
                       >
-                        <Card className="border border-bible-border p-4 bg-white">
-                          <h4 className="font-bold text-lg text-bible-text">{book.name}</h4>
-                          <p className="text-sm text-bible-muted mt-1">{book.category} • {book.chapters} chapters</p>
+                        <Card className="border border-bible-border p-4 bg-white transition-all duration-200 hover:bg-[#fdfaf7] hover:-translate-y-0.5">
+                          <h4 className="font-bold text-lg text-bible-text leading-relaxed">
+                            {book.name}
+                          </h4>
+                          <p className="text-sm text-bible-muted mt-1">
+                            {book.category} • {book.chapters} chapters
+                          </p>
                         </Card>
                       </motion.div>
-                    ))
-                  }
+                    ))}
                 </div>
               </section>
             )}
 
             {/* New Testament */}
-            {(selectedTestament === 'All' || selectedTestament === 'New') && (
+            {(selectedTestament === "All" || selectedTestament === "NT") && (
               <section id="new-testament">
                 <h3 className="text-3xl font-bold tracking-tight text-bible-text border-b-2 border-primary pb-3 mb-8">
                   New Testament
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 bg-white dark:bg-gray-900">
                   {filteredBooks
-                    .filter(book => book.testament === 'New')
+                    .filter((book) => book.testament === "NT")
                     .map((book, index) => (
                       <motion.div
                         key={book.name}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="book-item cursor-pointer transition-all duration-200 hover:bg-[#fdfaf7] hover:-translate-y-0.5"
+                        className="book-item"
                         onClick={() => onSelectBook(book)}
                       >
-                        <Card className="border border-bible-border p-4 bg-white">
-                          <h4 className="font-bold text-lg text-bible-text">{book.name}</h4>
-                          <p className="text-sm text-bible-muted mt-1">{book.category} • {book.chapters} chapters</p>
+                        <Card className="border border-bible-border p-4 bg-white transition-all duration-200 hover:bg-[#fdfaf7] hover:-translate-y-0.5">
+                          <h4 className="font-bold text-lg text-bible-text leading-relaxed">
+                            {book.name}
+                          </h4>
+                          <p className="text-sm text-bible-muted mt-1">
+                            {book.category} • {book.chapters} chapters
+                          </p>
                         </Card>
                       </motion.div>
-                    ))
-                  }
+                    ))}
                 </div>
               </section>
             )}
           </div>
-
         </div>
       </main>
 
