@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/lib/hooks/use-toast";
-import { ArrowLeft, Send, Image, Video, X, Hash, Smile } from "lucide-react";
+import { ArrowLeft, Send, Image, Video, X, Hash, Smile, Brain } from "lucide-react";
 import MediaBrowser from "@/components/community/MediaBrowser";
+import SmartContentModeration from "@/components/community/SmartContentModeration";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const CreatePost = () => {
@@ -191,6 +192,20 @@ const CreatePost = () => {
                   {content.length}/2000
                 </span>
               </div>
+            </div>
+
+            {/* Smart Content Moderation */}
+            <div className="px-4 mb-3">
+              <SmartContentModeration 
+                content={content}
+                contentType="post"
+                onModerationResult={(result) => {
+                  // Optional: Store moderation result for enhanced post submission
+                }}
+                onContentAnalysis={(analysis) => {
+                  // Optional: Store analysis for engagement prediction
+                }}
+              />
             </div>
 
             {/* Media Preview */}

@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Users, MessageSquare, Calendar, Trophy, Plus, Edit3, Target, Clock, Flame, Book } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BookOpen, Users, MessageSquare, Calendar, Trophy, Plus, Edit3, Target, Clock, Flame, Book, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import ActivityDashboard from '@/components/ActivityDashboard';
+import MLInsightsDashboard from '@/components/MLInsightsDashboard';
 
 const Dashboard = () => {
   const { user, userProfile } = useAuth();
@@ -259,13 +261,31 @@ const Dashboard = () => {
             ))}
           </motion.div>
 
-          {/* Activity Dashboard */}
+          {/* Dashboard Tabs */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="mb-10"
           >
-            <ActivityDashboard />
+            <Tabs defaultValue="activity" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="activity" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Activity Dashboard
+                </TabsTrigger>
+                <TabsTrigger value="insights" className="flex items-center gap-2">
+                  <Brain className="h-4 w-4" />
+                  AI Insights
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="activity">
+                <ActivityDashboard />
+              </TabsContent>
+              <TabsContent value="insights">
+                <MLInsightsDashboard />
+              </TabsContent>
+            </Tabs>
           </motion.div>
         </div>
       </div>
