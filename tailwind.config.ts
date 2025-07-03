@@ -19,12 +19,19 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				newsreader: ['Newsreader', 'serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				"bible-bg": "hsl(var(--bible-bg))",
+				"bible-text": "hsl(var(--bible-text))",
+				"bible-muted": "hsl(var(--bible-muted))",
+				"bible-border": "hsl(var(--bible-border))",
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'

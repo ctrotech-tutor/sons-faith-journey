@@ -167,8 +167,7 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   const navigateChapter = (direction: 'prev' | 'next') => {
     const newChapter = direction === 'prev' ? chapter - 1 : chapter + 1;
     if (newChapter >= 1 && newChapter <= book.chapters) {
-      window.history.pushState(null, '', `/bible/${book.name}/${newChapter}`);
-      // This would need to be handled by parent component to update the chapter prop
+      window.location.href = `/bible/${encodeURIComponent(book.name)}/${newChapter}`;
     }
   };
 
@@ -205,175 +204,117 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-[#FDFDFC] font-newsreader text-bible-text">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {book.name} {chapter}
-            </h1>
-            <p className="text-sm text-purple-600 dark:text-purple-400">
-              {bibleVersions.find(v => v.value === selectedVersion)?.label}
-            </p>
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-[#F3F0EE] shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-6 w-6 text-primary" />
+            <h2 className="text-xl font-bold leading-tight tracking-[-0.015em]">Scripture Study</h2>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {bibleVersions.map((version) => (
-                <SelectItem key={version.value} value={version.value}>
-                  {version.value.toUpperCase()}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </motion.div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigateChapter('prev')}
-          disabled={chapter <= 1}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </Button>
-
-        <Badge variant="outline" className="text-sm">
-          Chapter {chapter} of {book.chapters}
-        </Badge>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigateChapter('next')}
-          disabled={chapter >= book.chapters}
-          className="flex items-center gap-2"
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
 
-      {/* Chapter Actions */}
-      <Card className="shadow-md dark:bg-gray-800 dark:border-gray-700">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <span className="font-medium text-gray-800 dark:text-gray-100">
-                {verses.length} verses
-              </span>
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyChapter}
-              className="flex items-center gap-2"
+      <main className="flex-1 px-16 py-8 md:px-24 lg:px-40">
+        <div className="mx-auto max-w-4xl">
+          {/* Breadcrumb */}
+          <div className="mb-8 flex items-center space-x-2 text-sm text-gray-500">
+            <button 
+              onClick={onBack}
+              className="hover:text-primary hover:underline"
             >
-              <Copy className="h-4 w-4" />
-              Copy Chapter
-            </Button>
+              {book.name}
+            </button>
+            <span>/</span>
+            <span className="font-semibold text-bible-text">Chapter {chapter}</span>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Bible Content */}
-      <Card className="shadow-md dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            {book.name} Chapter {chapter}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {verses.map((verse, index) => (
-              <motion.div
-                key={verse.verse}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
-                className="group relative"
+          {/* Title and Navigation */}
+          <div className="flex items-baseline justify-between mb-8">
+            <h1 className="text-4xl font-bold text-bible-text tracking-tight">{book.name} {chapter}</h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateChapter('prev')}
+                disabled={chapter <= 1}
+                className="flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50"
               >
-                <div className="flex gap-3">
-                  <span className="text-purple-600 dark:text-purple-400 font-bold text-sm mt-1 min-w-[2rem] flex-shrink-0">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateChapter('next')}
+                disabled={chapter >= book.chapters}
+                className="flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Verses */}
+          <div className="space-y-6">
+            <div className="mt-8 text-lg leading-loose text-gray-800 space-y-6">
+              {verses.map((verse, index) => (
+                <motion.p
+                  key={verse.verse}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="group relative"
+                >
+                  <span className="verse-number text-xs font-bold text-bible-muted mr-1 align-super">
                     {verse.verse}
                   </span>
-                  <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg flex-1">
-                    {verse.text}
-                  </p>
-                </div>
-                
-                {/* Verse Actions */}
-                <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white dark:bg-gray-800 rounded-md shadow-md p-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyVerse(verse)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {copiedVerse === verse.verse ? (
-                      <Check className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
+                  {verse.text}
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleFavorite(verse)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Heart 
-                      className={`h-3 w-3 ${
-                        favoriteVerses.has(`${book.name}:${verse.chapter}:${verse.verse}`)
-                          ? 'fill-red-500 text-red-500'
-                          : 'text-gray-400'
-                      }`}
-                    />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => shareVerse(verse)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Share className="h-3 w-3" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
+                  {/* Verse Actions */}
+                  <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white rounded-md shadow-md p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyVerse(verse)}
+                      className="h-8 w-8 p-0"
+                    >
+                      {copiedVerse === verse.verse ? (
+                        <Check className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleFavorite(verse)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Heart 
+                        className={`h-3 w-3 ${
+                          favoriteVerses.has(`${book.name}:${verse.chapter}:${verse.verse}`)
+                            ? 'fill-red-500 text-red-500'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => shareVerse(verse)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Share className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </motion.p>
+              ))}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 };

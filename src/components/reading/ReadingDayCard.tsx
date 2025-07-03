@@ -111,7 +111,7 @@ const ReadingDayCard: React.FC<ReadingDayCardProps> = ({
 
         <CardFooter className="px-5 sm:px-6 pb-4 pt-0 flex flex-wrap justify-between gap-2">
           <Link
-            to={`/bible/${dayData.passages[0]}/${dayData.day}`}
+            to={`/bible/${encodeURIComponent(dayData.passages[0])}/${dayData.day}`}
             className={isLocked ? 'pointer-events-none opacity-50' : ''}
           >
             <Button
