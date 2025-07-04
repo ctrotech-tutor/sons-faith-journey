@@ -8,7 +8,7 @@ import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
 import PostsList from '@/components/community/PostsList';
 import EnhancedPostsList from '@/components/community/EnhancedPostsList';
-import CommentsSlideUp from '@/components/community/CommentsSlideUp';
+import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
 
@@ -95,7 +95,7 @@ const Community = () => {
         </div>
       </div>
 
-      <CommentsSlideUp
+      <AdvancedCommentSystem
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}
         onClose={() => setSelectedPostForComments(null)}
