@@ -28,6 +28,8 @@ const ChurchRoom = lazy(() => import("./pages/ChurchRoom"));
 const ChatWithSupervisor = lazy(() => import("./pages/ChatWithSupervisor"));
 const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const Profile = lazy(() => import("./pages/Profile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
@@ -110,6 +112,8 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/:userId" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<UserProfile />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/community" element={<Community />} />
         <Route path="/community/post/:postId" element={<PostDetail />} />

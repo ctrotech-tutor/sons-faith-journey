@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { bibleOfflineCache } from '@/lib/bibleOfflineCache';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -41,6 +46,8 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   initialVersion = 'kjv'
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,6 +60,21 @@ const BibleReader: React.FC<BibleReaderProps> = ({
     setError('');
     
     try {
+      // Try offline cache first
+      const cachedData = await bibleOfflineCache.getChapter(book.name, chapter, selectedVersion);
+      
+      if (cachedData && cachedData.verses) {
+        const versesArray: BibleVerse[] = cachedData.verses.map((verse: { verse: number; text: string }) => ({
+          chapter,
+          verse: verse.verse,
+          text: verse.text.trim()
+        }));
+        setVerses(versesArray);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to API if not cached
       const response = await fetch(
         `https://bible-api.com/${book.name}+${chapter}?translation=${selectedVersion}`
       );
@@ -126,25 +148,70 @@ const BibleReader: React.FC<BibleReaderProps> = ({
     }
   };
 
-  const toggleFavorite = (verse: BibleVerse) => {
+  const toggleFavorite = async (verse: BibleVerse) => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save favorite verses",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const verseKey = `${book.name}:${verse.chapter}:${verse.verse}`;
     const newFavorites = new Set(favoriteVerses);
     
-    if (newFavorites.has(verseKey)) {
-      newFavorites.delete(verseKey);
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      const currentFavorites = userDoc.data()?.favoriteVerses || [];
+      
+      if (newFavorites.has(verseKey)) {
+        // Remove from favorites
+        newFavorites.delete(verseKey);
+        const updatedFavorites = currentFavorites.filter((fav: any) => fav.id !== verseKey);
+        
+        await updateDoc(userDocRef, {
+          favoriteVerses: updatedFavorites
+        });
+        
+        toast({
+          title: "Removed from favorites",
+          description: `${book.name} ${verse.chapter}:${verse.verse}`,
+        });
+      } else {
+        // Add to favorites
+        newFavorites.add(verseKey);
+        const favoriteVerse = {
+          id: verseKey,
+          book: book.name,
+          chapter: verse.chapter,
+          verse: verse.verse,
+          text: verse.text,
+          version: selectedVersion,
+          addedDate: new Date(),
+          tags: []
+        };
+        
+        await updateDoc(userDocRef, {
+          favoriteVerses: arrayUnion(favoriteVerse)
+        });
+        
+        toast({
+          title: "Added to favorites",
+          description: `${book.name} ${verse.chapter}:${verse.verse}`,
+        });
+      }
+      
+      setFavoriteVerses(newFavorites);
+    } catch (error) {
+      console.error('Error updating favorites:', error);
       toast({
-        title: "Removed from favorites",
-        description: `${book.name} ${verse.chapter}:${verse.verse}`,
-      });
-    } else {
-      newFavorites.add(verseKey);
-      toast({
-        title: "Added to favorites",
-        description: `${book.name} ${verse.chapter}:${verse.verse}`,
+        title: "Error",
+        description: "Failed to update favorites. Please try again.",
+        variant: "destructive"
       });
     }
-    
-    setFavoriteVerses(newFavorites);
   };
 
   const shareVerse = async (verse: BibleVerse) => {
@@ -167,7 +234,8 @@ const BibleReader: React.FC<BibleReaderProps> = ({
   const navigateChapter = (direction: 'prev' | 'next') => {
     const newChapter = direction === 'prev' ? chapter - 1 : chapter + 1;
     if (newChapter >= 1 && newChapter <= book.chapters) {
-      window.location.href = `/bible/${encodeURIComponent(book.name)}/${newChapter}`;
+      // Use React Router navigation instead of window.location to prevent reload
+      navigate(`/bible/${encodeURIComponent(book.name)}/${newChapter}`, { replace: true });
     }
   };
 
