@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
+import { useMLInsights } from '@/lib/hooks/useMLInsights';
 
 export interface UserActivity {
   type: 'reading_completed' | 'chat_message' | 'community_post' | 'profile_update' | 'login' | 'bible_reading' | 'system';
@@ -22,6 +23,8 @@ export interface UserStats {
   timeSpentReading: number;
   currentPage?: string;
   sessionStart?: any;
+  totalEngagementScore?: number;
+  [key: string]: any;
 }
 
 export interface ActivityFilter {
@@ -34,6 +37,7 @@ export interface ActivityFilter {
 export const useActivitySync = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { analyzeContent } = useMLInsights();
   const [userStats, setUserStats] = useState<UserStats>({
     readingStreak: 0,
     totalReadingDays: 0,
@@ -435,6 +439,148 @@ export const useActivitySync = () => {
     }
   }, [user, userDocRef, toast]);
 
+  // Enhanced activity tracking with ML-powered insights
+  const trackEngagement = useCallback(async (engagementType: 'post_like' | 'post_comment' | 'post_share' | 'page_view' | 'feature_use', details: any) => {
+    if (!user || !userDocRef) return null;
+
+    try {
+      const timestamp = serverTimestamp();
+      const engagementActivity = {
+        type: engagementType,
+        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp,
+        data: {
+          ...details,
+          sessionId: `session-${Date.now()}`,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          timeOfDay: new Date().getHours(),
+          dayOfWeek: new Date().getDay()
+        }
+      };
+
+      // Analyze activity with ML for patterns and insights
+      try {
+        const activityInsights = await analyzeContent(JSON.stringify(engagementActivity.data), 'post');
+        if (activityInsights) {
+          engagementActivity.data.mlInsights = activityInsights;
+        }
+      } catch (mlError) {
+        console.warn('ML analysis failed for activity:', mlError);
+      }
+
+      await updateDoc(userDocRef, {
+        recentActivities: arrayUnion(engagementActivity),
+        lastActiveDate: new Date().toISOString(),
+        [`${engagementType}_count`]: (userStats[`${engagementType}_count` as keyof UserStats] as number || 0) + 1,
+        totalEngagementScore: (userStats.totalEngagementScore || 0) + getEngagementWeight(engagementType),
+        lastEngagementType: engagementType,
+        engagementPattern: await generateEngagementPattern(engagementType)
+      });
+
+      return engagementActivity.id;
+    } catch (error) {
+      console.error('Error tracking engagement:', error);
+      return null;
+    }
+  }, [user, userDocRef, userStats, analyzeContent, recentActivities]);
+
+  const generateEngagementPattern = async (engagementType: string) => {
+    try {
+      const recentEngagements = recentActivities
+        .filter(activity => activity.type === engagementType)
+        .slice(0, 10);
+      
+      if (recentEngagements.length < 3) return null;
+
+      const timePatterns = recentEngagements.map(activity => {
+        const activityDate = activity.timestamp?.toDate ? activity.timestamp.toDate() : new Date(activity.timestamp);
+        return {
+          hour: activityDate.getHours(),
+          dayOfWeek: activityDate.getDay(),
+          timestamp: activityDate.getTime()
+        };
+      });
+
+      return {
+        preferredHours: getMostCommonHours(timePatterns),
+        preferredDays: getMostCommonDays(timePatterns),
+        frequency: calculateFrequency(timePatterns),
+        trend: calculateTrend(timePatterns)
+      };
+    } catch (error) {
+      console.error('Error generating engagement pattern:', error);
+      return null;
+    }
+  };
+
+  const getMostCommonHours = (patterns: any[]) => {
+    const hourCounts = patterns.reduce((acc, pattern) => {
+      acc[pattern.hour] = (acc[pattern.hour] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(hourCounts)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 3)
+      .map(([hour]) => parseInt(hour));
+  };
+
+  const getMostCommonDays = (patterns: any[]) => {
+    const dayCounts = patterns.reduce((acc, pattern) => {
+      acc[pattern.dayOfWeek] = (acc[pattern.dayOfWeek] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(dayCounts)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 3)
+      .map(([day]) => parseInt(day));
+  };
+
+  const calculateFrequency = (patterns: any[]) => {
+    if (patterns.length < 2) return 'insufficient_data';
+    
+    const timestamps = patterns.map(p => p.timestamp).sort();
+    const intervals = [];
+    
+    for (let i = 1; i < timestamps.length; i++) {
+      intervals.push(timestamps[i] - timestamps[i-1]);
+    }
+    
+    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    const daysInterval = avgInterval / (1000 * 60 * 60 * 24);
+    
+    if (daysInterval < 1) return 'very_high';
+    if (daysInterval < 3) return 'high';
+    if (daysInterval < 7) return 'moderate';
+    return 'low';
+  };
+
+  const calculateTrend = (patterns: any[]) => {
+    if (patterns.length < 3) return 'stable';
+    
+    const recentInterval = patterns[0].timestamp - patterns[1].timestamp;
+    const olderInterval = patterns[1].timestamp - patterns[2].timestamp;
+    
+    if (recentInterval < olderInterval * 0.8) return 'increasing';
+    if (recentInterval > olderInterval * 1.2) return 'decreasing';
+    return 'stable';
+  };
+
+  const getEngagementWeight = (type: string): number => {
+    const weights = {
+      'post_like': 1,
+      'post_comment': 3,
+      'post_share': 5,
+      'page_view': 0.5,
+      'feature_use': 2,
+      'reading_completed': 10,
+      'bible_reading': 8
+    };
+    return weights[type as keyof typeof weights] || 1;
+  };
+
   const calculateStreak = (progressArray: number[]) => {
     if (progressArray.length === 0) return 0;
     
@@ -531,14 +677,9 @@ export const useActivitySync = () => {
     getTodayDayNumber,
     trackActivity,
     trackBibleReading,
-    clearActivity: async (activityId: string) => {
-      // ... keep existing code (clearActivity implementation)
-      return true;
-    },
-    clearAllActivities: async () => {
-      // ... keep existing code (clearAllActivities implementation) 
-      return true;
-    },
+    trackEngagement,
+    clearActivity,
+    clearAllActivities,
     filterActivities,
     loading,
     error,

@@ -28,6 +28,8 @@ const ChurchRoom = lazy(() => import("./pages/ChurchRoom"));
 const ChatWithSupervisor = lazy(() => import("./pages/ChatWithSupervisor"));
 const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const Profile = lazy(() => import("./pages/Profile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthModal = lazy(() => import("@/components/AuthModal"));
 const Reading = lazy(() => import("./pages/Reading"));
@@ -44,6 +46,7 @@ const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const AuthAction = lazy(() => import("./pages/auth/AuthAction"));
+const MLAnalytics = lazy(() => import("./pages/MLAnalytics"));
 
 // Create QueryClient with improved error handling
 const queryClient = new QueryClient({
@@ -109,6 +112,8 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/:userId" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<UserProfile />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/community" element={<Community />} />
         <Route path="/community/post/:postId" element={<PostDetail />} />
@@ -126,6 +131,7 @@ const AppContent = () => {
         <Route path="/bookmarks" element={<Bookmark />} />
         <Route path="/post-approval" element={<PostApproval />} />
         <Route path="/post-manager" element={<PostManager />} />
+        <Route path="/ml-analytics" element={<MLAnalytics />} />
         
         {/* Enhanced Auth Routes */}
         <Route path="/login" element={<Login />} />

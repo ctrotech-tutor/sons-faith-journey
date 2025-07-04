@@ -12,6 +12,8 @@ import LazyImage from '@/components/LazyImage';
 import LazyVideo from '@/components/LazyVideo';
 import CommentsSlideUp from '@/components/community/CommentsSlideUp';
 import PostInteractions from '@/components/community/PostInteractions';
+import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
+import MetaUpdater from '@/components/MetaUpdater';
 import { formatPostContent } from '@/lib/postUtils';
 import { useToast } from '@/lib/hooks/use-toast';
 
@@ -141,6 +143,13 @@ const PostDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Dynamic Meta Tags */}
+      <MetaUpdater
+        title={post?.content ? undefined : "Community Post"}
+        content={post?.content}
+        generateFromContent={true}
+      />
+      
       <div className="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
@@ -256,8 +265,8 @@ const PostDetail = () => {
           />
         </div>
 
-        {/* Comments Modal */}
-        <CommentsSlideUp
+        {/* Advanced Comments Modal */}
+        <AdvancedCommentSystem
           postId={post.id}
           isOpen={showComments}
           onClose={() => setShowComments(false)}

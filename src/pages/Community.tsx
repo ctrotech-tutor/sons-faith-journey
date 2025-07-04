@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
 import PostsList from '@/components/community/PostsList';
-import CommentsSlideUp from '@/components/community/CommentsSlideUp';
+import EnhancedPostsList from '@/components/community/EnhancedPostsList';
+import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
 
@@ -75,7 +76,7 @@ const Community = () => {
 
       <div className="pb-20">
         <div className="max-w-md mx-auto">
-          <PostsList
+          <EnhancedPostsList
             posts={filteredPosts}
             loading={loading}
             filter={filter}
@@ -94,7 +95,7 @@ const Community = () => {
         </div>
       </div>
 
-      <CommentsSlideUp
+      <AdvancedCommentSystem
         postId={selectedPostForComments || ''}
         isOpen={!!selectedPostForComments}
         onClose={() => setSelectedPostForComments(null)}

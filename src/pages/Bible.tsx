@@ -11,7 +11,9 @@ import PullToRefresh from '@/components/PullToRefresh';
 import BibleBookList from '@/components/bible/BibleBookList';
 import BibleChapterList from '@/components/bible/BibleChapterList';
 import BibleReader from '@/components/bible/BibleReader';
+import BibleOfflineManager from '@/components/bible/BibleOfflineManager';
 import { BibleBook, getBookByName, bibleVersions } from '@/data/bibleBooks';
+import { bibleOfflineCache } from '@/lib/bibleOfflineCache';
 
 type ViewMode = 'books' | 'chapters' | 'reader' | 'passage';
 
@@ -40,6 +42,8 @@ const Bible = () => {
   const [bookName, setBookName] = useState('');
   const [chapterRange, setChapterRange] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showOfflineManager, setShowOfflineManager] = useState(false);
+  const [isFullyCached, setIsFullyCached] = useState(false);
 
   // Determine if this is a passage view (from reading plan) or standalone
   const isPassageView = !!(passage && day);
@@ -75,6 +79,21 @@ const Bible = () => {
 
       for (let i = chapters[0]; i <= (chapters[1] || chapters[0]); i++) {
         try {
+          // Try offline cache first
+          const cachedData = await bibleOfflineCache.getChapter(parsedBookName, i, selectedVersion);
+          
+          if (cachedData && cachedData.verses) {
+            const versesArray: BibleVerse[] = cachedData.verses.map((verse: { verse: number; text: string }) => ({
+              chapter: i,
+              verse: verse.verse,
+              text: verse.text.trim()
+            }));
+            
+            allVerses.push(...versesArray);
+            continue;
+          }
+
+          // Fallback to API if not cached
           const response = await fetch(`https://bible-api.com/${parsedBookName}+${i}?translation=${selectedVersion}`);
           
           if (!response.ok) {
@@ -113,6 +132,9 @@ const Bible = () => {
   },[passage, selectedVersion]);
 
   useEffect(() => {
+    // Check offline cache status
+    checkOfflineStatus();
+
     if (isPassageView) {
       setViewMode('passage');
       setLoading(true);
@@ -131,6 +153,20 @@ const Bible = () => {
       setViewMode('books');
     }
   }, [passage, day, bookParam, chapterParam, selectedVersion, loadBibleChapter, logBibleReading, isDirectBookChapter, isPassageView]);
+
+  const checkOfflineStatus = async () => {
+    try {
+      const fullyCached = await bibleOfflineCache.isFullyCached();
+      setIsFullyCached(fullyCached);
+      
+      // Show offline manager on first visit if not cached
+      if (!fullyCached && !isPassageView) {
+        setShowOfflineManager(true);
+      }
+    } catch (error) {
+      console.error('Error checking offline status:', error);
+    }
+  };
 
   const handleRefresh = async () => {
     if (passage) {
@@ -388,6 +424,17 @@ const Bible = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
+        {showOfflineManager && !isFullyCached && (
+          <div className="p-4">
+            <BibleOfflineManager 
+              onDownloadComplete={() => {
+                setShowOfflineManager(false);
+                setIsFullyCached(true);
+              }}
+            />
+          </div>
+        )}
+
         {viewMode === 'books' && (
           <BibleBookList onSelectBook={handleSelectBook} />
         )}

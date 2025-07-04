@@ -18,6 +18,7 @@ import remarkGfm from 'remark-gfm';
 import UserTrackingDashboard from '@/components/admin/UserTrackingDashboard';
 import VerseOfTheDayManager from '@/components/admin/VerseOfTheDayManager';
 import RealTimeUserTracker from '@/components/admin/RealTimeUserTracker';
+import AdvancedUserDashboard from '@/components/admin/AdvancedUserDashboard';
 
 interface Registration {
   id: string;
@@ -322,8 +323,12 @@ const Admin = () => {
             <p className="text-gray-600">Manage THE SONS challenge</p>
           </motion.div>
 
-          <Tabs defaultValue="realtime" className="space-y-6">
+          <Tabs defaultValue="advanced" className="space-y-6">
             <TabsList className="w-full overflow-x-auto gap-2 no-scrollbar">
+              <TabsTrigger value="advanced" className="flex items-center space-x-2">
+                <BarChart2 className="h-4 w-4" />
+                <span>Advanced Analytics</span>
+              </TabsTrigger>
               <TabsTrigger value="realtime" className="flex items-center space-x-2">
                 <Monitor className="h-4 w-4" />
                 <span>Real-Time Tracking</span>
@@ -348,11 +353,11 @@ const Admin = () => {
                 <Users className="h-4 w-4" />
                 <span>Users</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center space-x-2">
-                <BarChart2 className="h-4 w-4" />
-                <span>Analytics</span>
-              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="advanced">
+              <AdvancedUserDashboard />
+            </TabsContent>
 
             <TabsContent value="realtime">
               <RealTimeUserTracker />
