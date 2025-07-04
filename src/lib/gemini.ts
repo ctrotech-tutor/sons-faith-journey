@@ -327,7 +327,7 @@ Respond with ONLY a JSON array of keywords, no other text:
       console.log(`Raw ${type} keywords response:`, text);
       
       // Clean up response and extract JSON
-      let cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
+      const cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
       const jsonMatch = cleanText.match(/\[[\s\S]*\]/);
       
       if (jsonMatch) {
@@ -396,7 +396,7 @@ JSON format (respond with ONLY this JSON, no markdown or extra text):
       console.log('Raw Gemini response:', text);
       
       // Clean up the response - remove any markdown formatting
-      let cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
+      const cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
       
       // Try to find JSON in the response
       const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
