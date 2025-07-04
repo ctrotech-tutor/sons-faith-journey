@@ -17,7 +17,7 @@ import HashtagTab from './HashtagTab';
 import EmojiTab from './EmojiTab';
 import { cn } from '@/lib/utils';
 import { geminiService } from '@/lib/gemini';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { emojiCategories } from '@/data/emojiCategories';
 
 interface MediaBrowserProps {
   isOpen: boolean;
@@ -63,7 +63,6 @@ const commonHashtags = hashtags;
 
 const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelectEmoji }: MediaBrowserProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('upload');
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<UnsplashImage[]>([]);
@@ -71,14 +70,8 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   const [loading, setLoading] = useState(false);
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"image" | "video" | null>(null);
-  
-  // ML-powered states
-  const [dynamicHashtags, setDynamicHashtags] = useState<string[]>([]);
-  const [hashtagsLoading, setHashtagsLoading] = useState(false);
-  const [smartKeywords, setSmartKeywords] = useState<{ image: string[], video: string[] }>({
-    image: [],
-    video: []
-  });
+  const [dynamicHashtags, setDynamicHashtags] = useState<string[]>(commonHashtags);
+  const [loadingHashtags, setLoadingHashtags] = useState(false);
 
   const searchImages = async (query: string) => {
     if (!query.trim()) return;
@@ -256,94 +249,44 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
     });
   };
 
-  // ML-powered functions
-  const generateDynamicHashtags = async () => {
-    if (hashtagsLoading) return;
-    
-    setHashtagsLoading(true);
-    try {
-      const context = {
-        userInterests: user ? ['faith', 'community', 'worship'] : [],
-        recentTopics: ['prayer', 'devotion', 'scripture'],
-        seasonalContext: new Date().getMonth() === 11 ? 'Christmas' : 'General'
-      };
-      
-      const hashtags = await geminiService.generateTrendingHashtags(context);
-      setDynamicHashtags(hashtags);
-    } catch (error) {
-      console.error('Error generating hashtags:', error);
-      // Fall back to static hashtags
-      setDynamicHashtags(commonHashtags);
-    } finally {
-      setHashtagsLoading(false);
-    }
-  };
-
-  const generateSmartKeywords = async () => {
-    try {
-      const context = {
-        userInterests: user ? ['christian', 'inspiration', 'faith'] : [],
-        currentSeason: new Date().getMonth() === 11 ? 'Christmas' : 'General',
-        recentActivity: ['worship', 'prayer', 'community']
-      };
-
-      const [imageKeywords, videoKeywords] = await Promise.all([
-        geminiService.generateSearchKeywords('image', context),
-        geminiService.generateSearchKeywords('video', context)
-      ]);
-
-      setSmartKeywords({
-        image: imageKeywords,
-        video: videoKeywords
-      });
-    } catch (error) {
-      console.error('Error generating smart keywords:', error);
-      // Use fallback keywords
-      setSmartKeywords({
-        image: ['faith inspiration', 'christian art', 'biblical landscape', 'prayer'],
-        video: ['christian worship', 'praise music', 'sermon', 'gospel']
-      });
-    }
-  };
-
-  const getRandomSmartKeyword = (type: 'image' | 'video'): string => {
-    const keywords = smartKeywords[type];
-    if (keywords.length === 0) {
-      return type === 'image' ? 'inspiration faith' : 'christian worship';
-    }
-    return keywords[Math.floor(Math.random() * keywords.length)];
-  };
-
   useEffect(() => {
-    if (isOpen) {
-      // Generate smart keywords when drawer opens
-      generateSmartKeywords();
-      
-      // Generate default content based on active tab
-      if (activeTab === 'images' && !searchQuery) {
-        if (smartKeywords.image.length > 0) {
-          searchImages(getRandomSmartKeyword('image'));
-        } else {
-          searchImages('inspiration faith');
+    const initializeDefaultSearch = async () => {
+      if (isOpen && activeTab === 'images' && !searchQuery) {
+        try {
+          const keywords = await geminiService.generateSearchKeywords('image');
+          const defaultKeyword = keywords[0] || 'christian inspiration';
+          searchImages(defaultKeyword);
+        } catch {
+          searchImages('christian inspiration');
         }
-      } else if (activeTab === 'videos' && !searchQuery) {
-        if (smartKeywords.video.length > 0) {
-          searchVideos(getRandomSmartKeyword('video'));
-        } else {
+      } else if (isOpen && activeTab === 'videos' && !searchQuery) {
+        try {
+          const keywords = await geminiService.generateSearchKeywords('video');
+          const defaultKeyword = keywords[0] || 'christian worship';
+          searchVideos(defaultKeyword);
+        } catch {
           searchVideos('christian worship');
         }
-      } else if (activeTab === 'hashtags' && dynamicHashtags.length === 0) {
-        generateDynamicHashtags();
       }
-    }
-  }, [isOpen, activeTab, smartKeywords]);
+    };
 
-  // Generate hashtags when hashtag tab is accessed
-  useEffect(() => {
-    if (activeTab === 'hashtags' && dynamicHashtags.length === 0 && !hashtagsLoading) {
-      generateDynamicHashtags();
-    }
-  }, [activeTab]);
+    const generateDynamicHashtags = async () => {
+      if (isOpen && activeTab === 'hashtags' && !loadingHashtags) {
+        setLoadingHashtags(true);
+        try {
+          const generated = await geminiService.generateDynamicHashtags();
+          setDynamicHashtags([...commonHashtags, ...generated]);
+        } catch {
+          setDynamicHashtags(commonHashtags);
+        } finally {
+          setLoadingHashtags(false);
+        }
+      }
+    };
+
+    initializeDefaultSearch();
+    generateDynamicHashtags();
+  }, [isOpen, activeTab, searchQuery, loadingHashtags]);
 
   function scrollToCategory(i: number): void {
     const grid = document.querySelector('.grid.grid-cols-8');
@@ -424,8 +367,7 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
               handleEmojiSelect={handleEmojiSelect}
             />
             <HashtagTab
-              dynamicHashtags={dynamicHashtags.length > 0 ? dynamicHashtags : commonHashtags}
-              loadingHashtags={hashtagsLoading}
+              commonHashtags={dynamicHashtags}
               handleHashtagSelect={handleHashtagSelect}
             />
           </Tabs>

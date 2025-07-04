@@ -8,9 +8,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/lib/hooks/use-toast';
-import { ArrowLeft, Send, Image, Video, X, Hash, Smile, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Image, Video, X, Hash, Smile, Loader2, Sparkles } from 'lucide-react';
 import MediaBrowser from '@/components/community/MediaBrowser';
+import AIContentGenerator from '@/components/community/AIContentGenerator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PostData {
   id: string;
@@ -34,6 +36,7 @@ const EditPost = () => {
   const [loadingPost, setLoadingPost] = useState(true);
   const [showMediaBrowser, setShowMediaBrowser] = useState(false);
   const [originalPost, setOriginalPost] = useState<PostData | null>(null);
+  const [activeTab, setActiveTab] = useState<"write" | "ai">("write");
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -134,6 +137,17 @@ const EditPost = () => {
 
   const handleHashtagSelect = (hashtag: string) => {
     setContent(prev => prev + (prev.endsWith(' ') || prev === '' ? '' : ' ') + hashtag + ' ');
+  };
+
+  const handleAIContentGenerated = (generatedContent: string, hashtags: string[], keywords?: string[]) => {
+    setContent(generatedContent + " " + hashtags.join(" "));
+    
+    if (keywords && keywords.length > 0) {
+      toast({
+        title: "Content Generated!",
+        description: `Try searching for: ${keywords.join(", ")}`,
+      });
+    }
   };
 
   const removeMedia = () => {
@@ -243,23 +257,45 @@ const EditPost = () => {
               </div>
             )}
 
-            {/* Content Input */}
+            {/* Content Input with AI Tab */}
             <div className="px-4 pb-3">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="What's on your heart? Share your thoughts, testimonies, prayer requests, or encouragement..."
-                className="border-0 resize-none focus:ring-0 p-0 text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-transparent"
-                rows={6}
-                maxLength={2000}
-              />
-              
-              {/* Character count */}
-              <div className="flex justify-end mt-2">
-                <span className="text-xs text-gray-400">
-                  {content.length}/2000
-                </span>
-              </div>
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "write" | "ai")}>
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="write" className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    Edit
+                  </TabsTrigger>
+                  <TabsTrigger value="ai" className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    AI Enhance
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="write" className="space-y-3">
+                  <Textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="What's on your heart? Share your thoughts, testimonies, prayer requests, or encouragement..."
+                    className="border-0 resize-none focus:ring-0 p-0 text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-transparent"
+                    rows={6}
+                    maxLength={2000}
+                  />
+                  
+                  {/* Character count */}
+                  <div className="flex justify-end">
+                    <span className="text-xs text-gray-400">
+                      {content.length}/2000
+                    </span>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="ai">
+                  <AIContentGenerator
+                    onContentGenerated={handleAIContentGenerated}
+                    onSelectMedia={handleMediaSelect}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Media Preview */}

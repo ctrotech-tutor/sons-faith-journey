@@ -269,27 +269,22 @@ class GeminiService {
     }
   }
 
-  async generateTrendingHashtags(context?: { userInterests?: string[], recentTopics?: string[], seasonalContext?: string }): Promise<string[]> {
+  async generateDynamicHashtags(context: string = ''): Promise<string[]> {
     try {
       const prompt = `
-        Generate 15 trending and relevant hashtags for a Christian community app.
+        Generate 15-20 relevant hashtags for a Christian community app based on this context:
         
-        Context: ${JSON.stringify(context || {})}
+        Context: "${context}"
         
         Consider:
-        - Current spiritual seasons (Advent, Lent, Easter, etc.)
-        - Popular Christian topics and themes
-        - Community engagement patterns
-        - User interests and recent discussions
+        - Current Christian trends and topics
+        - Seasonal relevance (holidays, events)
+        - Biblical themes and concepts
+        - Community engagement topics
+        - Inspirational and motivational themes
         
-        Generate hashtags that are:
-        - Spiritually uplifting and meaningful
-        - Relevant to Christian faith and life
-        - Engaging for community interaction
-        - Mix of popular and niche topics
-        
-        Return as JSON array of hashtag strings (with # symbol):
-        ["#Faith", "#Prayer", "#Grace", "#Community", "#Hope", ...]
+        Return only the hashtags as a JSON array, each starting with #:
+        ["#hashtag1", "#hashtag2", ...]
       `;
 
       const result = await this.model.generateContent(prompt);
@@ -301,41 +296,191 @@ class GeminiService {
         return JSON.parse(jsonMatch[0]);
       }
       
-      return [
-        '#Faith', '#Prayer', '#Grace', '#Hope', '#Love', '#Community',
-        '#Worship', '#Bible', '#Jesus', '#God', '#Blessed', '#Testimony',
-        '#ChristianLife', '#Devotion', '#Encouragement'
-      ];
+      return ['#faith', '#blessed', '#prayer', '#worship', '#community'];
     } catch (error) {
-      console.error('Error generating trending hashtags:', error);
-      return [
-        '#Faith', '#Prayer', '#Grace', '#Hope', '#Love', '#Community',
-        '#Worship', '#Bible', '#Jesus', '#God', '#Blessed', '#Testimony'
-      ];
+      console.error('Error generating hashtags:', error);
+      return ['#faith', '#blessed', '#prayer', '#worship', '#community'];
     }
   }
 
-  async generateSearchKeywords(type: 'image' | 'video', context?: { userInterests?: string[], currentSeason?: string, recentActivity?: string[] }): Promise<string[]> {
+  async generateSearchKeywords(type: 'image' | 'video', context: string = ''): Promise<string[]> {
+    try {
+      console.log(`Generating ${type} keywords with context:`, context);
+      
+      const prompt = `Generate 5-8 search keywords for finding ${type} content for a Christian community app. 
+      
+${context ? `Context: "${context}"` : ''}
+
+Requirements:
+- Christian themes and biblical concepts
+- Inspirational and uplifting content
+- Community-relevant topics
+- Visual appeal for ${type} content
+
+Respond with ONLY a JSON array of keywords, no other text:
+["keyword1", "keyword2", "keyword3"]`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text().trim();
+      
+      console.log(`Raw ${type} keywords response:`, text);
+      
+      // Clean up response and extract JSON
+      let cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
+      const jsonMatch = cleanText.match(/\[[\s\S]*\]/);
+      
+      if (jsonMatch) {
+        try {
+          const keywords = JSON.parse(jsonMatch[0]);
+          console.log(`Parsed ${type} keywords:`, keywords);
+          if (Array.isArray(keywords) && keywords.length > 0) {
+            return keywords;
+          }
+        } catch (parseError) {
+          console.error('Error parsing keywords JSON:', parseError);
+        }
+      }
+      
+      throw new Error('Invalid keywords response format');
+      
+    } catch (error) {
+      console.error('Error generating keywords:', error);
+      
+      // Enhanced fallback keywords
+      if (type === 'image') {
+        return context.toLowerCase().includes('prayer') ? ['christian prayer', 'hands praying', 'faith inspiration', 'biblical verses'] :
+               context.toLowerCase().includes('worship') ? ['christian worship', 'praise music', 'church community', 'spiritual joy'] :
+               context.toLowerCase().includes('bible') ? ['open bible', 'scripture reading', 'biblical wisdom', 'holy book'] :
+               ['christian inspiration', 'faith quotes', 'biblical scenes', 'worship community', 'spiritual growth'];
+      } else {
+        return context.toLowerCase().includes('prayer') ? ['christian prayer videos', 'prayer testimonies', 'faith prayers', 'spiritual meditation'] :
+               context.toLowerCase().includes('worship') ? ['christian worship songs', 'praise music', 'church worship', 'inspirational music'] :
+               context.toLowerCase().includes('bible') ? ['bible study videos', 'scripture teaching', 'biblical sermons', 'christian education'] :
+               ['christian worship', 'faith testimonies', 'biblical teachings', 'inspirational stories', 'church community'];
+      }
+    }
+  }
+
+  async generatePostContent(hint: string, includeMedia: 'none' | 'image' | 'video' = 'none'): Promise<{
+    content: string;
+    suggestedHashtags: string[];
+    mediaKeywords?: string[];
+  }> {
+    try {
+      console.log('Starting generatePostContent with hint:', hint);
+      
+      const prompt = `You are a Christian content creator. Generate engaging social media content based on the following hint. Respond with ONLY a valid JSON object, no other text.
+
+Hint: "${hint}"
+
+Requirements:
+- Create inspiring, authentic content (100-300 words)
+- Include 3-5 relevant hashtags (starting with #)
+- Keep it faith-centered and community-focused
+${includeMedia !== 'none' ? `- Include search keywords for ${includeMedia} content` : ''}
+
+JSON format (respond with ONLY this JSON, no markdown or extra text):
+{
+  "content": "your generated content here",
+  "suggestedHashtags": ["#hashtag1", "#hashtag2", "#hashtag3"],
+  ${includeMedia !== 'none' ? '"mediaKeywords": ["keyword1", "keyword2", "keyword3"]' : ''}
+}`;
+
+      console.log('Sending prompt to Gemini:', prompt);
+      
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text().trim();
+      
+      console.log('Raw Gemini response:', text);
+      
+      // Clean up the response - remove any markdown formatting
+      let cleanText = text.replace(/```json\s*/, '').replace(/```\s*$/, '').trim();
+      
+      // Try to find JSON in the response
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[0];
+        console.log('Extracted JSON:', jsonStr);
+        
+        try {
+          const parsed = JSON.parse(jsonStr);
+          console.log('Successfully parsed JSON:', parsed);
+          
+          // Validate the response has required fields
+          if (parsed.content && parsed.suggestedHashtags) {
+            return {
+              content: parsed.content,
+              suggestedHashtags: Array.isArray(parsed.suggestedHashtags) ? parsed.suggestedHashtags : [],
+              ...(parsed.mediaKeywords && { mediaKeywords: parsed.mediaKeywords })
+            };
+          }
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+        }
+      }
+      
+      throw new Error('Invalid response format from Gemini');
+      
+    } catch (error) {
+      console.error('Error generating post content:', error);
+      
+      // Enhanced fallback content based on hint
+      const fallbackContent = this.generateFallbackContent(hint, includeMedia);
+      return fallbackContent;
+    }
+  }
+
+  private generateFallbackContent(hint: string, includeMedia: 'none' | 'image' | 'video'): {
+    content: string;
+    suggestedHashtags: string[];
+    mediaKeywords?: string[];
+  } {
+    // Create more relevant fallback based on the hint
+    const content = `🙏 ${hint.includes('prayer') ? 'Let us join together in prayer' : 
+                           hint.includes('bible') || hint.includes('scripture') ? 'The Word of God is our guide and strength' :
+                           hint.includes('faith') ? 'Faith moves mountains and transforms hearts' :
+                           hint.includes('hope') ? 'Hope anchors our souls in uncertain times' :
+                           'God\'s love surrounds us in every moment'}. 
+
+May this message encourage your heart and strengthen your faith journey. Remember, you are loved beyond measure! ✨
+
+Share your thoughts and let's grow together in faith. 💙`;
+
+    const hashtags = hint.includes('prayer') ? ['#Prayer', '#Faith', '#Community', '#Blessed'] :
+                    hint.includes('bible') ? ['#Scripture', '#BibleStudy', '#Faith', '#Wisdom'] :
+                    hint.includes('worship') ? ['#Worship', '#Praise', '#Faith', '#Joy'] :
+                    ['#Faith', '#Blessed', '#Community', '#Hope', '#Love'];
+
+    const result: any = {
+      content,
+      suggestedHashtags: hashtags
+    };
+
+    if (includeMedia !== 'none') {
+      result.mediaKeywords = includeMedia === 'image' 
+        ? ['christian inspiration', 'faith quotes', 'prayer', 'worship']
+        : ['christian worship', 'faith testimonies', 'prayer', 'inspirational music'];
+    }
+
+    return result;
+  }
+
+  async extractKeywordsFromContent(content: string): Promise<string[]> {
     try {
       const prompt = `
-        Generate 8 intelligent search keywords for ${type} content in a Christian community app.
+        Extract 3-5 key search terms from this content that would be suitable for finding related images or videos:
         
-        Context: ${JSON.stringify(context || {})}
+        Content: "${content}"
         
-        Consider:
-        - Current spiritual seasons and holidays
-        - Popular Christian themes
-        - User interests and recent activity
-        - Visual content that inspires faith
+        Focus on:
+        - Main themes and topics
+        - Visual concepts that could be represented
+        - Emotional tones and feelings
+        - Biblical or spiritual elements
         
-        For ${type} content, generate keywords that would find:
-        - Inspirational and uplifting content
-        - Christian art, nature, worship scenes
-        - Biblical themes and stories
-        - Community and fellowship moments
-        
-        Return as JSON array of search terms:
-        ["keyword1", "keyword2", "keyword3", ...]
+        Return as JSON array: ["keyword1", "keyword2", ...]
       `;
 
       const result = await this.model.generateContent(prompt);
@@ -347,26 +492,70 @@ class GeminiService {
         return JSON.parse(jsonMatch[0]);
       }
       
-      // Fallback keywords based on type
-      if (type === 'image') {
-        return [
-          'faith inspiration', 'christian art', 'biblical landscape', 'prayer hands',
-          'cross sunset', 'church architecture', 'nature worship', 'bible verses'
-        ];
-      } else {
-        return [
-          'christian worship', 'praise music', 'sermon highlights', 'biblical stories',
-          'faith testimony', 'prayer service', 'gospel songs', 'christian devotional'
-        ];
-      }
+      return ['christian', 'faith', 'inspiration'];
     } catch (error) {
-      console.error('Error generating search keywords:', error);
-      // Fallback keywords
-      if (type === 'image') {
-        return ['faith inspiration', 'christian art', 'biblical landscape', 'prayer'];
-      } else {
-        return ['christian worship', 'praise music', 'sermon', 'gospel'];
+      console.error('Error extracting keywords:', error);
+      return ['christian', 'faith', 'inspiration'];
+    }
+  }
+
+  async generateTrendingHashtags(): Promise<string[]> {
+    try {
+      console.log('Making Gemini API call for trending hashtags...');
+      
+      const prompt = `Generate 15-20 trending Christian hashtags. Respond with ONLY hashtags separated by commas, no other text.
+
+Requirements:
+- Each hashtag must start with #
+- Mix of general faith and specific biblical terms
+- Current spiritual themes and community topics
+- Separated by commas only
+
+Example format: #Faith, #Blessed, #Prayer, #Hope, #Scripture, #Worship
+
+Generate hashtags now:`;
+
+      console.log('Sending hashtag prompt to Gemini');
+      
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text().trim();
+      
+      console.log('Raw hashtag response:', text);
+      
+      // Clean and parse hashtags
+      const hashtags = text
+        .split(/[,\n]/)
+        .map(tag => tag.trim())
+        .filter(tag => tag.startsWith('#'))
+        .filter(tag => tag.length > 1)
+        .slice(0, 20); // Limit to 20 hashtags
+      
+      console.log('Parsed hashtags:', hashtags);
+      
+      if (hashtags.length === 0) {
+        throw new Error('No valid hashtags found in response');
       }
+      
+      return hashtags;
+    } catch (error) {
+      console.error('Error generating trending hashtags:', error);
+      
+      // Enhanced fallback with more variety
+      const currentDate = new Date();
+      const month = currentDate.getMonth();
+      const seasonalTags = month < 3 ? ['#NewYear', '#Winter', '#Renewal'] :
+                          month < 6 ? ['#Spring', '#Easter', '#NewLife'] :
+                          month < 9 ? ['#Summer', '#Growth', '#Adventure'] :
+                          ['#Autumn', '#Thanksgiving', '#Harvest'];
+      
+      return [
+        '#Faith', '#Blessed', '#Prayer', '#Hope', '#Love', '#Grace',
+        '#Worship', '#Scripture', '#Community', '#Inspiration', '#Testimony',
+        '#Gratitude', '#ChristianLife', '#Devotion', '#Encouragement',
+        '#Faithful', '#Mercy', '#Strength', '#Peace', '#Joy',
+        ...seasonalTags
+      ];
     }
   }
 }

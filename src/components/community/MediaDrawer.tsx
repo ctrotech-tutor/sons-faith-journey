@@ -151,9 +151,9 @@ const MediaDrawer: React.FC<MediaDrawerProps> = ({
               handleEmojiSelect={handleEmojiSelect}
             />
             <HashtagTab
-              dynamicHashtags={commonHashtags}
-              loadingHashtags={false}
+              commonHashtags={commonHashtags}
               handleHashtagSelect={handleHashtagSelect}
+              loading={loading}
             />
           </Tabs>
         </div>
