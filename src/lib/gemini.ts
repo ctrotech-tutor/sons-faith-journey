@@ -268,6 +268,160 @@ class GeminiService {
       throw error;
     }
   }
+
+  async generateDynamicHashtags(context: string = ''): Promise<string[]> {
+    try {
+      const prompt = `
+        Generate 15-20 relevant hashtags for a Christian community app based on this context:
+        
+        Context: "${context}"
+        
+        Consider:
+        - Current Christian trends and topics
+        - Seasonal relevance (holidays, events)
+        - Biblical themes and concepts
+        - Community engagement topics
+        - Inspirational and motivational themes
+        
+        Return only the hashtags as a JSON array, each starting with #:
+        ["#hashtag1", "#hashtag2", ...]
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      return ['#faith', '#blessed', '#prayer', '#worship', '#community'];
+    } catch (error) {
+      console.error('Error generating hashtags:', error);
+      return ['#faith', '#blessed', '#prayer', '#worship', '#community'];
+    }
+  }
+
+  async generateSearchKeywords(type: 'image' | 'video', context: string = ''): Promise<string[]> {
+    try {
+      const prompt = `
+        Generate 5-8 search keywords for ${type} content in a Christian community app.
+        
+        Context: "${context}"
+        
+        Consider:
+        - Christian themes and biblical concepts
+        - Inspirational and uplifting content
+        - Community-relevant topics
+        - Seasonal and current relevance
+        - Visual appeal and engagement potential
+        
+        Return as JSON array of keywords:
+        ["keyword1", "keyword2", ...]
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      return type === 'image' 
+        ? ['christian inspiration', 'faith quotes', 'biblical scenes', 'worship']
+        : ['christian worship', 'testimonies', 'biblical teachings', 'faith stories'];
+    } catch (error) {
+      console.error('Error generating keywords:', error);
+      return type === 'image' 
+        ? ['christian inspiration', 'faith quotes', 'biblical scenes', 'worship']
+        : ['christian worship', 'testimonies', 'biblical teachings', 'faith stories'];
+    }
+  }
+
+  async generatePostContent(hint: string, includeMedia: 'none' | 'image' | 'video' = 'none'): Promise<{
+    content: string;
+    suggestedHashtags: string[];
+    mediaKeywords?: string[];
+  }> {
+    try {
+      const prompt = `
+        Generate engaging social media content for a Christian community app based on this hint:
+        
+        Hint: "${hint}"
+        
+        Create:
+        1. Main post content (engaging, inspirational, community-focused)
+        2. 3-5 relevant hashtags
+        ${includeMedia !== 'none' ? `3. Search keywords for finding suitable ${includeMedia} content` : ''}
+        
+        Keep it authentic, encouraging, and faith-centered. Length should be 100-300 words.
+        
+        Respond in JSON format:
+        {
+          "content": "generated post content",
+          "suggestedHashtags": ["#hashtag1", "#hashtag2"],
+          ${includeMedia !== 'none' ? '"mediaKeywords": ["keyword1", "keyword2"]' : ''}
+        }
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      return {
+        content: "Thank you for your faith journey with us! Keep growing and sharing God's love. 🙏",
+        suggestedHashtags: ['#faith', '#blessed', '#community'],
+        ...(includeMedia !== 'none' && { mediaKeywords: ['christian inspiration', 'faith'] })
+      };
+    } catch (error) {
+      console.error('Error generating post content:', error);
+      return {
+        content: "Thank you for your faith journey with us! Keep growing and sharing God's love. 🙏",
+        suggestedHashtags: ['#faith', '#blessed', '#community'],
+        ...(includeMedia !== 'none' && { mediaKeywords: ['christian inspiration', 'faith'] })
+      };
+    }
+  }
+
+  async extractKeywordsFromContent(content: string): Promise<string[]> {
+    try {
+      const prompt = `
+        Extract 3-5 key search terms from this content that would be suitable for finding related images or videos:
+        
+        Content: "${content}"
+        
+        Focus on:
+        - Main themes and topics
+        - Visual concepts that could be represented
+        - Emotional tones and feelings
+        - Biblical or spiritual elements
+        
+        Return as JSON array: ["keyword1", "keyword2", ...]
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      return ['christian', 'faith', 'inspiration'];
+    } catch (error) {
+      console.error('Error extracting keywords:', error);
+      return ['christian', 'faith', 'inspiration'];
+    }
+  }
 }
 
 export const geminiService = new GeminiService();

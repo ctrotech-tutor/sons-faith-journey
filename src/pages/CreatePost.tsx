@@ -7,10 +7,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/lib/hooks/use-toast";
-import { ArrowLeft, Send, Image, Video, X, Hash, Smile, Brain } from "lucide-react";
+import { ArrowLeft, Send, Image, Video, X, Hash, Smile, Brain, Sparkles } from "lucide-react";
 import MediaBrowser from "@/components/community/MediaBrowser";
 import SmartContentModeration from "@/components/community/SmartContentModeration";
+import AIContentGenerator from "@/components/community/AIContentGenerator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CreatePost = () => {
   const { user, userProfile } = useAuth();
@@ -21,6 +23,7 @@ const CreatePost = () => {
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [loading, setLoading] = useState(false);
   const [showMediaBrowser, setShowMediaBrowser] = useState(false);
+  const [activeTab, setActiveTab] = useState<"write" | "ai">("write");
 
   const handleSubmit = async () => {
     if (!content.trim() || !user || !userProfile) return;
@@ -81,6 +84,20 @@ const CreatePost = () => {
       (prev) =>
         prev + (prev.endsWith(" ") || prev === "" ? "" : " ") + hashtag + " "
     );
+  };
+
+  const handleAIContentGenerated = (generatedContent: string, hashtags: string[], keywords?: string[]) => {
+    setContent(generatedContent + " " + hashtags.join(" "));
+    
+    // If keywords are provided, automatically search for media
+    if (keywords && keywords.length > 0) {
+      // You could automatically open media browser and search
+      // For now, we'll just show a toast with the keywords
+      toast({
+        title: "Content Generated!",
+        description: `Try searching for: ${keywords.join(", ")}`,
+      });
+    }
   };
 
   const removeMedia = () => {
@@ -175,23 +192,45 @@ const CreatePost = () => {
               </div>
             </div>
 
-            {/* Content Input */}
+            {/* Writing Tabs */}
             <div className="px-4 pb-3">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="What's on your heart? Share your thoughts, testimonies, prayer requests, or encouragement... #blessed #faith"
-                className="border-0 resize-none focus:ring-0 p-0 text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-transparent"
-                rows={6}
-                maxLength={2000}
-              />
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "write" | "ai")}>
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="write" className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    Write
+                  </TabsTrigger>
+                  <TabsTrigger value="ai" className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    AI Generate
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Character count */}
-              <div className="flex justify-end mt-2">
-                <span className="text-xs text-gray-400">
-                  {content.length}/2000
-                </span>
-              </div>
+                <TabsContent value="write" className="space-y-3">
+                  <Textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="What's on your heart? Share your thoughts, testimonies, prayer requests, or encouragement... #blessed #faith"
+                    className="border-0 resize-none focus:ring-0 p-0 text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-transparent"
+                    rows={6}
+                    maxLength={2000}
+                  />
+
+                  {/* Character count */}
+                  <div className="flex justify-end">
+                    <span className="text-xs text-gray-400">
+                      {content.length}/2000
+                    </span>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="ai">
+                  <AIContentGenerator
+                    onContentGenerated={handleAIContentGenerated}
+                    onSelectMedia={handleMediaSelect}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Smart Content Moderation */}
