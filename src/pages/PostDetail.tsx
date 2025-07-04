@@ -4,18 +4,18 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Home, Users, Plus, Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import LazyImage from '@/components/LazyImage';
 import LazyVideo from '@/components/LazyVideo';
-import CommentsSlideUp from '@/components/community/CommentsSlideUp';
-import PostInteractions from '@/components/community/PostInteractions';
 import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
 import MetaUpdater from '@/components/MetaUpdater';
 import { formatPostContent } from '@/lib/postUtils';
 import { useToast } from '@/lib/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface CommunityPost {
   id: string;
@@ -108,28 +108,28 @@ const PostDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-md mx-auto bg-white dark:bg-gray-800">
+      <div className="min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto bg-card">
           {/* Header Skeleton */}
-          <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-            <div className="animate-pulse h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded" />
-            <div className="animate-pulse h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded" />
-            <div className="animate-pulse h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded" />
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="animate-pulse h-6 w-6 bg-muted rounded" />
+            <div className="animate-pulse h-4 w-20 bg-muted rounded" />
+            <div className="animate-pulse h-6 w-6 bg-muted rounded" />
           </div>
           
           {/* Content Skeleton */}
           <div className="p-4 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="animate-pulse h-10 w-10 bg-gray-300 dark:bg-gray-600 rounded-full" />
+              <div className="animate-pulse h-12 w-12 bg-muted rounded-full" />
               <div className="space-y-2">
-                <div className="animate-pulse h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded" />
-                <div className="animate-pulse h-3 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
+                <div className="animate-pulse h-4 w-24 bg-muted rounded" />
+                <div className="animate-pulse h-3 w-16 bg-muted rounded" />
               </div>
             </div>
-            <div className="animate-pulse h-64 w-full bg-gray-300 dark:bg-gray-600 rounded" />
+            <div className="animate-pulse h-64 w-full bg-muted rounded" />
             <div className="space-y-2">
-              <div className="animate-pulse h-4 w-full bg-gray-300 dark:bg-gray-600 rounded" />
-              <div className="animate-pulse h-4 w-3/4 bg-gray-300 dark:bg-gray-600 rounded" />
+              <div className="animate-pulse h-4 w-full bg-muted rounded" />
+              <div className="animate-pulse h-4 w-3/4 bg-muted rounded" />
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ const PostDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Dynamic Meta Tags */}
       <MetaUpdater
         title={post?.content ? undefined : "Community Post"}
@@ -150,128 +150,152 @@ const PostDetail = () => {
         generateFromContent={true}
       />
       
-      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-          <div className="flex items-center justify-between p-4">
+      {/* Header */}
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-md px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 text-primary">
+            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold tracking-tighter text-foreground">THE SONS</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="hidden items-center gap-2 md:flex">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                if (window.history.length > 2) {
-                  navigate(-1);
-                } else {
-                  navigate("/community");
-                }
-              }}
-              className="h-8 w-8 p-0"
+              onClick={() => navigate('/')}
+              className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <Home className="h-6 w-6" />
             </Button>
-            <h1 className="font-semibold text-gray-900 dark:text-white">Post</h1>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreVertical className="h-5 w-5" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/community')}
+              className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
+            >
+              <Users className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/create-post')}
+              className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground"
+            >
+              <Plus className="h-6 w-6" />
             </Button>
           </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={userProfile?.profilePhoto} />
+            <AvatarFallback>
+              {userProfile?.displayName?.charAt(0) || user?.email?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
         </div>
+      </header>
 
-        {/* Post Content */}
-        <div className="space-y-4">
-          {/* Author Info */}
-          <div className="flex items-center space-x-3 p-4 pb-2">
-            <Avatar className="h-12 w-12 ring-2 ring-gray-200 dark:ring-gray-600">
-              <AvatarImage src={post.authorAvatar} />
-              <AvatarFallback className="text-lg dark:text-gray-300">
-                {post.authorName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <p className="font-semibold text-gray-900 dark:text-white">{post.authorName}</p>
-                {post.isAdmin && (
-                  <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs">
-                    Leader
-                  </Badge>
-                )}
+      {/* Main Content */}
+      <main className="flex-1 bg-card py-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            {/* Post Header */}
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarImage src={post.authorAvatar} />
+                  <AvatarFallback>
+                    {post.authorName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-foreground">{post.authorName}</p>
+                    {post.isAdmin && (
+                      <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs">
+                        Leader
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {post.timestamp?.toDate?.()?.toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {post.timestamp?.toDate?.()?.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </p>
-            </div>
-          </div>
-
-          {/* Media - Full width for single media */}
-          {post.mediaUrl && (
-            <div className="w-full bg-black/5 dark:bg-white/5">
-              {post.mediaType === 'image' ? (
-                <LazyImage
-                  src={post.mediaUrl}
-                  alt="Post media"
-                  className="w-full h-auto max-h-[70vh] object-cover"
-                />
-              ) : (
-                <LazyVideo
-                  src={post.mediaUrl}
-                  className="w-full h-auto aspect-video max-h-[70vh] object-cover"
-                />
-              )}
-            </div>
-          )}
-
-          {/* Post Text and Interactions */}
-          <div className="px-4 space-y-4">
-            {/* Post Text */}
-            <div className="text-gray-900 dark:text-gray-100">
-              <p className="text-base leading-relaxed whitespace-pre-wrap">
+              <p className="mt-4 text-foreground leading-relaxed">
                 {formatPostContent(post.content, handleHashtagClick)}
               </p>
             </div>
 
-            {/* Engagement Stats */}
-            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 py-2">
-              <div className="flex items-center space-x-4">
-                {post.likeCount > 0 && (
-                  <span>{post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span>
-                )}
-                {post.commentCount > 0 && (
-                  <span>{post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}</span>
-                )}
-                {post.shareCount > 0 && (
-                  <span>{post.shareCount} {post.shareCount === 1 ? 'share' : 'shares'}</span>
+            {/* Post Media */}
+            {post.mediaUrl && (
+              <div className="aspect-[4/3] w-full bg-muted/20">
+                {post.mediaType === 'image' ? (
+                  <LazyImage
+                    src={post.mediaUrl}
+                    alt="Post media"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <LazyVideo
+                    src={post.mediaUrl}
+                    className="h-full w-full object-cover"
+                  />
                 )}
               </div>
+            )}
+
+            {/* Post Actions */}
+            <div className="flex items-center justify-around border-t border-border p-2">
+              <button 
+                onClick={() => handleLike(post.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted transition-colors",
+                  post.likes?.includes(user.uid) ? "text-primary" : "text-muted-foreground hover:text-primary"
+                )}
+              >
+                <Heart className={cn("h-6 w-6", post.likes?.includes(user.uid) && "fill-current")} />
+                <span className="text-sm font-semibold">{post.likeCount || 0}</span>
+              </button>
+              <button 
+                onClick={handleOpenComments}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+              >
+                <MessageCircle className="h-6 w-6" />
+                <span className="text-sm font-semibold">{post.commentCount || 0}</span>
+              </button>
+              <button 
+                onClick={() => sharePost(post.id)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+              >
+                <Send className="h-6 w-6" />
+                <span className="text-sm font-semibold">{post.shareCount || 0}</span>
+              </button>
+              <button 
+                onClick={() => toggleBookmark(post.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted transition-colors",
+                  bookmarkedPosts.has(post.id) ? "text-primary" : "text-muted-foreground hover:text-primary"
+                )}
+              >
+                <Bookmark className={cn("h-6 w-6", bookmarkedPosts.has(post.id) && "fill-current")} />
+              </button>
             </div>
           </div>
         </div>
+      </main>
 
-        {/* Interactions */}
-        <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-4">
-          <PostInteractions
-            post={post}
-            user={user}
-            likeAnimation={likeAnimations[post.id]}
-            bookmarked={bookmarkedPosts.has(post.id)}
-            bookmarkAnimation={bookmarkAnimations[post.id]}
-            onLike={() => handleLike(post.id)}
-            onComment={handleOpenComments}
-            onShare={() => sharePost(post.id)}
-            onBookmark={() => toggleBookmark(post.id)}
-          />
-        </div>
-
-        {/* Advanced Comments Modal */}
-        <AdvancedCommentSystem
-          postId={post.id}
-          isOpen={showComments}
-          onClose={() => setShowComments(false)}
-        />
-      </div>
+      {/* Advanced Comments Modal */}
+      <AdvancedCommentSystem
+        postId={post.id}
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+      />
     </div>
   );
 };
