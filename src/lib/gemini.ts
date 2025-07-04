@@ -268,6 +268,107 @@ class GeminiService {
       throw error;
     }
   }
+
+  async generateTrendingHashtags(context?: { userInterests?: string[], recentTopics?: string[], seasonalContext?: string }): Promise<string[]> {
+    try {
+      const prompt = `
+        Generate 15 trending and relevant hashtags for a Christian community app.
+        
+        Context: ${JSON.stringify(context || {})}
+        
+        Consider:
+        - Current spiritual seasons (Advent, Lent, Easter, etc.)
+        - Popular Christian topics and themes
+        - Community engagement patterns
+        - User interests and recent discussions
+        
+        Generate hashtags that are:
+        - Spiritually uplifting and meaningful
+        - Relevant to Christian faith and life
+        - Engaging for community interaction
+        - Mix of popular and niche topics
+        
+        Return as JSON array of hashtag strings (with # symbol):
+        ["#Faith", "#Prayer", "#Grace", "#Community", "#Hope", ...]
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      return [
+        '#Faith', '#Prayer', '#Grace', '#Hope', '#Love', '#Community',
+        '#Worship', '#Bible', '#Jesus', '#God', '#Blessed', '#Testimony',
+        '#ChristianLife', '#Devotion', '#Encouragement'
+      ];
+    } catch (error) {
+      console.error('Error generating trending hashtags:', error);
+      return [
+        '#Faith', '#Prayer', '#Grace', '#Hope', '#Love', '#Community',
+        '#Worship', '#Bible', '#Jesus', '#God', '#Blessed', '#Testimony'
+      ];
+    }
+  }
+
+  async generateSearchKeywords(type: 'image' | 'video', context?: { userInterests?: string[], currentSeason?: string, recentActivity?: string[] }): Promise<string[]> {
+    try {
+      const prompt = `
+        Generate 8 intelligent search keywords for ${type} content in a Christian community app.
+        
+        Context: ${JSON.stringify(context || {})}
+        
+        Consider:
+        - Current spiritual seasons and holidays
+        - Popular Christian themes
+        - User interests and recent activity
+        - Visual content that inspires faith
+        
+        For ${type} content, generate keywords that would find:
+        - Inspirational and uplifting content
+        - Christian art, nature, worship scenes
+        - Biblical themes and stories
+        - Community and fellowship moments
+        
+        Return as JSON array of search terms:
+        ["keyword1", "keyword2", "keyword3", ...]
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      
+      // Fallback keywords based on type
+      if (type === 'image') {
+        return [
+          'faith inspiration', 'christian art', 'biblical landscape', 'prayer hands',
+          'cross sunset', 'church architecture', 'nature worship', 'bible verses'
+        ];
+      } else {
+        return [
+          'christian worship', 'praise music', 'sermon highlights', 'biblical stories',
+          'faith testimony', 'prayer service', 'gospel songs', 'christian devotional'
+        ];
+      }
+    } catch (error) {
+      console.error('Error generating search keywords:', error);
+      // Fallback keywords
+      if (type === 'image') {
+        return ['faith inspiration', 'christian art', 'biblical landscape', 'prayer'];
+      } else {
+        return ['christian worship', 'praise music', 'sermon', 'gospel'];
+      }
+    }
+  }
 }
 
 export const geminiService = new GeminiService();
