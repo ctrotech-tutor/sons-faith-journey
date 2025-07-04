@@ -33,7 +33,7 @@ const MetaUpdater: React.FC<MetaUpdaterProps> = ({
             
             // Generate description from content
             if (!finalDescription) {
-              const cleanContent = content.replace(/[#*\[\]]/g, '').trim();
+              const cleanContent = content.replace(/[#*[\]]/g, '').trim();
               finalDescription = cleanContent.length > 150 
                 ? cleanContent.substring(0, 150) + '...'
                 : cleanContent;
