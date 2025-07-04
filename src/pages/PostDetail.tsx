@@ -428,34 +428,30 @@ const PostDetail = () => {
 
             {/* Comments Section */}
             <div className="border-t border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-4">Comments ({comments.length})</h2>
-              
+              <h2 className="text-lg font-bold text-foreground">Comments ({comments.length})</h2>
               <div className="flex flex-col gap-6">
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex w-full items-start gap-4">
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={comment.authorAvatar} />
-                      <AvatarFallback>
-                        {comment.authorName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <img 
+                      className="h-10 w-10 shrink-0 rounded-full object-cover" 
+                      src={comment.authorAvatar || '/default-avatar.png'} 
+                      alt={comment.authorName}
+                    />
                     <div className="flex flex-1 flex-col">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground">{comment.authorName}</p>
                         <p className="text-xs text-muted-foreground">
                           {comment.timestamp?.toDate?.()?.toLocaleDateString('en-US', {
-                            month: 'short',
                             day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                            month: 'short'
+                          }) || ''}
                         </p>
                       </div>
-                      <p className="text-sm text-foreground mt-1">
+                      <p className="text-sm text-foreground">
                         {comment.content}
                       </p>
                       
-                      {/* Comment Actions */}
+                      {/* Comment Actions - Simple like button */}
                       <div className="flex items-center gap-4 mt-2">
                         <button
                           onClick={() => handleLikeComment(comment.id, comment.likes || [])}
@@ -515,22 +511,19 @@ const PostDetail = () => {
                         <div className="space-y-3 mt-3 ml-4 border-l border-border pl-4">
                           {comment.replies.map((reply: Comment) => (
                             <div key={reply.id} className="flex items-start gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src={reply.authorAvatar} />
-                                <AvatarFallback className="text-xs">
-                                  {reply.authorName.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
+                              <img 
+                                className="h-8 w-8 shrink-0 rounded-full object-cover" 
+                                src={reply.authorAvatar || '/default-avatar.png'} 
+                                alt={reply.authorName}
+                              />
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="font-medium text-foreground">{reply.authorName}</span>
                                   <span className="text-muted-foreground">
                                     {reply.timestamp?.toDate?.()?.toLocaleDateString('en-US', {
-                                      month: 'short',
                                       day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
+                                      month: 'short'
+                                    }) || ''}
                                   </span>
                                 </div>
                                 <p className="text-sm text-foreground mt-1">{reply.content}</p>
@@ -559,30 +552,30 @@ const PostDetail = () => {
                   </div>
                 )}
               </div>
-
-              {/* Add Comment */}
-              <div className="sticky bottom-0 bg-background py-4 mt-6">
+              
+              <div className="sticky bottom-0 bg-background py-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 flex-shrink-0">
-                    <AvatarImage src={userProfile?.profilePhoto} />
-                    <AvatarFallback className="text-xs">
-                      {userProfile?.displayName?.charAt(0) || user?.email?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <img 
+                    className="h-10 w-10 shrink-0 rounded-full object-cover" 
+                    src={userProfile?.profilePhoto || '/default-avatar.png'} 
+                    alt="Your avatar"
+                  />
                   <div className="relative flex-1">
                     <input
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                      className="w-full rounded-full border border-border bg-muted/20 py-2 pl-4 pr-24 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:bg-background"
+                      className="w-full rounded-full border-gray-300 bg-gray-50 py-2 pl-4 pr-24 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                       placeholder="Add a comment..."
                     />
                     <button
                       onClick={handleAddComment}
                       disabled={!newComment.trim()}
-                      className="absolute inset-y-0 right-0 flex items-center justify-center rounded-r-full bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      className="absolute inset-y-0 right-0 flex items-center justify-center rounded-r-full bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
                     >
-                      <Send className="h-4 w-4" />
+                      <svg fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path>
+                      </svg>
                     </button>
                   </div>
                 </div>
