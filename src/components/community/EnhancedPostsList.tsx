@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  MoreVertical, 
-  Bookmark, 
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreVertical,
+  Bookmark,
   BookmarkCheck,
   Play,
   Pause,
@@ -15,19 +15,19 @@ import {
   Maximize,
   Eye,
   TrendingUp,
-  Crown
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import LazyImage from '@/components/LazyImage';
-import LazyVideo from '@/components/LazyVideo';
-import PostSkeleton from './PostSkeleton';
-import { formatPostContent } from '@/lib/postUtils';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useActivitySync } from '@/lib/hooks/useActivitySync';
+  Crown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import LazyImage from "@/components/LazyImage";
+import LazyVideo from "@/components/LazyVideo";
+import PostSkeleton from "./PostSkeleton";
+import { formatPostContent } from "@/lib/postUtils";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useActivitySync } from "@/lib/hooks/useActivitySync";
 
 interface CommunityPost {
   id: string;
@@ -36,14 +36,14 @@ interface CommunityPost {
   authorAvatar: string;
   content: string;
   mediaUrl?: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: "image" | "video";
   likes: string[];
   likeCount: number;
   comments: Comment[];
   commentCount: number;
   shareCount: number;
   viewCount?: number;
-  status: 'approved' | 'pending' | 'rejected';
+  status: "approved" | "pending" | "rejected";
   timestamp: any;
   isAdmin: boolean;
   engagementScore?: number;
@@ -100,14 +100,14 @@ const EnhancedPostsList = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const postId = entry.target.getAttribute('data-post-id');
+            const postId = entry.target.getAttribute("data-post-id");
             if (postId && !viewedPosts.has(postId)) {
-              setViewedPosts(prev => new Set(prev).add(postId));
-              trackEngagement('page_view', { 
-                type: 'post_view', 
+              setViewedPosts((prev) => new Set(prev).add(postId));
+              trackEngagement("page_view", {
+                type: "post_view",
                 postId,
                 filter,
-                timestamp: Date.now()
+                timestamp: Date.now(),
               });
             }
           }
@@ -125,36 +125,40 @@ const EnhancedPostsList = ({
 
   const handlePostClick = (postId: string, event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest('[role="button"]')
+    ) {
       return;
     }
-    
-    trackEngagement('page_view', { 
-      type: 'post_detail_view', 
+
+    trackEngagement("page_view", {
+      type: "post_detail_view",
       postId,
-      source: 'post_click'
+      source: "post_click",
     });
-    
+
     navigate(`/community/post/${postId}`);
   };
 
   const handleLikeWithTracking = (postId: string) => {
     onHandleLike(postId);
-    trackEngagement('post_like', { postId, timestamp: Date.now() });
+    trackEngagement("post_like", { postId, timestamp: Date.now() });
   };
 
   const handleShareWithTracking = (postId: string) => {
     onSharePost(postId);
-    trackEngagement('post_share', { postId, timestamp: Date.now() });
+    trackEngagement("post_share", { postId, timestamp: Date.now() });
   };
 
   const handleCommentWithTracking = (postId: string) => {
     onOpenCommentsModal(postId);
-    trackEngagement('post_comment', { postId, action: 'open_comments' });
+    trackEngagement("post_comment", { postId, action: "open_comments" });
   };
 
   const toggleVideoPlay = (postId: string) => {
-    setPlayingVideos(prev => {
+    setPlayingVideos((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) {
         newSet.delete(postId);
@@ -170,8 +174,9 @@ const EnhancedPostsList = ({
     if (post.likeCount > 0) stats.push(`${post.likeCount} likes`);
     if (post.commentCount > 0) stats.push(`${post.commentCount} comments`);
     if (post.shareCount > 0) stats.push(`${post.shareCount} shares`);
-    if (post.viewCount && post.viewCount > 0) stats.push(`${post.viewCount} views`);
-    return stats.join(' • ');
+    if (post.viewCount && post.viewCount > 0)
+      stats.push(`${post.viewCount} views`);
+    return stats.join(" • ");
   };
 
   const getPostPriorityBadge = (post: CommunityPost) => {
@@ -189,7 +194,11 @@ const EnhancedPostsList = ({
         </Badge>
       );
     }
-    if (filter === 'trending' && post.trendingScore && post.trendingScore > 15) {
+    if (
+      filter === "trending" &&
+      post.trendingScore &&
+      post.trendingScore > 15
+    ) {
       return (
         <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
           🔥 Trending
@@ -214,21 +223,29 @@ const EnhancedPostsList = ({
       <div className="text-center py-20 px-4">
         <div className="text-6xl mb-4">💬</div>
         <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-          {hashtagFilter ? `No posts with ${hashtagFilter}` :
-            filter === 'trending' ? 'No Trending Posts' :
-              filter === 'popular' ? 'No Popular Posts Yet' :
-                filter === 'admin' ? 'No Leader Posts' :
-                  'Start the Conversation'}
+          {hashtagFilter
+            ? `No posts with ${hashtagFilter}`
+            : filter === "trending"
+            ? "No Trending Posts"
+            : filter === "popular"
+            ? "No Popular Posts Yet"
+            : filter === "admin"
+            ? "No Leader Posts"
+            : "Start the Conversation"}
         </h3>
         <p className="text-gray-500 dark:text-gray-500 mb-6">
-          {hashtagFilter ? 'Try a different hashtag or create a post with this tag!' :
-            filter === 'trending' ? 'Posts will appear here when they gain traction!' :
-              filter === 'popular' ? 'Posts will appear here based on engagement!' :
-                filter === 'admin' ? 'Leaders haven\'t posted yet!' :
-                  'Be the first to share something meaningful with the community!'}
+          {hashtagFilter
+            ? "Try a different hashtag or create a post with this tag!"
+            : filter === "trending"
+            ? "Posts will appear here when they gain traction!"
+            : filter === "popular"
+            ? "Posts will appear here based on engagement!"
+            : filter === "admin"
+            ? "Leaders haven't posted yet!"
+            : "Be the first to share something meaningful with the community!"}
         </p>
         <Button
-          onClick={() => navigate('/create-post')}
+          onClick={() => navigate("/create-post")}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
           Create First Post
@@ -271,10 +288,12 @@ const EnhancedPostsList = ({
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
-                    <p className="font-semibold text-sm dark:text-white">{post.authorName}</p>
+                    <p className="font-semibold text-sm dark:text-white">
+                      {post.authorName}
+                    </p>
                     {post.isAdmin && (
                       <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs px-2 py-0.5">
                         Leader
@@ -282,9 +301,11 @@ const EnhancedPostsList = ({
                     )}
                     {getPostPriorityBadge(post)}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{post.timestamp?.toDate?.()?.toLocaleDateString()}</span>
+                    <span>
+                      {post.timestamp?.toDate?.()?.toLocaleDateString()}
+                    </span>
                     {post.location && (
                       <>
                         <span>•</span>
@@ -294,16 +315,18 @@ const EnhancedPostsList = ({
                     {userProfile?.isAdmin && post.engagementScore && (
                       <>
                         <span>•</span>
-                        <span className="text-purple-600">E: {post.engagementScore.toFixed(1)}</span>
+                        <span className="text-purple-600">
+                          E: {post.engagementScore.toFixed(1)}
+                        </span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
+
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -314,7 +337,7 @@ const EnhancedPostsList = ({
             {/* Enhanced Media Display */}
             {post.mediaUrl && (
               <div className="relative w-full bg-black/5 dark:bg-white/5">
-                {post.mediaType === 'image' ? (
+                {post.mediaType === "image" ? (
                   <LazyImage
                     src={post.mediaUrl}
                     alt="Post media"
@@ -372,9 +395,9 @@ const EnhancedPostsList = ({
                     >
                       <Heart
                         className={`h-6 w-6 transition-all duration-300 ${
-                          post.likes.includes(user?.uid || '')
-                            ? 'fill-red-500 text-red-500'
-                            : 'text-gray-700 dark:text-gray-300 group-hover:text-red-500'
+                          post.likes.includes(user?.uid || "")
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-700 dark:text-gray-300 group-hover:text-red-500"
                         }`}
                       />
                     </motion.div>
@@ -396,7 +419,9 @@ const EnhancedPostsList = ({
                   >
                     <MessageCircle className="h-6 w-6 mr-1" />
                     {post.commentCount > 0 && (
-                      <span className="text-sm font-medium">{post.commentCount}</span>
+                      <span className="text-sm font-medium">
+                        {post.commentCount}
+                      </span>
                     )}
                   </Button>
 
@@ -411,7 +436,9 @@ const EnhancedPostsList = ({
                   >
                     <Share2 className="h-6 w-6 mr-1" />
                     {post.shareCount > 0 && (
-                      <span className="text-sm font-medium">{post.shareCount}</span>
+                      <span className="text-sm font-medium">
+                        {post.shareCount}
+                      </span>
                     )}
                   </Button>
 
@@ -458,17 +485,22 @@ const EnhancedPostsList = ({
               )}
 
               {/* Enhanced Post Content */}
-              <motion.div
-                layout
-                className="space-y-2"
-              >
+              <motion.div layout className="space-y-2">
                 <p className="text-sm dark:text-gray-200 leading-relaxed">
                   <span className="font-semibold">{post.authorName}</span>{" "}
                   {expandedPosts[post.id] || post.content.length <= 200 ? (
-                    <span>{formatPostContent(post.content, onHashtagClick)}</span>
+                    <span>
+                      {formatPostContent(post.content, onHashtagClick)}
+                    </span>
                   ) : (
                     <>
-                      <span>{formatPostContent(post.content.slice(0, 200), onHashtagClick)}...</span>
+                      <span>
+                        {formatPostContent(
+                          post.content.slice(0, 200),
+                          onHashtagClick
+                        )}
+                        ...
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

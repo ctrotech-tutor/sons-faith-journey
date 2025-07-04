@@ -116,7 +116,7 @@ const AppContent = () => {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/community" element={<Community />} />
-        <Route path="/community/post/:postId" element={<PostDetail />} />
+        <Route path="/post/:postId" element={<PostDetail />} />
         <Route path="/church-room" element={<ChurchRoom />} />
         <Route path="/chat/:chatId" element={<ChurchRoom />} />
         <Route path="/chat-supervisor" element={<ChatWithSupervisor />} />

@@ -1,16 +1,23 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, BookmarkCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import LazyImage from '@/components/LazyImage';
-import LazyVideo from '@/components/LazyVideo';
-import PostSkeleton from './PostSkeleton';
-import { formatPostContent } from '@/lib/postUtils';
-import { useAuth } from '@/lib/hooks/useAuth';
+import React from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreVertical,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import LazyImage from "@/components/LazyImage";
+import LazyVideo from "@/components/LazyVideo";
+import PostSkeleton from "./PostSkeleton";
+import { formatPostContent } from "@/lib/postUtils";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 interface CommunityPost {
   id: string;
@@ -19,13 +26,13 @@ interface CommunityPost {
   authorAvatar: string;
   content: string;
   mediaUrl?: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: "image" | "video";
   likes: string[];
   likeCount: number;
   comments: Comment[];
   commentCount: number;
   shareCount: number;
-  status: 'approved' | 'pending' | 'rejected';
+  status: "approved" | "pending" | "rejected";
   timestamp: any;
   isAdmin: boolean;
   engagementScore?: number;
@@ -71,7 +78,11 @@ const PostsList = ({
   const handlePostClick = (postId: string, event: React.MouseEvent) => {
     // Prevent navigation if clicking on interactive elements
     const target = event.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest('[role="button"]')
+    ) {
       return;
     }
     navigate(`/community/post/${postId}`);
@@ -92,21 +103,29 @@ const PostsList = ({
       <div className="text-center py-20 px-4">
         <div className="text-6xl mb-4">💬</div>
         <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-          {hashtagFilter ? `No posts with ${hashtagFilter}` :
-            filter === 'trending' ? 'No Trending Posts' :
-              filter === 'popular' ? 'No Popular Posts Yet' :
-                filter === 'admin' ? 'No Leader Posts' :
-                  'Start the Conversation'}
+          {hashtagFilter
+            ? `No posts with ${hashtagFilter}`
+            : filter === "trending"
+            ? "No Trending Posts"
+            : filter === "popular"
+            ? "No Popular Posts Yet"
+            : filter === "admin"
+            ? "No Leader Posts"
+            : "Start the Conversation"}
         </h3>
         <p className="text-gray-500 dark:text-gray-500 mb-6">
-          {hashtagFilter ? 'Try a different hashtag or create a post with this tag!' :
-            filter === 'trending' ? 'Posts will appear here when they gain traction!' :
-              filter === 'popular' ? 'Posts will appear here based on engagement!' :
-                filter === 'admin' ? 'Leaders haven\'t posted yet!' :
-                  'Be the first to share something meaningful with the community!'}
+          {hashtagFilter
+            ? "Try a different hashtag or create a post with this tag!"
+            : filter === "trending"
+            ? "Posts will appear here when they gain traction!"
+            : filter === "popular"
+            ? "Posts will appear here based on engagement!"
+            : filter === "admin"
+            ? "Leaders haven't posted yet!"
+            : "Be the first to share something meaningful with the community!"}
         </p>
         <Button
-          onClick={() => navigate('/create-post')}
+          onClick={() => navigate("/create-post")}
           className="bg-gradient-to-r from-purple-600 to-pink-600"
         >
           Create First Post
@@ -138,26 +157,30 @@ const PostsList = ({
                 </Avatar>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <p className="font-semibold text-sm dark:text-white">{post.authorName}</p>
+                    <p className="font-semibold text-sm dark:text-white">
+                      {post.authorName}
+                    </p>
                     {post.isAdmin && (
                       <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs px-2 py-0">
                         Leader
                       </Badge>
                     )}
-                    {filter === 'trending' && post.trendingScore && post.trendingScore > 10 && (
-                      <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-1 py-0">
-                        🔥
-                      </Badge>
-                    )}
+                    {filter === "trending" &&
+                      post.trendingScore &&
+                      post.trendingScore > 10 && (
+                        <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-1 py-0">
+                          🔥
+                        </Badge>
+                      )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {post.timestamp?.toDate?.()?.toLocaleDateString()}
                   </p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-8 w-8 p-0 text-gray-500 dark:text-gray-400"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -168,7 +191,7 @@ const PostsList = ({
             {/* Media */}
             {post.mediaUrl && (
               <div className="w-full bg-black/5 dark:bg-white/5 relative">
-                {post.mediaType === 'image' ? (
+                {post.mediaType === "image" ? (
                   <LazyImage
                     src={post.mediaUrl}
                     alt="Post media"
@@ -204,9 +227,9 @@ const PostsList = ({
                   >
                     <Heart
                       className={`h-6 w-6 transition-colors duration-300 ${
-                        post.likes.includes(user?.uid || '')
-                          ? 'fill-red-500 text-red-500'
-                          : 'text-gray-700 dark:text-gray-300'
+                        post.likes.includes(user?.uid || "")
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-700 dark:text-gray-300"
                       }`}
                     />
                   </motion.button>
@@ -264,7 +287,7 @@ const PostsList = ({
                 <div className="flex items-center space-x-4">
                   {post.likeCount > 0 && (
                     <span className="font-medium">
-                      {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}
+                      {post.likeCount} {post.likeCount === 1 ? "like" : "likes"}
                     </span>
                   )}
                   {post.commentCount > 0 && (
@@ -276,7 +299,8 @@ const PostsList = ({
                 </div>
                 {userProfile?.isAdmin && (
                   <span className="text-xs text-purple-600">
-                    E: {post.engagementScore?.toFixed(1)} | T: {post.trendingScore?.toFixed(1)}
+                    E: {post.engagementScore?.toFixed(1)} | T:{" "}
+                    {post.trendingScore?.toFixed(1)}
                   </span>
                 )}
               </div>
@@ -287,15 +311,23 @@ const PostsList = ({
                 initial={false}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className='bg-white dark:bg-gray-900/60'
+                className="bg-white dark:bg-gray-900/60"
               >
                 <p className="text-sm dark:text-gray-200 break-all">
                   <span className="font-semibold">{post.authorName}</span>{" "}
                   {expandedPosts[post.id] || post.content.length <= 150 ? (
-                    <span>{formatPostContent(post.content, onHashtagClick)}</span>
+                    <span>
+                      {formatPostContent(post.content, onHashtagClick)}
+                    </span>
                   ) : (
                     <>
-                      <span>{formatPostContent(post.content.slice(0, 150), onHashtagClick)}...</span>
+                      <span>
+                        {formatPostContent(
+                          post.content.slice(0, 150),
+                          onHashtagClick
+                        )}
+                        ...
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

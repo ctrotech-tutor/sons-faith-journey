@@ -48,7 +48,7 @@ const Community = () => {
   };
 
   const handleOpenCommentsModal = (postId: string) => {
-    navigate(`/post/${postId}`);
+    navigate(`community/post/${postId}`);
   };
 
   if (!user) {
