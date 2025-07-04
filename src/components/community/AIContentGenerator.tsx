@@ -41,21 +41,27 @@ const AIContentGenerator: React.FC<AIContentGeneratorProps> = ({
 
     setLoading(true);
     try {
+      console.log('Generating AI content with hint:', hint, 'includeMedia:', includeMedia);
       const result = await geminiService.generatePostContent(hint, includeMedia);
+      console.log('AI Content result:', result);
       
-      setGeneratedContent(result.content);
-      setSuggestedHashtags(result.suggestedHashtags);
-      
-      if (result.mediaKeywords) {
-        setMediaKeywords(result.mediaKeywords);
+      if (result && result.content) {
+        setGeneratedContent(result.content);
+        setSuggestedHashtags(result.suggestedHashtags || []);
+        
+        if (result.mediaKeywords) {
+          setMediaKeywords(result.mediaKeywords);
+        }
+
+        toast({
+          title: 'Content Generated!',
+          description: 'AI has created engaging content based on your hint.'
+        });
+
+        setActiveTab('preview');
+      } else {
+        throw new Error('No content generated');
       }
-
-      toast({
-        title: 'Content Generated!',
-        description: 'AI has created engaging content based on your hint.'
-      });
-
-      setActiveTab('preview');
     } catch (error) {
       console.error('Error generating content:', error);
       toast({

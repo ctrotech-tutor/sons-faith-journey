@@ -27,15 +27,23 @@ const HashtagTab: React.FC<HashtagTabProps> = ({
   const generateTrendingHashtags = async () => {
     setLoadingTrending(true);
     try {
+      console.log('Attempting to generate trending hashtags...');
       const trending = await geminiService.generateTrendingHashtags();
-      setTrendingHashtags(trending);
+      console.log('Generated hashtags:', trending);
+      if (trending && trending.length > 0) {
+        setTrendingHashtags(trending);
+      } else {
+        throw new Error('No hashtags returned');
+      }
     } catch (error) {
       console.error('Error generating trending hashtags:', error);
       // Fallback hashtags
-      setTrendingHashtags([
+      const fallbackTags = [
         '#Faith', '#Blessed', '#Prayer', '#Hope', '#Love', '#Grace',
-        '#Worship', '#Scripture', '#Community', '#Inspiration'
-      ]);
+        '#Worship', '#Scripture', '#Community', '#Inspiration', '#Testimony',
+        '#Gratitude', '#ChristianLife', '#Devotion', '#Encouragement'
+      ];
+      setTrendingHashtags(fallbackTags);
     } finally {
       setLoadingTrending(false);
     }
@@ -44,7 +52,7 @@ const HashtagTab: React.FC<HashtagTabProps> = ({
   const allHashtags = [...new Set([...commonHashtags, ...trendingHashtags])];
 
   return (
-    <TabsContent value="hashtag" className="pt-2 space-y-4">
+    <TabsContent value="hashtags" className="pt-2 space-y-4">
       <div className="space-y-3">
         {/* Popular Hashtags */}
         <div>

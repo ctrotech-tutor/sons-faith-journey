@@ -425,6 +425,7 @@ class GeminiService {
 
   async generateTrendingHashtags(): Promise<string[]> {
     try {
+      console.log('Making Gemini API call for trending hashtags...');
       const prompt = `
         Generate 15-20 trending hashtags for a Christian community social media platform.
         Focus on current spiritual themes, seasonal religious topics, and community engagement.
@@ -437,8 +438,14 @@ class GeminiService {
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+      console.log('Gemini API response for hashtags:', text);
       
-      return text.split(',').map(tag => tag.trim()).filter(tag => tag.startsWith('#'));
+      const hashtags = text.split(',').map(tag => tag.trim()).filter(tag => tag.startsWith('#'));
+      if (hashtags.length === 0) {
+        throw new Error('No valid hashtags found in response');
+      }
+      
+      return hashtags;
     } catch (error) {
       console.error('Error generating trending hashtags:', error);
       return [
