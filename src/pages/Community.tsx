@@ -1,12 +1,9 @@
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
-import PostsList from '@/components/community/PostsList';
 import EnhancedPostsList from '@/components/community/EnhancedPostsList';
 import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
 import { useCommunityData } from '@/hooks/useCommunityData';

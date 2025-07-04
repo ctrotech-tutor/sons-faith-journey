@@ -87,12 +87,14 @@ const Navigation = () => {
     { path: '/bible', icon: BookOpen, label: 'Bible' },
     { path: '/post-manager', icon: Pencil, label: 'Manage Post' },
     { path: '/create-post', icon: PencilLine, label: 'Create Post' },
+    { path: '/favorites', icon: Heart, label: 'Favorites', unreadCount: unreadCounts.favorites },
   ];
 
   const adminItems = [
     { path: '/admin', icon: Settings, label: 'Admin Panel' },
     { path: '/admin-inbox', icon: Heart, label: 'Admin Inbox' },
     { path: '/post-approval', icon: CheckCircle2, label: 'Post Approval' },
+    { path: '/ml-analytics', icon: Users, label: 'ML Analytics' },
   ];
 
   const getCurrentNavLabel = () => {
