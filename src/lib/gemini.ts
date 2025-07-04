@@ -422,6 +422,32 @@ class GeminiService {
       return ['christian', 'faith', 'inspiration'];
     }
   }
+
+  async generateTrendingHashtags(): Promise<string[]> {
+    try {
+      const prompt = `
+        Generate 15-20 trending hashtags for a Christian community social media platform.
+        Focus on current spiritual themes, seasonal religious topics, and community engagement.
+        Include a mix of general faith hashtags and more specific biblical/theological terms.
+        Return only the hashtags separated by commas, each starting with #.
+
+        Example format: #Faith, #Blessed, #Prayer, #Hope, #Scripture, #Worship
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      return text.split(',').map(tag => tag.trim()).filter(tag => tag.startsWith('#'));
+    } catch (error) {
+      console.error('Error generating trending hashtags:', error);
+      return [
+        '#Faith', '#Blessed', '#Prayer', '#Hope', '#Love', '#Grace',
+        '#Worship', '#Scripture', '#Community', '#Inspiration', '#Testimony',
+        '#Gratitude', '#ChristianLife', '#Devotion', '#Encouragement'
+      ];
+    }
+  }
 }
 
 export const geminiService = new GeminiService();

@@ -153,6 +153,7 @@ const MediaDrawer: React.FC<MediaDrawerProps> = ({
             <HashtagTab
               commonHashtags={commonHashtags}
               handleHashtagSelect={handleHashtagSelect}
+              loading={loading}
             />
           </Tabs>
         </div>

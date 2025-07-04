@@ -369,6 +369,7 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
             <HashtagTab
               commonHashtags={dynamicHashtags}
               handleHashtagSelect={handleHashtagSelect}
+              loading={loadingHashtags}
             />
           </Tabs>
         </div>
