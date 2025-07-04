@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
 import EnhancedPostsList from '@/components/community/EnhancedPostsList';
-import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
 
@@ -91,12 +90,6 @@ const Community = () => {
           />
         </div>
       </div>
-
-      <AdvancedCommentSystem
-        postId={selectedPostForComments || ''}
-        isOpen={!!selectedPostForComments}
-        onClose={() => setSelectedPostForComments(null)}
-      />
     </div>
   );
 };
