@@ -1,108 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
-import { geminiService } from '@/lib/gemini';
-import { Hash, Loader2, TrendingUp } from 'lucide-react';
+"use client";
 
-interface HashtagTabProps {
+import { TabsContent } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+import React from "react";
+
+type HashtagTabProps = {
   commonHashtags: string[];
   handleHashtagSelect: (hashtag: string) => void;
-  loading: boolean;
-}
+};
 
 const HashtagTab: React.FC<HashtagTabProps> = ({
   commonHashtags,
   handleHashtagSelect,
-  loading
 }) => {
-  const [trendingHashtags, setTrendingHashtags] = useState<string[]>([]);
-  const [loadingTrending, setLoadingTrending] = useState(false);
-
-  useEffect(() => {
-    generateTrendingHashtags();
-  }, []);
-
-  const generateTrendingHashtags = async () => {
-    setLoadingTrending(true);
-    try {
-      console.log('Attempting to generate trending hashtags...');
-      const trending = await geminiService.generateTrendingHashtags();
-      console.log('Generated hashtags:', trending);
-      if (trending && trending.length > 0) {
-        setTrendingHashtags(trending);
-      } else {
-        throw new Error('No hashtags returned');
-      }
-    } catch (error) {
-      console.error('Error generating trending hashtags:', error);
-      // Fallback hashtags
-      const fallbackTags = [
-        '#Faith', '#Blessed', '#Prayer', '#Hope', '#Love', '#Grace',
-        '#Worship', '#Scripture', '#Community', '#Inspiration', '#Testimony',
-        '#Gratitude', '#ChristianLife', '#Devotion', '#Encouragement'
-      ];
-      setTrendingHashtags(fallbackTags);
-    } finally {
-      setLoadingTrending(false);
-    }
-  };
-
-  const allHashtags = [...new Set([...commonHashtags, ...trendingHashtags])];
-
   return (
-    <TabsContent value="hashtags" className="pt-2 space-y-4">
-      <div className="space-y-3">
-        {/* Popular Hashtags */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-medium text-foreground">Popular</h3>
-          </div>
-          {loading || loadingTrending ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {allHashtags.slice(0, 20).map((hashtag, index) => (
-                <motion.div
-                  key={hashtag}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                    onClick={() => handleHashtagSelect(hashtag)}
-                  >
-                    <Hash className="h-3 w-3 mr-1" />
-                    {hashtag.replace('#', '')}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Refresh Button */}
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={generateTrendingHashtags}
-            disabled={loadingTrending}
-            className="text-xs"
-          >
-            {loadingTrending ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <Hash className="h-3 w-3 mr-1" />
-            )}
-            Refresh Hashtags
-          </Button>
+    <TabsContent value="hashtags" className="pt-2 space-y-3">
+      <div className="rounded-2xl backdrop-blur-md border border-white/10 bg-white/30 dark:bg-white/5 shadow-inner max-h-[250px] overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-purple-400 dark:scrollbar-thumb-purple-600 scrollbar-track-transparent">
+        <div className="space-y-2">
+          {commonHashtags.map((hashtag, index) => (
+            <motion.button
+              key={index}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
+              className="block w-full text-left p-2 px-3 rounded-xl text-sm md:text-base font-semibold text-purple-700 dark:text-purple-300 hover:bg-white/20 dark:hover:bg-white/10 transition-all"
+              onClick={() => handleHashtagSelect(hashtag)}
+            >
+              {hashtag}
+            </motion.button>
+          ))}
         </div>
       </div>
     </TabsContent>

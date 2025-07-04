@@ -16,8 +16,6 @@ import VideoTab from './VideoTab';
 import HashtagTab from './HashtagTab';
 import EmojiTab from './EmojiTab';
 import { cn } from '@/lib/utils';
-import { geminiService } from '@/lib/gemini';
-import { emojiCategories } from '@/data/emojiCategories';
 
 interface MediaBrowserProps {
   isOpen: boolean;
@@ -70,8 +68,6 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   const [loading, setLoading] = useState(false);
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"image" | "video" | null>(null);
-  const [dynamicHashtags, setDynamicHashtags] = useState<string[]>(commonHashtags);
-  const [loadingHashtags, setLoadingHashtags] = useState(false);
 
   const searchImages = async (query: string) => {
     if (!query.trim()) return;
@@ -250,43 +246,12 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
   };
 
   useEffect(() => {
-    const initializeDefaultSearch = async () => {
-      if (isOpen && activeTab === 'images' && !searchQuery) {
-        try {
-          const keywords = await geminiService.generateSearchKeywords('image');
-          const defaultKeyword = keywords[0] || 'christian inspiration';
-          searchImages(defaultKeyword);
-        } catch {
-          searchImages('christian inspiration');
-        }
-      } else if (isOpen && activeTab === 'videos' && !searchQuery) {
-        try {
-          const keywords = await geminiService.generateSearchKeywords('video');
-          const defaultKeyword = keywords[0] || 'christian worship';
-          searchVideos(defaultKeyword);
-        } catch {
-          searchVideos('christian worship');
-        }
-      }
-    };
-
-    const generateDynamicHashtags = async () => {
-      if (isOpen && activeTab === 'hashtags' && !loadingHashtags) {
-        setLoadingHashtags(true);
-        try {
-          const generated = await geminiService.generateDynamicHashtags();
-          setDynamicHashtags([...commonHashtags, ...generated]);
-        } catch {
-          setDynamicHashtags(commonHashtags);
-        } finally {
-          setLoadingHashtags(false);
-        }
-      }
-    };
-
-    initializeDefaultSearch();
-    generateDynamicHashtags();
-  }, [isOpen, activeTab, searchQuery, loadingHashtags]);
+    if (isOpen && activeTab === 'images' && !searchQuery) {
+      searchImages('inspiration faith');
+    } else if (isOpen && activeTab === 'videos' && !searchQuery) {
+      searchVideos('christian worship');
+    }
+  }, [isOpen, activeTab]);
 
   function scrollToCategory(i: number): void {
     const grid = document.querySelector('.grid.grid-cols-8');
@@ -367,7 +332,7 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
               handleEmojiSelect={handleEmojiSelect}
             />
             <HashtagTab
-              commonHashtags={dynamicHashtags}
+              commonHashtags={commonHashtags}
               handleHashtagSelect={handleHashtagSelect}
             />
           </Tabs>
