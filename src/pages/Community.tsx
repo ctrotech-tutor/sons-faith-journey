@@ -6,28 +6,20 @@ import { useToast } from '@/lib/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityFilters from '@/components/community/CommunityFilters';
-import VirtualizedPostList from '@/components/community/VirtualizedPostList';
+import PostsList from '@/components/community/PostsList';
+import EnhancedPostsList from '@/components/community/EnhancedPostsList';
 import AdvancedCommentSystem from '@/components/community/AdvancedCommentSystem';
-import { useCommunityInfiniteScroll } from '@/hooks/useCommunityInfiniteScroll';
+import { useCommunityData } from '@/hooks/useCommunityData';
 import { useCommunityActions } from '@/hooks/useCommunityActions';
 
 const Community = () => {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
+  const [filter, setFilter] = useState<'recent' | 'trending' | 'popular' | 'admin'>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
+  const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
 
-  const { 
-    posts, 
-    loading, 
-    hasNextPage,
-    isNextPageLoading,
-    bookmarkedPosts, 
-    filter,
-    hashtagFilter,
-    handleFilterChange,
-    handleHashtagFilter,
-    loadNextPage
-  } = useCommunityInfiniteScroll(user, userProfile);
+  const { posts, loading, bookmarkedPosts, getFilteredPosts } = useCommunityData(user, userProfile);
   
   const {
     expandedPosts,
@@ -41,7 +33,7 @@ const Community = () => {
   } = useCommunityActions(user, userProfile, posts);
 
   const handleHashtagClick = (hashtag: string) => {
-    handleHashtagFilter(hashtag);
+    setHashtagFilter(hashtag);
     toast({
       title: 'Filtered by hashtag',
       description: `Showing posts with ${hashtag}`
@@ -49,7 +41,7 @@ const Community = () => {
   };
 
   const clearHashtagFilter = () => {
-    handleHashtagFilter(null);
+    setHashtagFilter(null);
   };
 
   const handleOpenCommentsModal = (postId: string) => {
@@ -71,6 +63,8 @@ const Community = () => {
     );
   }
 
+  const filteredPosts = getFilteredPosts(filter, hashtagFilter);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <CommunityHeader 
@@ -78,39 +72,25 @@ const Community = () => {
         clearHashtagFilter={clearHashtagFilter}
       />
       
-      <CommunityFilters filter={filter} setFilter={handleFilterChange} />
+      <CommunityFilters filter={filter} setFilter={setFilter} />
 
       <div className="pb-20">
         <div className="max-w-md mx-auto">
-          <VirtualizedPostList
-            posts={posts}
-            hasNextPage={hasNextPage}
-            isNextPageLoading={isNextPageLoading}
-            loadNextPage={loadNextPage}
-            onPostInteraction={(postId: string, action: string) => {
-              switch (action) {
-                case 'like':
-                  handleLike(postId);
-                  break;
-                case 'bookmark':
-                  toggleBookmark(postId);
-                  break;
-                case 'share':
-                  sharePost(postId);
-                  break;
-                case 'comment':
-                  handleOpenCommentsModal(postId);
-                  break;
-                case 'expand':
-                  toggleExpanded(postId);
-                  break;
-                case 'hashtag':
-                  // Handle hashtag click
-                  break;
-                default:
-                  break;
-              }
-            }}
+          <EnhancedPostsList
+            posts={filteredPosts}
+            loading={loading}
+            filter={filter}
+            hashtagFilter={hashtagFilter}
+            expandedPosts={expandedPosts}
+            likeAnimations={likeAnimations}
+            bookmarkedPosts={bookmarkedPosts}
+            bookmarkAnimations={bookmarkAnimations}
+            onToggleExpanded={toggleExpanded}
+            onHandleLike={handleLike}
+            onToggleBookmark={toggleBookmark}
+            onSharePost={sharePost}
+            onOpenCommentsModal={handleOpenCommentsModal}
+            onHashtagClick={handleHashtagClick}
           />
         </div>
       </div>

@@ -1,17 +1,14 @@
 
-import React, { memo, useMemo, useCallback, useRef, useEffect } from 'react';
-import { VariableSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
+import React, { memo, useMemo } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import { motion } from 'framer-motion';
-import OptimizedPostCard from './OptimizedPostCard';
+import PostCard from './PostCard';
 import PostSkeleton from './PostSkeleton';
-import throttle from 'lodash.throttle';
 
 interface CommunityPost {
   id: string;
   authorId: string;
   authorName: string;
-  authorAvatar: string;
   content: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
@@ -34,9 +31,8 @@ interface VirtualizedPostListProps {
   onPostInteraction: (postId: string, action: string) => void;
 }
 
-const ITEM_HEIGHT = 420; // Optimized post height
-const CONTAINER_HEIGHT = Math.min(window.innerHeight - 200, 800); // Responsive height
-const OVERSCAN_COUNT = 5; // Render extra items for smoother scrolling
+const ITEM_HEIGHT = 400; // Average post height
+const CONTAINER_HEIGHT = window.innerHeight - 200; // Viewport minus header/nav
 
 const VirtualizedPostList = memo(({ 
   posts, 
@@ -46,106 +42,53 @@ const VirtualizedPostList = memo(({
   onPostInteraction 
 }: VirtualizedPostListProps) => {
   const itemCount = hasNextPage ? posts.length + 1 : posts.length;
-  const listRef = useRef<any>(null);
-  
-  // Throttled load more to prevent excessive calls
-  const throttledLoadMore = useCallback(
-    throttle(() => {
-      if (hasNextPage && !isNextPageLoading) {
-        loadNextPage();
-      }
-    }, 1000),
-    [hasNextPage, isNextPageLoading, loadNextPage]
-  );
-
-  // Check if item is loaded
-  const isItemLoaded = useCallback((index: number) => {
-    return !!posts[index];
-  }, [posts]);
-
-  // Dynamic item size based on content
-  const getItemSize = useCallback((index: number) => {
-    const post = posts[index];
-    if (!post) return ITEM_HEIGHT;
-    
-    let baseHeight = 200; // Base post height
-    
-    // Add height for media
-    if (post.mediaUrl) {
-      baseHeight += post.mediaType === 'video' ? 250 : 300;
-    }
-    
-    // Add height for long content
-    if (post.content && post.content.length > 200) {
-      baseHeight += Math.min(post.content.length / 4, 100);
-    }
-    
-    return baseHeight;
-  }, [posts]);
 
   const PostItem = memo(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const post = posts[index];
 
-    // Show skeleton for loading items
     if (!post) {
       return (
-        <div style={style} className="px-2">
+        <div style={style}>
           <PostSkeleton />
         </div>
       );
     }
 
-    // Optimized post rendering with reduced animations for performance
     return (
-      <div style={style} className="px-2">
-        <OptimizedPostCard 
-          post={post} 
-          onInteraction={onPostInteraction}
-          isVirtualized={true}
-        />
+      <div style={style}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.02 }}
+          className="px-1"
+        >
+          <PostCard 
+            post={post} 
+            onInteraction={onPostInteraction}
+          />
+        </motion.div>
       </div>
     );
   });
 
-  PostItem.displayName = 'VirtualizedPostItem';
-
-  // Optimized list with infinite loading
   const memoizedList = useMemo(() => (
-    <InfiniteLoader
-      isItemLoaded={isItemLoaded}
+    <List
+      height={CONTAINER_HEIGHT}
+      width={'100%'}
       itemCount={itemCount}
-      loadMoreItems={throttledLoadMore}
-      threshold={3} // Load more when 3 items from the end
+      itemSize={ITEM_HEIGHT}
+      overscanCount={2}
+      className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
+      onItemsRendered={({ visibleStopIndex }) => {
+        // Load more when near the end
+        if (hasNextPage && !isNextPageLoading && visibleStopIndex >= posts.length - 5) {
+          loadNextPage();
+        }
+      }}
     >
-      {({ onItemsRendered, ref }) => (
-        <List
-          ref={(list) => {
-            listRef.current = list;
-            if (ref) ref.current = list;
-          }}
-          height={CONTAINER_HEIGHT}
-          width="100%"
-          itemCount={itemCount}
-          itemSize={getItemSize}
-          overscanCount={OVERSCAN_COUNT}
-          onItemsRendered={onItemsRendered}
-          className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
-          style={{
-            scrollBehavior: 'smooth'
-          }}
-        >
-          {PostItem}
-        </List>
-      )}
-    </InfiniteLoader>
-  ), [itemCount, posts, isItemLoaded, throttledLoadMore, getItemSize, PostItem]);
-
-  // Scroll to top when filter changes
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollToItem(0, 'start');
-    }
-  }, [posts.length === 0]); // Reset when posts are cleared
+      {PostItem}
+    </List>
+  ), [itemCount, posts, hasNextPage, isNextPageLoading, loadNextPage, PostItem]);
 
   return (
     <div className="w-full max-w-md mx-auto">
