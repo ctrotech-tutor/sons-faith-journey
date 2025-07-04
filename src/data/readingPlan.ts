@@ -73,7 +73,37 @@ export const readingPlan: ReadingDay[] = [
   { day: 59, date: '2025-07-29', passages: ['Lamentations 3:19-26', 'Hebrews 10:19-25'], theme: 'God in Relationship', month: 2, monthName: 'July' },
   { day: 60, date: '2025-07-30', passages: ['Psalm 62', 'Ephesians 3:14-21'], theme: 'God in Relationship', month: 2, monthName: 'July' },
 
-  // Days 61-90: To be added later
+  // Days 61-90: God Revealed in Christ
+  { day: 61, date: '2025-07-31', passages: ['Matthew 1-2', 'John 1'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 62, date: '2025-08-01', passages: ['Matthew 3-4', 'Luke 4'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 63, date: '2025-08-02', passages: ['John 2-3'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 64, date: '2025-08-03', passages: ['Matthew 5-7'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 65, date: '2025-08-04', passages: ['John 4-5'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 66, date: '2025-08-05', passages: ['Matthew 8-9', 'John 6'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 67, date: '2025-08-06', passages: ['John 7-8'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 68, date: '2025-08-07', passages: ['Luke 10', 'John 10'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 69, date: '2025-08-08', passages: ['Luke 15', 'John 11'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 70, date: '2025-08-09', passages: ['Matthew 21', 'John 12'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 71, date: '2025-08-10', passages: ['Matthew 22-23', 'John 13'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 72, date: '2025-08-11', passages: ['John 14-15'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 73, date: '2025-08-12', passages: ['John 16-17'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 74, date: '2025-08-13', passages: ['Matthew 26', 'John 18'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 75, date: '2025-08-14', passages: ['John 19-20'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 76, date: '2025-08-15', passages: ['Matthew 28', 'Luke 24'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 77, date: '2025-08-16', passages: ['Acts 1-2'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 78, date: '2025-08-17', passages: ['Acts 3-4', 'Hebrews 1'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 79, date: '2025-08-18', passages: ['Romans 3', 'Romans 5'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 80, date: '2025-08-19', passages: ['Romans 6-8'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 81, date: '2025-08-20', passages: ['2 Corinthians 3-5'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 82, date: '2025-08-21', passages: ['Galatians 2-3'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 83, date: '2025-08-22', passages: ['Ephesians 1-2'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 84, date: '2025-08-23', passages: ['Philippians 2', 'Colossians 1'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 85, date: '2025-08-24', passages: ['1 Thessalonians 4-5', 'Titus 2'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 86, date: '2025-08-25', passages: ['Hebrews 2', 'Hebrews 4'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 87, date: '2025-08-26', passages: ['1 Peter 1-2'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 88, date: '2025-08-27', passages: ['1 John 3-4'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 89, date: '2025-08-28', passages: ['Revelation 5', 'Revelation 21-22'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
+  { day: 90, date: '2025-08-29', passages: ['Psalm 27', 'Jeremiah 24:7', 'John 17:3'], theme: 'God Revealed in Christ', month: 3, monthName: 'August' },
 ];
 
 export const getMonthData = (month: number) => {
@@ -84,7 +114,7 @@ export const getThemeForMonth = (month: number) => {
   const themes = {
     1: 'Who God Is',
     2: 'God in Relationship', 
-    3: 'Knowing God' // Days 61-90 to be added
+    3: 'God Revealed in Christ'
   };
-  return themes[month as keyof typeof themes] || 'Knowing God';
+  return themes[month as keyof typeof themes] || 'God Revealed in Christ';
 };
