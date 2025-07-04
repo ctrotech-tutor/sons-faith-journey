@@ -59,7 +59,7 @@ const UNSPLASH_ACCESS_KEY = Keys.UNSPLASH_ACCESS_KEY;
 const YOUTUBE_API_KEY = Keys.YOUTUBE_API_KEY;
 
 const popularEmojis = emojis;
-let commonHashtags = hashtags;
+const commonHashtags = hashtags;
 
 const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelectEmoji }: MediaBrowserProps) => {
   const { toast } = useToast();
@@ -369,7 +369,6 @@ const MediaBrowser = ({ isOpen, onClose, onSelectMedia, onSelectHashtag, onSelec
             <HashtagTab
               commonHashtags={dynamicHashtags}
               handleHashtagSelect={handleHashtagSelect}
-              loading={loadingHashtags}
             />
           </Tabs>
         </div>
